@@ -1,0 +1,5 @@
+streamlit
+llama-index-core
+llama-index-llms-groq
+llama-index-embeddings-ollama 
+# (Añade cualquier otra que uses, como el OCR si lo volviste a poner)
