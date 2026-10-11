@@ -1,5 +1,9 @@
-streamlit
+streamlit>=1.50
 pandas
 requests
 xlsxwriter
 openpyxl
+altair
+python-dotenv
+tzdata
+anthropic

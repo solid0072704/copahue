@@ -1,0 +1,12 @@
+# Datos de los agentes (contienen información de tus leads: no se suben al repositorio)
+data/*.db
+data/*.db-*
+# Credenciales
+.env
+.streamlit/secrets.toml
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+# Índices locales de grok.py
+storage_vectorial/
