@@ -1,0 +1,68 @@
+# Ejecuta a los agentes del ebook cada 30 minutos, sin necesidad de tener tu PC encendido.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_EMAIL (opcional), ANTHROPIC_API_KEY (opcional)
+#   2. Variables: AGENTES_ACTIVOS = true   (sin esta variable el flujo no corre ni consume minutos)
+#      Opcionales: LINK_AGENDA, FIRMA, SEGUIMIENTO_MODO, EBOOK_NOMBRE, OFERTA_REUNION
+name: Agentes del ebook
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      resumen:
+        description: "Enviar el resumen diario ahora"
+        type: boolean
+        default: false
+
+concurrency:
+  group: agentes-ebook
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  agentes:
+    if: vars.AGENTES_ACTIVOS == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # La "memoria" de los agentes (qué leads ya avisaron, qué correos ya prepararon)
+      # se guarda entre ejecuciones en la caché de Actions, nunca en el repositorio.
+      - name: Recuperar memoria de los agentes
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: agentes-ebook-db-${{ github.run_id }}
+          restore-keys: agentes-ebook-db-
+
+      - name: Ejecutar agentes
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LINK_AGENDA: ${{ vars.LINK_AGENDA }}
+          FIRMA: ${{ vars.FIRMA }}
+          SEGUIMIENTO_MODO: ${{ vars.SEGUIMIENTO_MODO }}
+          EBOOK_NOMBRE: ${{ vars.EBOOK_NOMBRE }}
+          OFERTA_REUNION: ${{ vars.OFERTA_REUNION }}
+        run: python run_agentes.py ${{ inputs.resumen && '--resumen' || '' }}
+
+      - name: Guardar memoria de los agentes
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: agentes-ebook-db-${{ github.run_id }}
