@@ -2,9 +2,63 @@
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
+| `tablero_trading.py` | **Agente de inversiones**: depositas tu dinero, el agente propone qué comprar o vender y **te consulta cada orden** (Telegram o tablero) antes de ejecutarla | `streamlit run tablero_trading.py` |
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+
+---
+
+## 🤖 Agente de inversiones (con tu aprobación)
+
+Tú depositas el dinero. Los agentes arman la cartera según tu perfil de riesgo, la vigilan y te proponen
+cada compra o venta. **Ninguna orden se ejecuta sin que toques ✅ Ejecutar** en Telegram o en el tablero.
+
+```mermaid
+flowchart LR
+    D[💵 Depositas] --> B[(Broker<br/>simulado o Alpaca)]
+    B --> E[🧭 Estratega<br/>cartera objetivo, tendencia,<br/>rebalanceo, stop]
+    E --> G[🛡️ Guardia de riesgo<br/>límites que nadie puede saltar]
+    G --> IA[🧠 Claude opcional<br/>segunda opinión]
+    IA --> N[🔔 Notificador]
+    N -->|✅ / ❌| T[📱 Tu Telegram o tablero]
+    T --> X[⚙️ Ejecutor<br/>revalida precio y riesgo]
+    X --> B
+```
+
+| Agente | Qué hace |
+|---|---|
+| **Estratega** | Lleva tu cartera a la de tu perfil (`conservador`, `moderado`, `agresivo` o la tuya en `CARTERA_OBJETIVO`) con ETFs diversificados. **Filtro de tendencia**: si un activo cae bajo su media de 200 días, su peso pasa a bonos cortos (SHY). **Rebalancea** solo si un activo se desvía más del umbral, e invierte el dinero nuevo cuando depositas. **Stop de pérdida** si una posición cae más del X % bajo su costo. |
+| **Guardia de riesgo** | Revisa cada orden al proponerla y otra vez al ejecutarla: solo activos permitidos, sin apalancamiento ni ventas en corto, reserva de efectivo, máximo por activo, máximo de órdenes por día y **freno de pérdidas** (pausa compras si la cartera retrocede mucho). |
+| **IA (opcional)** | Claude da una segunda opinión (👍 / 🤔 / 👎) y te explica cada orden en simple. No puede crear órdenes ni cambiar montos. |
+| **Notificador** | Te consulta por **Telegram con botones ✅ Ejecutar / ❌ Rechazar** (solo acepta respuestas de tu chat), te avisa por correo y responde `/cartera`. |
+| **Ejecutor** | Ejecuta solo lo aprobado, primero ventas y luego compras. Si el precio se movió más del límite desde que lo viste, no ejecuta. Si no respondes a tiempo, la propuesta vence. Nunca ejecuta dos veces la misma orden. |
+
+### Puesta en marcha
+
+1. **Pruébalo sin riesgo** (dinero ficticio, precios reales):
+   ```bash
+   pip install -r requirements.txt
+   cp .env.example .env          # deja BROKER=simulado
+   streamlit run tablero_trading.py
+   ```
+   Deposita un monto en la barra lateral y aprueba o rechaza lo que te proponga. Para probar sin internet: botón **🧪 Cargar demo**.
+2. **Telegram** (para que te consulte en el celular): crea un bot con [@BotFather](https://t.me/BotFather), escríbele
+   cualquier cosa y copia tu `chat.id` desde `https://api.telegram.org/bot<TOKEN>/getUpdates`. Completa
+   `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`. Comandos: `/cartera` y `/plan`.
+3. **Broker real**: abre una cuenta en [Alpaca](https://alpaca.markets) (ETFs de EE.UU., acepta fracciones de acción),
+   crea claves **paper** y usa `BROKER=alpaca`, `ALPACA_PAPER=true`. Tu dinero se deposita y queda en Alpaca, no aquí.
+4. **Dinero real** solo cuando estés conforme con la práctica: `ALPACA_PAPER=false` con claves de la cuenta real y
+   `TRADING_REAL=ENTIENDO_EL_RIESGO`. Sin esa frase, el sistema se niega a operar con dinero real.
+5. **Que trabaje solo**: `python run_trading.py --loop 5` en un PC o servidor, o el flujo
+   `.github/workflows/agentes-trading.yml` (cada 10 min con la bolsa abierta; actívalo con la variable `TRADING_ACTIVO=true`
+   y los Secrets que indica el archivo). En Actions usa `BROKER=alpaca`: la memoria se guarda en la caché y la cartera, en el broker.
+
+> ⚠️ Invertir tiene riesgo y puedes perder dinero. Esta herramienta no garantiza rentabilidad ni es asesoría
+> financiera; las estrategias son reglas simples y públicas. Empieza en modo práctica y con montos que puedas perder.
+
+Archivos: `agentes_trading/` (`estratega.py`, `guardia.py`, `ejecutor.py`, `notificador.py`, `brokers.py`,
+`mercado.py`, `llm.py`, `orquestador.py`), `run_trading.py`, `tablero_trading.py` y `tests/test_trading.py`.
 
 ---
 

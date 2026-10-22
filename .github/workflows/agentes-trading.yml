@@ -1,0 +1,76 @@
+# Ejecuta al agente de inversiones cada 10 minutos mientras la bolsa de EE.UU. está abierta,
+# sin necesidad de tener tu PC encendido. Lee tus respuestas de Telegram y ejecuta lo que aprobaste.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ALPACA_API_KEY, ALPACA_SECRET_KEY
+#                 Opcionales: ANTHROPIC_API_KEY, GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_EMAIL
+#   2. Variables: TRADING_ACTIVO = true   (sin esta variable el flujo no corre ni consume minutos)
+#                 BROKER = alpaca (recomendado aquí) · PERFIL_RIESGO · CARTERA_OBJETIVO · ALPACA_PAPER
+#                 Dinero real: ALPACA_PAPER = false y TRADING_REAL = ENTIENDO_EL_RIESGO
+name: Agente de inversiones
+
+on:
+  schedule:
+    - cron: "*/10 13-21 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      plan:
+        description: "Pedir un plan nuevo ahora"
+        type: boolean
+        default: false
+
+concurrency:
+  group: agentes-trading
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  agente:
+    if: vars.TRADING_ACTIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # La memoria del agente (propuestas, decisiones, historial) se guarda en la caché de Actions,
+      # nunca en el repositorio. Tu dinero y tus posiciones viven en el broker.
+      - name: Recuperar memoria del agente
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: agentes-trading-db-${{ github.run_id }}
+          restore-keys: agentes-trading-db-
+
+      - name: Ejecutar agente
+        env:
+          BROKER: ${{ vars.BROKER }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_PAPER: ${{ vars.ALPACA_PAPER }}
+          TRADING_REAL: ${{ vars.TRADING_REAL }}
+          PERFIL_RIESGO: ${{ vars.PERFIL_RIESGO }}
+          CARTERA_OBJETIVO: ${{ vars.CARTERA_OBJETIVO }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          TABLERO_TRADING_URL: ${{ vars.TABLERO_TRADING_URL }}
+        run: python run_trading.py ${{ inputs.plan && '--plan' || '' }}
+
+      - name: Guardar memoria del agente
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: agentes-trading-db-${{ github.run_id }}
