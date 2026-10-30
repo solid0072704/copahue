@@ -5,6 +5,37 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `agentes_hubspot/gestion_comercial_diaria.md` | **Agente de gestión comercial**: analiza HubSpot cada día hábil y envía al cierre un correo con medidas correctivas | Tarea programada de Claude (lun–vie, 18:58 hora de Chile) |
+
+---
+
+## 📊 Agente de gestión comercial diaria (HubSpot)
+
+Cada día hábil a las **18:58 (America/Santiago)** una tarea programada de Claude abre una sesión nueva con los
+conectores de **HubSpot** y **Gmail**, sigue las instrucciones de
+[`agentes_hubspot/gestion_comercial_diaria.md`](agentes_hubspot/gestion_comercial_diaria.md) y envía a
+`rbarcelo@tuproyectodevida.cl` el correo **«Gestión comercial DD-MM-AAAA: 🟢/🟡/🔴 N medidas correctivas»**.
+
+```mermaid
+flowchart LR
+    H[(HubSpot<br/>solo lectura)] --> A[🧠 Agente de gestión comercial]
+    G[(Gmail<br/>informe de ayer)] --> A
+    A -->|reglas R1–R12| M[Medidas correctivas<br/>qué · quién · cuándo · links]
+    M --> C[✉️ Correo al cierre del día]
+```
+
+| Qué revisa | Ejemplos de medidas que genera |
+|---|---|
+| **Demanda**: contactos y negocios nuevos, leads del día sin contactar, negocios sin dueño | «Llamar antes de las 10:00 a los 4 leads de hoy sin contacto de X» |
+| **Actividad**: llamadas y % de conexión por ejecutivo, visitas, tareas completadas | «X hizo 9 llamadas (promedio 31): meta de 31 mañana» · cambio de franja si la conexión es < 20 % |
+| **Embudo**: entradas a Visita Agendada, Visita Realizada, Parcela Reservada, Promesa, Notaría, Pagado; perdidos y su motivo | «Reabrir 6 negocios cerrados por "No Responde" con menos de 3 intentos» |
+| **Higiene y riesgo**: negocios sin próxima actividad, tareas vencidas, cartera de ejecutivos inactivos, negocios en Visita/Cierre sin actividad hace más de 5 días, fechas prometidas al cliente incumplidas | «Llamar mañana antes de las 12:00 a estos 3 negocios en Promesa sin actividad hace 9 días» (con links) |
+| **Seguimiento**: lee el informe del día anterior en Gmail y marca cada medida como ✅ / ⏳ / ❌ | — |
+
+- **Solo lectura**: el agente no modifica nada en HubSpot; solo lee y envía un correo al día (si ya se envió el de hoy, no lo repite).
+- **Cambiar destinatario, horario, umbrales o reglas**: edita el `.md` y pide a Claude que actualice la tarea
+  programada «Agente de gestión comercial diaria» con el nuevo texto (la tarea guarda una copia de las instrucciones).
+- **Pausar o ejecutar ahora**: desde la lista de tareas programadas en claude.ai/code o pidiéndoselo a Claude.
 
 ---
 
