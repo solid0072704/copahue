@@ -143,3 +143,20 @@ agentes_ebook/
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
 ```
+
+---
+
+## 🎬 Skill `motion-video-styles` (videos animados para reels/shorts)
+
+En `.claude/skills/motion-video-styles/` está instalada la skill
+[motion-video-styles](https://github.com/tecnomanu/motion-video-styles) (MIT, de tecnomanu): Claude Code la carga
+automáticamente al abrir este repo. Genera videos verticales (9:16) u horizontales (16:9) en 7 estilos
+(pastel, stamp, notebook, desktop, neon-night, poster, blueprint) con escenas HTML + GSAP sincronizadas a una voz,
+subtítulos karaoke y render determinista (Playwright → ffmpeg).
+
+Pídele a Claude: *"armame un kit de reels con la skill motion-video-styles"*. Te preguntará marca, formato, voz y
+estilo, creará `my-video-kit/` y guiará cada video. Prompt base en español e inglés:
+`.claude/skills/motion-video-styles/reel-prompt.md`.
+
+Requisitos para renderizar: Node 20+, ffmpeg, Python 3 con `faster-whisper` y un TTS (recomendado
+[QVox](https://github.com/tecnomanu/qwen3-tts-api); también OpenAI, ElevenLabs o Piper).
