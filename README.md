@@ -30,6 +30,7 @@ flowchart LR
 | **Actividad**: llamadas y % de conexión por ejecutivo, visitas, tareas completadas | «X hizo 9 llamadas (promedio 31): meta de 31 mañana» · cambio de franja si la conexión es < 20 % |
 | **Embudo**: entradas a Visita Agendada, Visita Realizada, Parcela Reservada, Promesa, Notaría, Pagado; perdidos y su motivo | «Reabrir 6 negocios cerrados por "No Responde" con menos de 3 intentos» |
 | **Higiene y riesgo**: negocios sin próxima actividad, tareas vencidas, cartera de ejecutivos inactivos, negocios en Visita/Cierre sin actividad hace más de 5 días, fechas prometidas al cliente incumplidas | «Llamar mañana antes de las 12:00 a estos 3 negocios en Promesa sin actividad hace 9 días» (con links) |
+| **Detalle por vendedor**: semáforo personal y hasta 4 puntos críticos por ejecutivo, con sus negocios | «🔴 Yanette Letelier: reserva lote 49 sin contacto desde el 03-09 → llamar el lunes antes de las 10:00» |
 | **Seguimiento**: lee el informe del día anterior en Gmail y marca cada medida como ✅ / ⏳ / ❌ | — |
 
 - **Solo lectura**: el agente no modifica nada en HubSpot; solo lee y envía un correo al día (si ya se envió el de hoy, no lo repite).

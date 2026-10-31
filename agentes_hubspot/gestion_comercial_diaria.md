@@ -110,6 +110,15 @@ sube el `LIMIT` o quita una dimensión, pero no informes cifras truncadas como t
 - D6 · Negocios en Escrituración y pago estancados más de 15 días en la misma etapa
   (`hs_v2_date_entered_current_stage`), por etapa.
 
+**F. Detalle por vendedor** (reutiliza A–D; solo agrega listas con dueño)
+- Para cada ejecutivo activo con cartera abierta o actividad en D, junta: llamadas en D vs. su promedio y % de
+  conexión (B1, B2); leads de D sin contacto (A3) y cola antigua de «Sin Contacto» (D3); negocios detenidos en
+  Visita y Cierre (D4) con su monto total; promesas al cliente incumplidas (D5); cierres prematuros (C3);
+  % sin próxima actividad (D1); tareas vencidas (D2); visitas sin resultado (B4).
+- Para tener links por vendedor, trae las listas completas con `search_crm_objects` (`limit` 100): D4 con
+  `hubspot_owner_id`, `amount_in_home_currency` y `notes_last_updated`, y A3 (negocios de D con
+  `num_contacted_notes` NOT_HAS_PROPERTY). Agrúpalas por dueño tú mismo.
+
 **E. Seguimiento del informe anterior**
 - Busca en Gmail el informe más reciente (`in:sent subject:"Gestión comercial" newer_than:5d`) y lee sus medidas
   con `get_thread`. Para cada una, compara con los datos de hoy y clasifícala: ✅ cumplida / ⏳ en curso / ❌ sin avance.
@@ -143,6 +152,31 @@ No uses frases genéricas como «mejorar el seguimiento».
 Asigna un semáforo al día: 🟢 sin reglas críticas (R1–R3 sin disparar y embudo sobre la línea base),
 🟡 alguna regla crítica con pocos registros, 🔴 R1 o R3 con muchos registros o el embudo bajo el 70 %.
 
+### Puntos críticos por vendedor
+
+Las medidas de arriba son para el equipo; aquí cada vendedor ve **lo suyo**. Aplica las mismas reglas R1–R12 a
+la cartera y la actividad de cada ejecutivo activo (datos de 1-F) y asígnale un semáforo personal:
+
+- 🔴 si cumple al menos una de estas condiciones:
+  - tiene una reserva o un cierre previo a la promesa (Parcela Reservada, Validación, Redacción del Contrato,
+    Envío de CV/Promesa) sin actividad hace más de 5 días o con la fecha acordada de contacto incumplida;
+  - tiene negocios detenidos en Visita/Cierre por más de $100.000.000 en total;
+  - dejó sin contactar la mitad o más de sus leads de D, si recibió 3 o más;
+  - hizo menos del 30 % de su promedio de llamadas, si su promedio es de 10 o más.
+- 🟡 si dispara cualquier otra regla.
+- 🟢 si no dispara ninguna.
+
+Para cada vendedor en 🔴 o 🟡 escribe **hasta 4 puntos críticos**, del más al menos importante. Cada punto lleva
+el dato exacto, la acción con su plazo en DH y hasta 3 links a sus negocios. Si los puntos repiten una medida del
+equipo, nombra solo sus negocios y su parte.
+
+- Agrega una línea «Bien:» cuando el vendedor destaque en algo, con el dato. Por ejemplo: llamadas sobre su
+  promedio, la mejor conexión del equipo o el menor % sin próxima actividad.
+- A un negocio en Promesa Firmada o una etapa posterior con más de 90 días sin actividad no le pidas llamar: pide
+  confirmar si sigue vigente y actualizar la etapa (probable dato desactualizado).
+- A un vendedor que no registra llamadas en la línea base no le marques la actividad telefónica.
+- A los vendedores en 🟢 nómbralos juntos en una sola línea al final.
+
 ## Paso 3 · Correo
 
 Envía con `send_message` de Gmail usando `htmlBody` (HTML simple con estilos en línea, tablas con bordes suaves,
@@ -157,9 +191,14 @@ ancho máximo 680 px, legible en el celular) y `body` con la versión en texto p
   3. **Medidas correctivas para DH:** (título con la fecha, p. ej. «para el lunes 02-11»), numeradas por prioridad, con el formato del Paso 2.
   4. **Tabla por ejecutivo** (activos con actividad o cartera): llamadas, % conexión, visitas, tareas completadas,
      leads de hoy sin contactar, negocios sin próxima actividad, tareas vencidas. Marca en rojo lo que dispara una regla.
-  5. **Negocios en riesgo** (D4, top 10) con link.
-  6. **Seguimiento de las medidas anteriores** (Paso 1-E), si aplica.
-  7. **Notas de datos:** consultas fallidas, supuestos, límites (en una o dos líneas).
+  5. **Detalle por vendedor: puntos críticos.** Un bloque por vendedor, primero los 🔴 y luego los 🟡; dentro de
+     cada color, de más a menos negocios en riesgo. El encabezado lleva semáforo, nombre, equipo o proyecto y el
+     problema principal en pocas palabras. Debajo va una línea con sus indicadores (llamadas vs. promedio ·
+     leads de hoy sin contacto · sin próxima actividad · tareas vencidas), luego sus puntos críticos y la línea
+     «Bien:». Cierra con la línea de vendedores en 🟢.
+  6. **Negocios en riesgo** (D4, top 10) con link.
+  7. **Seguimiento de las medidas anteriores** (Paso 1-E), si aplica.
+  8. **Notas de datos:** consultas fallidas, supuestos, límites (en una o dos líneas).
 - Pie: «Informe automático del agente de gestión comercial a partir de HubSpot (solo lectura).»
 
 ## Paso 4 · Cierre
