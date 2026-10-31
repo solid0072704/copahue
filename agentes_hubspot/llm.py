@@ -1,6 +1,6 @@
-"""IA opcional (Claude): redacta una lectura ejecutiva del embudo a partir del diagnóstico numérico.
+"""IA opcional (Claude): redacta una lectura ejecutiva a partir de un diagnóstico numérico.
 
-Si no hay ANTHROPIC_API_KEY, el informe sale igual con los hallazgos calculados por reglas.
+Si no hay ANTHROPIC_API_KEY, los informes salen igual con los hallazgos calculados por reglas.
 """
 
 import json
@@ -20,7 +20,7 @@ ESQUEMA_LECTURA = {
     "properties": {
         "lectura": {
             "type": "string",
-            "description": "3 a 5 frases: cuál es el cuello de botella principal, por qué importa y qué hacer primero.",
+            "description": "3 a 5 frases: cuál es el problema principal, por qué importa y qué hacer primero.",
         }
     },
     "required": ["lectura"],
@@ -29,37 +29,36 @@ ESQUEMA_LECTURA = {
 
 
 class AsistenteEmbudo:
+    sistema_plantilla = SISTEMA
+
     def __init__(self, cfg):
         import anthropic
 
         self.cfg = cfg
         self.anthropic = anthropic
         self.cliente = anthropic.Anthropic(api_key=cfg.anthropic_api_key, max_retries=2, timeout=60)
-        self.sistema = SISTEMA.format(empresa=cfg.empresa_nombre)
+        self.sistema = self.sistema_plantilla.format(empresa=cfg.empresa_nombre)
 
-    def lectura(self, diagnostico):
+    def _resumen(self, diagnostico):
         resumen = {
             k: diagnostico.get(k)
-            for k in (
-                "total_abiertos",
-                "estancados",
-                "creados_periodo",
-                "perdidos_periodo",
-                "ganados_periodo",
-                "periodo_dias",
-                "hallazgos",
-                "razones_perdida",
-            )
+            for k in ("total_abiertos", "estancados", "creados_periodo", "perdidos_periodo", "ganados_periodo", "periodo_dias", "hallazgos", "razones_perdida")
         }
         resumen["etapas"] = [
             {k: e.get(k) for k in ("nombre", "abiertos", "mediana_dias", "sin_proxima_actividad", "conversion")}
             for e in diagnostico.get("etapas", [])
             if e.get("abiertos") or e.get("alcanzaron")
         ]
+        return resumen
+
+    def lectura(self, diagnostico):
         prompt = (
-            "Escribe la lectura ejecutiva de este diagnóstico del embudo.\n"
-            f"<diagnostico>{json.dumps(resumen, ensure_ascii=False, default=str)}</diagnostico>"
+            "Escribe la lectura ejecutiva de este diagnóstico.\n"
+            f"<diagnostico>{json.dumps(self._resumen(diagnostico), ensure_ascii=False, default=str)}</diagnostico>"
         )
+        return self._pedir_lectura(prompt)
+
+    def _pedir_lectura(self, prompt):
         try:
             respuesta = self.cliente.beta.messages.create(
                 model=self.cfg.llm_modelo,
@@ -82,11 +81,11 @@ class AsistenteEmbudo:
             return None
 
 
-def crear_asistente(cfg):
+def crear_asistente(cfg, clase=AsistenteEmbudo):
     if not cfg.ia_configurada:
         return None
     try:
-        return AsistenteEmbudo(cfg)
+        return clase(cfg)
     except ImportError:
         log.warning("Falta el paquete 'anthropic' (pip install anthropic).")
         return None

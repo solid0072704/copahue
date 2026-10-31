@@ -12,3 +12,8 @@ __pycache__/
 storage_vectorial/
 # Informes del embudo de HubSpot (contienen nombres de negocios y clientes)
 data/informes/
+# Archivos de caja con datos reales (cuentas por cobrar y egresos)
+data/cobros*.csv
+data/cobros*.xlsx
+data/egresos*.csv
+data/egresos*.xlsx

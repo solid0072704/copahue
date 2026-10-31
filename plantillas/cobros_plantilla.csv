@@ -1,0 +1,6 @@
+empresa,cliente,compromiso,proyecto,numero_cuota,monto,fecha_vencimiento,estado,fecha_pago
+Sociedad Ejemplo SpA,Cliente Uno,CV-0001,Parcela 12,7,850000,2026-10-05,Pendiente,
+Sociedad Ejemplo SpA,Cliente Uno,CV-0001,Parcela 12,8,850000,2026-11-05,Pendiente,
+Sociedad Ejemplo SpA,Cliente Dos,CV-0002,Parcela 31,3,1200000,2026-09-20,Pagada,2026-09-22
+Sociedad Ejemplo SpA,Cliente Dos,CV-0002,Parcela 31,4,1200000,2026-10-20,Pendiente,
+Otra Sociedad SpA,Cliente Tres,F-1045,,1,4500000,2026-11-15,Pendiente,

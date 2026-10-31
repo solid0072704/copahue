@@ -1,0 +1,76 @@
+# Ejecuta al agente de caja cada mañana hábil, sin necesidad de tener tu PC encendido.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_EMAIL (opcional), ANTHROPIC_API_KEY (opcional),
+#                 HUBSPOT_TOKEN (opcional, ventas comprometidas), FORPAY_EMPRESAS (solo si usas Forpay)
+#   2. Variables: AGENTE_CAJA_ACTIVO = true   (sin esta variable el flujo no corre ni consume minutos)
+#                 COBROS_ARCHIVOS y EGRESOS_ARCHIVO: rutas de los CSV dentro del repositorio (p. ej. data/cobros.csv)
+#      Opcionales: CAJA_SALDO_INICIAL, CAJA_MINIMA, CAJA_INCLUIR_PIPELINE, EMPRESA_NOMBRE, FIRMA
+name: Agente de caja
+
+on:
+  schedule:
+    - cron: "0 11 * * 1-5" # 8:00 en Chile continental (UTC-3), de lunes a viernes
+  workflow_dispatch:
+
+concurrency:
+  group: agente-caja
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  caja:
+    if: vars.AGENTE_CAJA_ACTIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Recuperar memoria del agente
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: agente-caja-db-${{ github.run_id }}
+          restore-keys: agente-caja-db-
+
+      - name: Ejecutar agente de caja
+        env:
+          FORPAY_EMPRESAS: ${{ secrets.FORPAY_EMPRESAS }}
+          COBROS_ARCHIVOS: ${{ vars.COBROS_ARCHIVOS }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+          CAJA_SALDO_INICIAL: ${{ vars.CAJA_SALDO_INICIAL }}
+          CAJA_MINIMA: ${{ vars.CAJA_MINIMA }}
+          EGRESOS_ARCHIVO: ${{ vars.EGRESOS_ARCHIVO }}
+          CAJA_INCLUIR_PIPELINE: ${{ vars.CAJA_INCLUIR_PIPELINE }}
+          EMPRESA_NOMBRE: ${{ vars.EMPRESA_NOMBRE }}
+          FIRMA: ${{ vars.FIRMA }}
+        run: python run_agente_caja.py
+
+      - name: Guardar memoria del agente
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: agente-caja-db-${{ github.run_id }}
+
+      - name: Publicar el informe como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-caja-${{ github.run_number }}
+          path: data/informes/caja_*.md
+          if-no-files-found: ignore
+          retention-days: 30

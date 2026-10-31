@@ -4,6 +4,7 @@
 |---|---|---|
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `run_agentes_hubspot.py` | **Agentes del embudo de HubSpot**: diagnostican dónde se atascan los negocios del pipeline y proponen (o crean) la acción para destrabarlos | `python run_agentes_hubspot.py --demo` |
+| `run_agente_caja.py` | **Agente de caja** para la gerencia de finanzas: proyección semanal de caja, morosidad, cobranza prioritaria y alertas de liquidez a partir de tus cuentas por cobrar y egresos | `python run_agente_caja.py --demo` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
 
@@ -150,6 +151,13 @@ agentes_hubspot/   agentes del embudo de HubSpot (sección siguiente)
   informe.py       informe en Markdown, HTML y texto
   demo.py          datos ficticios para probar sin HubSpot
 run_agentes_hubspot.py  ejecución por terminal / cron / GitHub Actions
+agentes_caja/      agente de caja (sección siguiente)
+  fuentes.py       cuentas por cobrar (CSV/Excel o API de Forpay), egresos y ventas de HubSpot
+  cobranza.py      morosidad por antigüedad, por sociedad y por compromiso; efectividad
+  proyeccion.py    proyección semanal de caja en tres escenarios
+  analista.py      hallazgos y acciones para finanzas
+  informe.py       informe en Markdown, HTML y texto
+run_agente_caja.py  ejecución por terminal / cron / GitHub Actions
 ```
 
 ---
@@ -202,3 +210,53 @@ lectura ejecutiva redactada por Claude; sin ella, los hallazgos salen igual, cal
   Crea los secrets `HUBSPOT_TOKEN`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` (y opcionalmente `NOTIFY_EMAIL`, `ANTHROPIC_API_KEY`),
   la variable `AGENTES_HUBSPOT_ACTIVOS=true` y, si quieres, `HUBSPOT_PIPELINE`, `HUBSPOT_MODO` y `HUBSPOT_SUPERVISOR_ID`.
   Cada ejecución deja el informe como artefacto del flujo y la memoria de los agentes (fotos y tareas creadas) en la caché.
+
+---
+
+## 💵 Agente de caja
+
+Para la gerencia de finanzas: te dice **cuánto vas a cobrar y pagar cada semana, dónde se perfora la caja y a quién cobrar primero**.
+No depende de ningún sistema en particular: lee tus cuentas por cobrar desde un CSV o Excel (planilla, contabilidad o banco),
+tus egresos desde otro CSV y, si quieres, suma las ventas comprometidas de HubSpot.
+
+```mermaid
+flowchart LR
+    C[(Cuentas por cobrar<br/>CSV / Excel · Forpay)] --> K[🧾 Cobranza<br/>morosidad, antigüedad, prioridad]
+    E[(Egresos<br/>CSV)] --> P[📆 Proyección<br/>13 semanas · 3 escenarios]
+    H[(HubSpot<br/>ventas comprometidas)] -.opcional.-> P
+    K --> P
+    K --> A[🧠 Analista de caja<br/>hallazgos y acciones]
+    P --> A
+    A --> I[✉️ Informe<br/>correo + Markdown]
+```
+
+| Qué entrega | Detalle |
+|---|---|
+| **Proyección semanal** | Cobros programados, cobros esperados (según tu tasa histórica de cobro), recuperación de mora, egresos, neto y saldo por semana. Escenarios base, pesimista y optimista. **Alerta** con la semana en que el saldo cae bajo tu caja mínima y cuánto falta. |
+| **Cobranza** | Morosidad total y por sociedad, por antigüedad (1-15, 16-45, 46-90, más de 90 días) y la **lista de cobranza prioritaria** por compromiso, con la acción recomendada para cada tramo. Efectividad mensual: cuánto de lo que vencía se cobró. |
+| **Hallazgos y acciones** | Reglas sobre la caja, la cobertura de egresos, la concentración de la mora, la mora antigua, los vencimientos de los próximos 7 días y la comparación con la semana anterior. Con `ANTHROPIC_API_KEY`, una lectura ejecutiva redactada por Claude. |
+
+### Puesta en marcha
+
+```bash
+pip install -r requirements.txt
+python run_agente_caja.py --demo --imprimir   # informe con datos ficticios
+python run_agente_caja.py --plantillas        # crea data/cobros.csv y data/egresos.csv con filas de ejemplo
+```
+
+1. Reemplaza las filas de `data/cobros.csv` por tus cuentas por cobrar (una fila por cuota o factura: sociedad, cliente, compromiso,
+   monto, fecha de vencimiento, estado, fecha de pago). También puedes apuntar a un Excel con `COBROS_ARCHIVOS` o `--archivo`.
+   El agente reconoce los nombres de columna habituales; si alguno no lo detecta, fíjalo en `COBROS_CAMPOS`.
+2. Completa `data/egresos.csv` con los egresos programados y recurrentes (remuneraciones, impuestos, créditos, obras).
+3. En el `.env` pon el saldo en bancos de hoy en `CAJA_SALDO_INICIAL` y el mínimo que no quieres perforar en `CAJA_MINIMA`.
+4. Ejecuta `python run_agente_caja.py`. El informe llega a tu correo (mismo Gmail de los demás agentes) y queda en `data/informes/`.
+
+Si todavía no tienes el archivo de cobros, `CAJA_INCLUIR_PIPELINE=true` proyecta con el pie de los negocios avanzados de HubSpot,
+ponderado por la probabilidad de su etapa. Y si usas Forpay, `FORPAY_EMPRESAS` lee las cuotas directamente de su API.
+
+### Que trabaje solo
+
+- **Tu PC o un servidor**: programa `python run_agente_caja.py` en cron, una vez al día.
+- **GitHub Actions**: el flujo `.github/workflows/agente-caja.yml` corre de lunes a viernes a las 8:00 (Chile). Crea los secrets
+  `GMAIL_USER` y `GMAIL_APP_PASSWORD`, la variable `AGENTE_CAJA_ACTIVO=true`, y `COBROS_ARCHIVOS` / `EGRESOS_ARCHIVO` apuntando a
+  los CSV que subas al repositorio (o usa HubSpot con `CAJA_INCLUIR_PIPELINE=true`).
