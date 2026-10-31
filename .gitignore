@@ -10,3 +10,5 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Informes del embudo de HubSpot (contienen nombres de negocios y clientes)
+data/informes/

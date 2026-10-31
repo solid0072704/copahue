@@ -3,6 +3,7 @@
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
+| `run_agentes_hubspot.py` | **Agentes del embudo de HubSpot**: diagnostican dónde se atascan los negocios del pipeline y proponen (o crean) la acción para destrabarlos | `python run_agentes_hubspot.py --demo` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
 
@@ -142,4 +143,62 @@ agentes_ebook/
   orquestador.py   ciclo completo de los agentes
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
+agentes_hubspot/   agentes del embudo de HubSpot (sección siguiente)
+  api.py           cliente de la API de HubSpot (pipelines, negocios, propietarios, tareas)
+  embudo.py        Analista de embudo (etapas, conversión, pérdidas, hallazgos)
+  desatascador.py  Desatascador (negocios estancados, acción propuesta, tareas, escalación)
+  informe.py       informe en Markdown, HTML y texto
+  demo.py          datos ficticios para probar sin HubSpot
+run_agentes_hubspot.py  ejecución por terminal / cron / GitHub Actions
 ```
+
+---
+
+## 📈 Agentes del embudo de HubSpot
+
+Leen tu pipeline de negocios en HubSpot y te dicen **dónde se está atascando el embudo y qué hacer con cada negocio**.
+Nacen de un diagnóstico real: en un pipeline de 1.400 negocios abiertos, un tercio estaba en «Sin Contacto» sin
+próxima actividad, cientos llevaban semanas sin que nadie decidiera si seguir o cerrar, y decenas de negocios
+ya pagados seguían «abiertos» distorsionando las cifras.
+
+```mermaid
+flowchart LR
+    H[(HubSpot<br/>pipeline de negocios)] --> A[📊 Analista de embudo<br/>por etapa, conversión, pérdidas]
+    H --> D[🔧 Desatascador<br/>negocios estancados + acción]
+    A --> I[✉️ Informe diario<br/>hallazgos y qué hacer]
+    D --> I
+    D -->|modo tareas| T[✅ Tareas en HubSpot<br/>al propietario del negocio]
+    T -->|sigue estancado 7 días| S[🚨 Escalación<br/>al supervisor]
+```
+
+| Agente | Qué hace |
+|---|---|
+| **Analista de embudo** | Cuenta negocios abiertos por etapa, mediana de días en la etapa, cuántos no tienen próxima actividad y cuántos llevan ≥14 días sin contacto. Mide la conversión entre etapas de los negocios creados en los últimos 30 días, las razones de pérdida y la carga por propietario. Compara con la foto de la semana anterior y redacta **hallazgos y las 3 acciones de la semana**. |
+| **Desatascador** | Marca como estancado todo negocio que supera los días típicos de su etapa **y** no tiene nada agendado a futuro. Según la parte del embudo propone la acción: *llamar hoy* (primer contacto), *reactivar o cerrar* (prospección), *confirmar qué pasó con la visita*, *acordar próximo paso con el cliente* (negociación) o *cerrar ganado / destrabar el cierre legal* (administrativo). En modo `tareas` crea la tarea en HubSpot al propietario del negocio, no insiste antes de 7 días y, si sigue estancado, escala al supervisor. |
+
+### Puesta en marcha
+
+```bash
+pip install -r requirements.txt
+python run_agentes_hubspot.py --demo --imprimir   # informe con datos ficticios, sin tocar HubSpot
+```
+
+1. Crea una **app privada** en HubSpot (Configuración → Integraciones → Aplicaciones privadas) con los permisos
+   `crm.objects.deals.read`, `crm.objects.owners.read` y `crm.schemas.deals.read`. Copia el token en `HUBSPOT_TOKEN` del `.env`.
+2. Indica el pipeline en `HUBSPOT_PIPELINE` (su id, por ejemplo `default`, o su nombre tal como aparece en HubSpot).
+3. Ejecuta `python run_agentes_hubspot.py`. Recibirás el informe en tu correo (usa el mismo Gmail de los agentes del ebook)
+   y quedará guardado en `data/informes/`. Mientras `HUBSPOT_MODO=lectura`, **no se modifica nada en HubSpot**.
+4. Cuando el informe te convenza, pasa a `HUBSPOT_MODO=tareas` (agrega a la app privada el permiso para crear tareas) y,
+   si quieres escalaciones, pon el id del supervisor en `HUBSPOT_SUPERVISOR_ID`.
+
+Los umbrales de «estancado» se ajustan en el `.env` (`DESATASCAR_DIAS_*`, o por etapa con
+`DESATASCAR_DIAS_POR_ETAPA="Sin Contacto=2,Promesa Firmada=30"`). Con `ANTHROPIC_API_KEY` el informe incluye además una
+lectura ejecutiva redactada por Claude; sin ella, los hallazgos salen igual, calculados por reglas.
+
+### Que trabajen solos
+
+- **Tu PC o un servidor**: programa `python run_agentes_hubspot.py` en cron, una vez al día.
+- **GitHub Actions**: el flujo `.github/workflows/agentes-hubspot.yml` corre de lunes a viernes a las 8:30 (Chile).
+  Crea los secrets `HUBSPOT_TOKEN`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` (y opcionalmente `NOTIFY_EMAIL`, `ANTHROPIC_API_KEY`),
+  la variable `AGENTES_HUBSPOT_ACTIVOS=true` y, si quieres, `HUBSPOT_PIPELINE`, `HUBSPOT_MODO` y `HUBSPOT_SUPERVISOR_ID`.
+  Cada ejecución deja el informe como artefacto del flujo y la memoria de los agentes (fotos y tareas creadas) en la caché.

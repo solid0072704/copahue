@@ -1,0 +1,82 @@
+# Ejecuta a los agentes del embudo de HubSpot cada mañana hábil, sin necesidad de tener tu PC encendido.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   HUBSPOT_TOKEN (app privada), GMAIL_USER, GMAIL_APP_PASSWORD,
+#                 NOTIFY_EMAIL (opcional), ANTHROPIC_API_KEY (opcional)
+#   2. Variables: AGENTES_HUBSPOT_ACTIVOS = true   (sin esta variable el flujo no corre ni consume minutos)
+#      Opcionales: HUBSPOT_PIPELINE, HUBSPOT_MODO (lectura | tareas), HUBSPOT_SUPERVISOR_ID, EMPRESA_NOMBRE,
+#                  FIRMA, DESATASCAR_DIAS_POR_ETAPA (por ejemplo "Sin Contacto=2,Promesa Firmada=30")
+name: Agentes del embudo HubSpot
+
+on:
+  schedule:
+    - cron: "30 11 * * 1-5" # 8:30 en Chile continental (UTC-3), de lunes a viernes
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "lectura = solo informe · tareas = además crea tareas en HubSpot"
+        type: choice
+        options: [lectura, tareas]
+        default: lectura
+
+concurrency:
+  group: agentes-hubspot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  embudo:
+    if: vars.AGENTES_HUBSPOT_ACTIVOS == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # La memoria de los agentes (fotos del diagnóstico, tareas ya creadas) se guarda entre
+      # ejecuciones en la caché de Actions, nunca en el repositorio.
+      - name: Recuperar memoria de los agentes
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: agentes-hubspot-db-${{ github.run_id }}
+          restore-keys: agentes-hubspot-db-
+
+      - name: Ejecutar agentes del embudo
+        env:
+          HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HUBSPOT_PIPELINE: ${{ vars.HUBSPOT_PIPELINE }}
+          HUBSPOT_MODO: ${{ inputs.modo || vars.HUBSPOT_MODO }}
+          HUBSPOT_SUPERVISOR_ID: ${{ vars.HUBSPOT_SUPERVISOR_ID }}
+          EMPRESA_NOMBRE: ${{ vars.EMPRESA_NOMBRE }}
+          FIRMA: ${{ vars.FIRMA }}
+          DESATASCAR_DIAS_POR_ETAPA: ${{ vars.DESATASCAR_DIAS_POR_ETAPA }}
+        run: python run_agentes_hubspot.py
+
+      - name: Guardar memoria de los agentes
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: agentes-hubspot-db-${{ github.run_id }}
+
+      - name: Publicar el informe como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-embudo-${{ github.run_number }}
+          path: data/informes/*.md
+          if-no-files-found: ignore
+          retention-days: 30
