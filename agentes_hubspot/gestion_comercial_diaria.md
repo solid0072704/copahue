@@ -17,6 +17,8 @@ para mañana. Trabajas solo con los conectores de **HubSpot** (lectura) y **Gmai
    corto con asunto `Gestión comercial DD-MM-AAAA: análisis no disponible` explicando qué falló. Si Gmail no está
    disponible, termina con el error; no busques otra vía de envío.
 5. **Personas por su nombre**, nunca por ID. Resuelve los IDs con `search_owners` (lotes de hasta 100 IDs).
+   Si dos dueños comparten nombre (hoy hay dos «Katherine Garay»), distínguelos por su equipo, p. ej.
+   «Katherine Garay (cuenta Casablanca)».
 6. **Privacidad:** no copies teléfonos, correos ni RUT de clientes en el informe. Identifica cada negocio por su
    nombre y su link de HubSpot.
 7. **Excluye registros de prueba:** negocios cuyo nombre contenga «prueba» o «test».
@@ -53,9 +55,11 @@ para mañana. Trabajas solo con los conectores de **HubSpot** (lectura) y **Gmai
 
 ## Fechas
 
-- **D** = fecha de hoy en `America/Santiago` (el agente corre ~19:00). **D+1** = mañana.
+- **D** = fecha de hoy en `America/Santiago` (el agente corre ~19:00). **D+1** = el próximo día hábil
+  (el lunes si D es viernes); todos los plazos de las medidas se fijan en D+1.
 - **Línea base** = los 5 días hábiles (lun–vie) anteriores a D. Un indicador «cae» si está bajo el 70 % de su
-  promedio en la línea base.
+  promedio en la línea base. Para excluir el fin de semana, agrupa por día (`DATE_TRUNC(..., 'DAY')`) y suma solo
+  los días hábiles, o consulta por separado los tramos de lunes a viernes.
 - Para filtrar un día usa siempre `campo >= 'D' AND campo < 'D+1'` (formato `AAAA-MM-DD`). **No uses `<= 'D'`**:
   en consultas sin `GROUP BY` devuelve 0 filas. Para un rango usa `>= 'inicio' AND < 'fin+1'`.
 - Las fechas de HubSpot se agrupan en la zona del portal (US/Eastern, 1–2 h de diferencia con Chile). No lo
@@ -90,15 +94,18 @@ sube el `LIMIT` o quita una dimensión, pero no informes cifras truncadas como t
 - C4 · Reservas y negocios nuevos del día en los otros dos pipelines.
 
 **D. Higiene y riesgos (foto al cierre de D)**
-- D1 · Negocios abiertos del pipeline principal (`hs_is_closed = 'false'`) **sin próxima actividad**, por dueño, junto
-  al total de abiertos por dueño (para calcular el %).
+- D1 · Negocios abiertos del pipeline principal (`hs_is_closed = 'false'`) en fases de Prospección, Visita y Cierre
+  (excluye las etapas de Escrituración y pago con `dealstage != '...'`) **sin próxima actividad**, por dueño, junto
+  al total de abiertos en esas fases por dueño (para calcular el %).
 - D2 · Tareas vencidas por dueño (`TASK`, `hs_task_is_overdue = 'true'`).
 - D3 · Negocios en «Sin Contacto» creados antes de D-1 y nunca contactados, por dueño.
 - D4 · Negocios **estancados en fases de Visita y Cierre** (de `189519371` a `1026814100`) con `notes_last_updated`
   anterior a D-5: lista con `search_crm_objects`, ordenada por `amount_in_home_currency` descendente (top 10:
   nombre, etapa, dueño, monto, días sin actividad, si tiene próxima actividad, link).
-- D5 · Negocios abiertos con `fecha_acordada_para_proximo_contacto` en D o antes y sin contacto desde esa fecha
+- D5 · Negocios abiertos con `fecha_acordada_para_proximo_contacto` entre D-30 y D, y sin contacto desde esa fecha
   (`notes_last_contacted` anterior a la fecha acordada o vacío): promesas al cliente incumplidas, por dueño.
+  Tráelos con `search_crm_objects` y compara las dos fechas registro por registro. Las de negocios en Parcela
+  Reservada o etapas posteriores van primero (riesgo de devolución de la reserva).
 - D6 · Negocios en Escrituración y pago estancados más de 15 días en la misma etapa
   (`hs_v2_date_entered_current_stage`), por etapa.
 
@@ -119,10 +126,10 @@ ejecutivo o jefatura cuando corresponda). Prioriza por impacto en ventas: 1) neg
 | R2 | Promesas al cliente incumplidas (D5) | Contactar mañana a primera hora y disculparse; reagendar en HubSpot. |
 | R3 | Leads de hoy sin contacto (A3) > 0 | Llamar antes de las 10:00 de mañana; el lead se enfría en horas. Crítico si superan el 20 % de los leads del ejecutivo. |
 | R4 | «Sin Contacto» de días anteriores nunca contactados (D3) | Bloque de llamadas de 9:00 a 10:30 solo para esa cola. |
-| R5 | Llamadas del ejecutivo < 70 % de su promedio, o < 15 llamadas teniendo cartera abierta | Conversación breve con su jefatura y meta explícita para mañana (su promedio de la línea base). |
+| R5 | Llamadas del ejecutivo < 70 % de su promedio, o < 15 llamadas teniendo cartera abierta (solo si registra llamadas en la línea base; quien no registra ninguna se menciona en «Notas de datos», porque puede gestionar por WhatsApp u otro canal) | Conversación breve con su jefatura y meta explícita para mañana (su promedio de la línea base). |
 | R6 | Tasa de conexión (Conectadas / llamadas) < 20 % con ≥ 15 llamadas | Cambiar franja horaria (12:30–14:00 y 18:00–19:30), WhatsApp previo y volver a llamar a los «Ocupado». |
 | R7 | Cierres prematuros por «No Responde» con < 3 intentos (C3) | Reabrir esos negocios y aplicar cadencia mínima de 6 intentos en 10 días antes de darlos por perdidos. |
-| R8 | > 30 % de los negocios abiertos del ejecutivo sin próxima actividad (D1) | Agendar próxima tarea a todos sus negocios abiertos antes de las 13:00 de mañana. |
+| R8 | > 30 % de los negocios abiertos del ejecutivo sin próxima actividad (D1) | En D+1, próxima actividad para todos sus negocios en Visita y Cierre; el resto, un 20 % de la cartera por día hasta bajar del 30 %. Nombra a los referentes del equipo (los de menor %). |
 | R9 | > 20 tareas vencidas (D2), o tareas/negocios en manos de inactivos | Depurar y reprogramar; reasignar la cartera de inactivos (indica cuántos registros y de quién). |
 | R10 | Visitas pasadas sin resultado registrado (B4) | Registrar el resultado hoy/mañana: sin eso no se mide la conversión de visitas. |
 | R11 | Entradas a Visita Agendada o Parcela Reservada caen bajo el 70 % de la línea base (C1) | Foco del equipo mañana: agendar visitas con los «Interés Confirmado» y «Contacto con Prospecto». |
