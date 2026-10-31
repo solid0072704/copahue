@@ -200,8 +200,12 @@ ancho máximo 680 px, legible en el celular) y `body` con la versión en texto p
   7. **Seguimiento de las medidas anteriores** (Paso 1-E), si aplica.
   8. **Notas de datos:** consultas fallidas, supuestos, límites (en una o dos líneas).
 - Pie: «Informe automático del agente de gestión comercial a partir de HubSpot (solo lectura).»
+- **Después de enviarlo, déjalo visible:** el Gmail del destinatario tiene un filtro que manda a la etiqueta «YO»,
+  fuera de la bandeja de entrada, los correos que uno se envía a sí mismo. Con el ID que devuelve `send_message`,
+  usa `label_message` para agregar las etiquetas `INBOX` y `UNREAD`, y confírmalo con `get_message`
+  (`METADATA_ONLY`). Si no logras dejarlo en la bandeja, dilo en el cierre.
 
 ## Paso 4 · Cierre
 
-Termina tu respuesta con una línea: fecha analizada, semáforo, número de medidas e ID del mensaje enviado
-(o el motivo por el que no se envió).
+Termina tu respuesta con una línea: fecha analizada, semáforo, número de medidas, ID del mensaje enviado
+y si quedó en la bandeja de entrada (o el motivo por el que no se envió).
