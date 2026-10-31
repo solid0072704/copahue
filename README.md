@@ -34,8 +34,8 @@ flowchart LR
 | **Seguimiento**: lee el informe del día anterior en Gmail y marca cada medida como ✅ / ⏳ / ❌ | — |
 
 - **Solo lectura**: el agente no modifica nada en HubSpot; solo lee y envía un correo al día (si ya se envió el de hoy, no lo repite).
-- **Cambiar destinatario, umbrales o reglas**: edita el `.md` y súbelo a la rama; en cada ejecución el agente hace
-  `git pull` y usa la versión vigente (la tarea guarda además una copia de respaldo de las instrucciones).
+- **Cambiar destinatario, umbrales o reglas**: edita el `.md` y súbelo a GitHub; en cada ejecución el agente lee la
+  versión publicada en la rama `ccr-d79c751d-s8ingb` (o en `main`, cuando se fusione).
   Para cambiar el horario o los días, pídeselo a Claude en la misma sesión.
 - **Pausar o ejecutar ahora**: desde la lista de tareas programadas en claude.ai/code o pidiéndoselo a Claude.
 
