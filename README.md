@@ -11,8 +11,8 @@
 
 ## 📊 Agente de gestión comercial diaria (HubSpot)
 
-Cada día hábil a las **18:58 (America/Santiago)** una tarea programada de Claude abre una sesión nueva con los
-conectores de **HubSpot** y **Gmail**, sigue las instrucciones de
+Cada día hábil a las **18:58 (America/Santiago)** la tarea programada «Agente de gestión comercial diaria»
+retoma la sesión de Claude Code que tiene conectados **HubSpot** y **Gmail**, sigue las instrucciones de
 [`agentes_hubspot/gestion_comercial_diaria.md`](agentes_hubspot/gestion_comercial_diaria.md) y envía a
 `rbarcelo@tuproyectodevida.cl` el correo **«Gestión comercial DD-MM-AAAA: 🟢/🟡/🔴 N medidas correctivas»**.
 
@@ -33,8 +33,9 @@ flowchart LR
 | **Seguimiento**: lee el informe del día anterior en Gmail y marca cada medida como ✅ / ⏳ / ❌ | — |
 
 - **Solo lectura**: el agente no modifica nada en HubSpot; solo lee y envía un correo al día (si ya se envió el de hoy, no lo repite).
-- **Cambiar destinatario, horario, umbrales o reglas**: edita el `.md` y pide a Claude que actualice la tarea
-  programada «Agente de gestión comercial diaria» con el nuevo texto (la tarea guarda una copia de las instrucciones).
+- **Cambiar destinatario, umbrales o reglas**: edita el `.md` y súbelo a la rama; en cada ejecución el agente hace
+  `git pull` y usa la versión vigente (la tarea guarda además una copia de respaldo de las instrucciones).
+  Para cambiar el horario o los días, pídeselo a Claude en la misma sesión.
 - **Pausar o ejecutar ahora**: desde la lista de tareas programadas en claude.ai/code o pidiéndoselo a Claude.
 
 ---
