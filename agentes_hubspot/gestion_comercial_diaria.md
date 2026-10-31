@@ -55,8 +55,9 @@ para mañana. Trabajas solo con los conectores de **HubSpot** (lectura) y **Gmai
 
 ## Fechas
 
-- **D** = fecha de hoy en `America/Santiago` (el agente corre ~19:00). **D+1** = el próximo día hábil
-  (el lunes si D es viernes); todos los plazos de las medidas se fijan en D+1.
+- **D** = fecha de hoy en `America/Santiago` (el agente corre ~19:00). **D+1** = el día calendario siguiente
+  (solo para filtrar consultas). **DH** = el próximo día hábil (el lunes si D es viernes): todos los plazos de las
+  medidas se fijan en DH y se escriben con su fecha («lunes 02-11»).
 - **Línea base** = los 5 días hábiles (lun–vie) anteriores a D. Un indicador «cae» si está bajo el 70 % de su
   promedio en la línea base. Para excluir el fin de semana, agrupa por día (`DATE_TRUNC(..., 'DAY')`) y suma solo
   los días hábiles, o consulta por separado los tramos de lunes a viernes.
@@ -122,21 +123,21 @@ ejecutivo o jefatura cuando corresponda). Prioriza por impacto en ventas: 1) neg
 
 | # | Regla (se dispara si…) | Medida tipo |
 |---|---|---|
-| R1 | Negocios en Cierre/Visita sin actividad hace más de 5 días (D4) | Llamar mañana antes de las 12:00 y dejar próxima actividad agendada; el jefe de proyecto revisa los 3 de mayor monto. |
-| R2 | Promesas al cliente incumplidas (D5) | Contactar mañana a primera hora y disculparse; reagendar en HubSpot. |
-| R3 | Leads de hoy sin contacto (A3) > 0 | Llamar antes de las 10:00 de mañana; el lead se enfría en horas. Crítico si superan el 20 % de los leads del ejecutivo. |
+| R1 | Negocios en Cierre/Visita sin actividad hace más de 5 días (D4) | Llamar en DH antes de las 12:00 y dejar próxima actividad agendada; el jefe de proyecto revisa los 3 de mayor monto. |
+| R2 | Promesas al cliente incumplidas (D5) | Contactar en DH a primera hora y disculparse; reagendar en HubSpot. |
+| R3 | Leads de hoy sin contacto (A3) > 0 | Llamar en DH antes de las 10:00; el lead se enfría en horas. Crítico si superan el 20 % de los leads del ejecutivo. |
 | R4 | «Sin Contacto» de días anteriores nunca contactados (D3) | Bloque de llamadas de 9:00 a 10:30 solo para esa cola. |
-| R5 | Llamadas del ejecutivo < 70 % de su promedio, o < 15 llamadas teniendo cartera abierta (solo si registra llamadas en la línea base; quien no registra ninguna se menciona en «Notas de datos», porque puede gestionar por WhatsApp u otro canal) | Conversación breve con su jefatura y meta explícita para mañana (su promedio de la línea base). |
+| R5 | Llamadas del ejecutivo < 70 % de su promedio, o < 15 llamadas teniendo cartera abierta (solo si registra llamadas en la línea base; quien no registra ninguna se menciona en «Notas de datos», porque puede gestionar por WhatsApp u otro canal) | Conversación breve con su jefatura y meta explícita para DH (su promedio de la línea base). |
 | R6 | Tasa de conexión (Conectadas / llamadas) < 20 % con ≥ 15 llamadas | Cambiar franja horaria (12:30–14:00 y 18:00–19:30), WhatsApp previo y volver a llamar a los «Ocupado». |
 | R7 | Cierres prematuros por «No Responde» con < 3 intentos (C3) | Reabrir esos negocios y aplicar cadencia mínima de 6 intentos en 10 días antes de darlos por perdidos. |
-| R8 | > 30 % de los negocios abiertos del ejecutivo sin próxima actividad (D1) | En D+1, próxima actividad para todos sus negocios en Visita y Cierre; el resto, un 20 % de la cartera por día hasta bajar del 30 %. Nombra a los referentes del equipo (los de menor %). |
+| R8 | > 30 % de los negocios abiertos del ejecutivo sin próxima actividad (D1) | En DH, próxima actividad para todos sus negocios en Visita y Cierre; el resto, un 20 % de la cartera por día hasta bajar del 30 %. Nombra a los referentes del equipo (los de menor %). |
 | R9 | > 20 tareas vencidas (D2), o tareas/negocios en manos de inactivos | Depurar y reprogramar; reasignar la cartera de inactivos (indica cuántos registros y de quién). |
-| R10 | Visitas pasadas sin resultado registrado (B4) | Registrar el resultado hoy/mañana: sin eso no se mide la conversión de visitas. |
-| R11 | Entradas a Visita Agendada o Parcela Reservada caen bajo el 70 % de la línea base (C1) | Foco del equipo mañana: agendar visitas con los «Interés Confirmado» y «Contacto con Prospecto». |
+| R10 | Visitas pasadas sin resultado registrado (B4) | Registrar el resultado a más tardar en DH: sin eso no se mide la conversión de visitas. |
+| R11 | Entradas a Visita Agendada o Parcela Reservada caen bajo el 70 % de la línea base (C1) | Foco del equipo en DH: agendar visitas con los «Interés Confirmado» y «Contacto con Prospecto». |
 | R12 | Negocios abiertos sin dueño (A5) o Escrituración estancada (D6) | Asignar dueño hoy / revisar con Escrituración. |
 
 Cada medida debe decir: **qué pasa** (el dato exacto), **qué hacer** (acción verificable), **quién**
-(ejecutivo o jefatura), **cuándo** (plazo en D+1) y **dónde** (hasta 5 links a los negocios afectados).
+(ejecutivo o jefatura), **cuándo** (plazo en DH) y **dónde** (hasta 5 links a los negocios afectados).
 No uses frases genéricas como «mejorar el seguimiento».
 
 Asigna un semáforo al día: 🟢 sin reglas críticas (R1–R3 sin disparar y embudo sobre la línea base),
@@ -153,7 +154,7 @@ ancho máximo 680 px, legible en el celular) y `body` con la versión en texto p
   2. **Indicadores del día vs. línea base:** contactos y negocios nuevos, leads sin contactar, llamadas,
      % de conexión, visitas agendadas/realizadas, reservas, promesas, perdidos (con el motivo principal),
      negocios sin próxima actividad, tareas vencidas. Columnas: Hoy · Promedio 5 días · Variación.
-  3. **Medidas correctivas para mañana:** numeradas por prioridad, con el formato del Paso 2.
+  3. **Medidas correctivas para DH:** (título con la fecha, p. ej. «para el lunes 02-11»), numeradas por prioridad, con el formato del Paso 2.
   4. **Tabla por ejecutivo** (activos con actividad o cartera): llamadas, % conexión, visitas, tareas completadas,
      leads de hoy sin contactar, negocios sin próxima actividad, tareas vencidas. Marca en rojo lo que dispara una regla.
   5. **Negocios en riesgo** (D4, top 10) con link.
