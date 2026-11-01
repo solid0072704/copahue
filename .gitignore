@@ -10,3 +10,8 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Agente de Shorts: videos descargados, cortes y credenciales de YouTube
+data/shorts/
+data/youtube_client_secret.json
+data/youtube_token.json
+*.part

@@ -5,6 +5,139 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `run_shorts.py` | **Agente de YouTube Shorts**: encuentra los videos más virales, elige los mejores momentos, los recorta en vertical y los sube a tu canal | `python run_shorts.py` |
+
+---
+
+## 🎬 Agente de YouTube Shorts
+
+Tres agentes trabajan en cadena cada vez que ejecutas `python run_shorts.py`:
+
+```mermaid
+flowchart LR
+    Y[(YouTube<br/>Data API)] --> E[🔎 Explorador<br/>tendencias, búsquedas CC, tus canales]
+    E -->|score 0-100| S{¿viral y<br/>reutilizable?}
+    S -->|sí| D[⬇️ yt-dlp<br/>video + «más repetido» + subtítulos]
+    D --> C[✂️ Editor<br/>elige momentos · ffmpeg 9:16]
+    C -->|IA opcional| T[🧠 Claude<br/>momentos, títulos, etiquetas]
+    C --> P[📤 Publicador<br/>sube a tu canal con atribución]
+    P --> Y
+```
+
+| Agente | Qué hace |
+|---|---|
+| **Explorador** | Consulta las **tendencias** de tus regiones, busca los videos **Creative Commons** más vistos de la semana y, si los configuras, tus **temas** y **canales**. Puntúa cada video (vistas por hora, interacción, recencia, duración aprovechable) y selecciona los que superan el umbral. Nunca repite un video. |
+| **Editor** | Descarga el video con `yt-dlp`, lee el mapa de **«más repetido»** que YouTube dibuja en la barra de progreso y los subtítulos. Elige los momentos (con Claude si hay API key; si no, por el heatmap, la energía del audio o ventanas repartidas) y genera Shorts verticales 1080×1920 con `ffmpeg`: fondo difuminado o recorte al centro, rótulo con el título y subtítulos quemados. |
+| **Publicador** | Sube cada corte a **tu canal** con título, descripción con **atribución al autor y enlace al original**, etiquetas y `#Shorts`. Respeta el máximo diario de subidas, la cuota de la API y la privacidad que elijas (por defecto `private`, para que revises en YouTube Studio antes de publicar). Puede dejar las publicaciones programadas cada N horas. |
+
+### ⚠️ Antes de empezar: derechos de autor
+
+Recortar y volver a subir videos ajenos sin permiso **infringe los derechos de autor y las Condiciones del
+servicio de YouTube**: lo normal es recibir reclamos de Content ID, perder la monetización o acumular strikes.
+Por eso el agente, por defecto, **solo reutiliza videos con licencia Creative Commons (CC BY)**, que YouTube
+permite reutilizar con atribución (la descripción la incluye automáticamente), y además puede trabajar con
+**tus propios canales** (`SHORTS_CANALES`), donde el permiso es tuyo. `SHORTS_LICENCIA=cualquiera` quita ese
+filtro bajo tu responsabilidad.
+
+### Puesta en marcha (20 minutos)
+
+```bash
+pip install -r requirements.txt     # y ffmpeg: https://ffmpeg.org/download.html (en Mac: brew install ffmpeg)
+cp .env.example .env                # revisa la sección "Agente de YouTube Shorts"
+python run_shorts.py auth           # autoriza tu cuenta de YouTube (abre el navegador una sola vez)
+python run_shorts.py explorar       # mira qué está viral y qué seleccionaría
+python run_shorts.py                # ciclo completo: explorar → cortar → subir (privados)
+```
+
+1. En [Google Cloud](https://console.cloud.google.com/) crea un proyecto y habilita **YouTube Data API v3**.
+2. En *APIs y servicios → Credenciales* crea una **Clave de API** (pégala en `YOUTUBE_API_KEY`) y un
+   **ID de cliente OAuth** de tipo *Aplicación de escritorio*; descarga el JSON como `data/youtube_client_secret.json`.
+3. En *Pantalla de consentimiento OAuth* agrega tu correo como usuario de prueba. Si la app queda «En pruebas»,
+   el token caduca cada 7 días (vuelve a correr `auth`); pásala a «En producción» para que no caduque.
+4. `python run_shorts.py auth` guarda el token en `data/youtube_token.json` (ignorado por git).
+
+> **Límites de Google que conviene conocer.** La cuota gratuita es de 10 000 unidades/día y cada subida cuesta
+> 1 600 (máximo 6 Shorts al día; el agente lleva la cuenta y se detiene solo). Además, los videos subidos por la
+> API desde un proyecto que no ha pasado la [auditoría de cumplimiento](https://support.google.com/youtube/contact/yt_api_form)
+> pueden quedar **bloqueados en privado**. Si te pasa, deja `SHORTS_PRIVACIDAD=private`, revisa los cortes en
+> `data/shorts/<video>/corte_01.mp4` y publícalos desde YouTube Studio mientras solicitas la auditoría.
+
+### Comandos
+
+```bash
+python run_shorts.py                          # un ciclo completo
+python run_shorts.py --loop 180               # un ciclo cada 3 horas (deja tu PC o servidor trabajando)
+python run_shorts.py explorar                 # solo explorar y mostrar el ranking
+python run_shorts.py cortar --video <ID|URL>  # recortar un video que elijas tú (sin filtro de score)
+python run_shorts.py subir --simular          # mostrar qué subiría, sin subir
+python run_shorts.py subir --privacidad public
+python run_shorts.py estado                   # resumen, ranking y bitácora
+python run_shorts.py --sin-ia                 # no usar Claude aunque haya API key
+```
+
+### Qué se puede ajustar (`.env`)
+
+| Variable | Para qué |
+|---|---|
+| `SHORTS_REGIONES`, `SHORTS_IDIOMAS` | Dónde mirar las tendencias y en qué idioma deben estar los videos |
+| `SHORTS_TEMAS` | Palabras clave de tu nicho (cada búsqueda cuesta 100 unidades de cuota) |
+| `SHORTS_CANALES` | Tus canales (IDs `UC…` o `@handles`): se reutilizan sin filtrar la licencia |
+| `SHORTS_UMBRAL_VIRAL`, `SHORTS_VIDEOS_POR_CICLO` | Qué tan viral debe ser un video y cuántos se recortan por ciclo |
+| `SHORTS_CORTES_POR_VIDEO`, `SHORTS_CORTE_DURACION`, `SHORTS_CORTE_MIN/MAX` | Cuántos cortes por video y cuánto duran (hasta 180 s) |
+| `SHORTS_ESTILO`, `SHORTS_SUBTITULOS`, `SHORTS_ROTULO` | `difuminado` o `recorte`; subtítulos y rótulo quemados |
+| `SHORTS_PRIVACIDAD`, `SHORTS_MAX_SUBIDAS_DIA`, `SHORTS_PROGRAMAR_CADA_HORAS` | Cómo y cuánto se publica |
+| `SHORTS_FIRMA`, `SHORTS_ETIQUETAS` | Texto final de cada descripción y etiquetas fijas |
+| `SHORTS_COOKIES` | Cookies de yt-dlp si YouTube pide «confirma que no eres un robot» |
+
+### ¿Cómo se calcula el score?
+
+| Factor | Puntos |
+|---|---|
+| Vistas por hora desde la publicación (`12·log10`) | hasta 60 |
+| Interacción: (likes + 3·comentarios) / vistas | hasta 25 |
+| Publicado hace menos de 2 días / esta semana | +10 / +5 |
+| Dura entre 3 y 25 minutos (hay material para recortar) | +5 |
+
+Se descartan transmisiones en vivo, videos fuera de `SHORTS_DURACION_MIN/MAX`, categorías excluidas
+(Música por defecto), otros idiomas y, salvo en tus canales, los que no sean Creative Commons.
+
+### Que trabaje solo
+
+- **Tu PC o un servidor**: `python run_shorts.py --loop 360` (cada 6 horas). Es la opción recomendada: la
+  descarga desde tu IP residencial no suele tener problemas.
+- **GitHub Actions**: el flujo `.github/workflows/agentes-shorts.yml` corre cada 6 horas. Crea los secrets
+  `YOUTUBE_API_KEY`, `YOUTUBE_CLIENT_SECRET_JSON`, `YOUTUBE_TOKEN_JSON` (contenido de los JSON) y la variable
+  `SHORTS_ACTIVOS=true`. YouTube a veces bloquea las descargas desde servidores («Sign in to confirm you're not
+  a bot»); en ese caso agrega el secret `SHORTS_COOKIES_TXT` con tus cookies exportadas o usa tu PC.
+
+### IA opcional (Claude)
+
+Con `ANTHROPIC_API_KEY`, el editor le pasa a Claude la transcripción y las zonas más repetidas, y Claude
+elige los momentos con gancho (frases completas, inicio y final limpios) y escribe el título, la descripción y
+las etiquetas de cada Short. Usa `claude-opus-5-5` con esfuerzo medio y respaldo automático del servidor
+(`fallbacks: "default"`). Sin API key todo funciona igual con el heatmap de YouTube, el audio y plantillas.
+
+### Pruebas
+
+```bash
+pytest -q tests/test_shorts.py
+```
+
+Estructura:
+
+```
+agentes_shorts/
+  config.py        configuración desde .env
+  db.py            SQLite: videos, cortes, cuota de la API, bitácora
+  youtube_api.py   Data API v3: tendencias, búsquedas, canales, subida (OAuth) y control de cuota
+  explorador.py    agente explorador (fuentes, score, filtros, selección)
+  descarga.py      yt-dlp: video, heatmap «más repetido», subtítulos json3
+  editor.py        agente editor (momentos por IA/heatmap/audio, render ffmpeg 9:16, subtítulos, rótulo)
+  publicador.py    agente publicador (metadatos con atribución, límites, programación)
+  llm.py           IA opcional con Claude
+  orquestador.py   ciclo completo
+run_shorts.py      ejecución por terminal / cron / GitHub Actions
+```
 
 ---
 

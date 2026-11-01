@@ -1,0 +1,95 @@
+# Ejecuta al agente de Shorts cada 6 horas sin tener tu PC encendido.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   YOUTUBE_API_KEY, YOUTUBE_CLIENT_SECRET_JSON (contenido del JSON), YOUTUBE_TOKEN_JSON
+#                 (contenido de data/youtube_token.json tras `python run_shorts.py auth`), ANTHROPIC_API_KEY (opcional),
+#                 SHORTS_COOKIES_TXT (opcional: cookies de yt-dlp si YouTube bloquea la descarga desde servidores)
+#   2. Variables: SHORTS_ACTIVOS = true   (sin esta variable el flujo no corre ni consume minutos)
+#      Opcionales: SHORTS_REGIONES, SHORTS_IDIOMAS, SHORTS_TEMAS, SHORTS_CANALES, SHORTS_PRIVACIDAD, SHORTS_MAX_SUBIDAS_DIA,
+#                  SHORTS_PROGRAMAR_CADA_HORAS, SHORTS_FIRMA
+#
+# ⚠️ YouTube suele bloquear las descargas desde las IPs de GitHub ("Sign in to confirm you're not a bot").
+#    Si ves ese error en los logs, agrega el secret SHORTS_COOKIES_TXT o ejecuta el agente en tu PC con --loop.
+name: Agente de Shorts
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: "Qué hacer"
+        type: choice
+        default: ciclo
+        options: [ciclo, explorar, cortar, subir, estado]
+
+concurrency:
+  group: agentes-shorts
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  shorts:
+    if: vars.SHORTS_ACTIVOS == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Instalar ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      # La memoria del agente (qué videos ya revisó, qué cortes subió, cuánta cuota usó) se conserva entre
+      # ejecuciones en la caché de Actions; los videos descargados no, para no llenar la caché.
+      - name: Recuperar memoria del agente
+        uses: actions/cache/restore@v4
+        with:
+          path: data/shorts.db
+          key: agentes-shorts-db-${{ github.run_id }}
+          restore-keys: agentes-shorts-db-
+
+      - name: Escribir credenciales
+        env:
+          CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+          TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          COOKIES_TXT: ${{ secrets.SHORTS_COOKIES_TXT }}
+        run: |
+          mkdir -p data
+          [ -n "$CLIENT_SECRET_JSON" ] && printf '%s' "$CLIENT_SECRET_JSON" > data/youtube_client_secret.json
+          [ -n "$TOKEN_JSON" ] && printf '%s' "$TOKEN_JSON" > data/youtube_token.json
+          [ -n "$COOKIES_TXT" ] && printf '%s' "$COOKIES_TXT" > data/cookies.txt && echo "SHORTS_COOKIES=data/cookies.txt" >> "$GITHUB_ENV"
+          true
+
+      - name: Ejecutar agente
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SHORTS_REGIONES: ${{ vars.SHORTS_REGIONES }}
+          SHORTS_IDIOMAS: ${{ vars.SHORTS_IDIOMAS }}
+          SHORTS_TEMAS: ${{ vars.SHORTS_TEMAS }}
+          SHORTS_CANALES: ${{ vars.SHORTS_CANALES }}
+          SHORTS_PRIVACIDAD: ${{ vars.SHORTS_PRIVACIDAD }}
+          SHORTS_MAX_SUBIDAS_DIA: ${{ vars.SHORTS_MAX_SUBIDAS_DIA }}
+          SHORTS_PROGRAMAR_CADA_HORAS: ${{ vars.SHORTS_PROGRAMAR_CADA_HORAS }}
+          SHORTS_FIRMA: ${{ vars.SHORTS_FIRMA }}
+        run: python run_shorts.py ${{ inputs.accion || 'ciclo' }}
+
+      - name: Guardar memoria del agente
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/shorts.db
+          key: agentes-shorts-db-${{ github.run_id }}
+
+      - name: Borrar credenciales
+        if: always()
+        run: rm -f data/youtube_client_secret.json data/youtube_token.json data/cookies.txt
