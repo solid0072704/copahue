@@ -54,7 +54,9 @@ python run_shorts.py                # ciclo completo: explorar → cortar → su
    **ID de cliente OAuth** de tipo *Aplicación de escritorio*; descarga el JSON como `data/youtube_client_secret.json`.
 3. En *Pantalla de consentimiento OAuth* agrega tu correo como usuario de prueba. Si la app queda «En pruebas»,
    el token caduca cada 7 días (vuelve a correr `auth`); pásala a «En producción» para que no caduque.
-4. `python run_shorts.py auth` guarda el token en `data/youtube_token.json` (ignorado por git).
+4. `python run_shorts.py auth` guarda el token en `data/youtube_token.json` (ignorado por git). Para correr el agente
+   en un servidor o entorno en la nube sin copiar archivos, pega el contenido de ese JSON en la variable
+   `YOUTUBE_TOKEN_JSON` (y el del cliente OAuth en `YOUTUBE_CLIENT_SECRET_JSON`).
 
 > **Límites de Google que conviene conocer.** La cuota gratuita es de 10 000 unidades/día y cada subida cuesta
 > 1 600 (máximo 6 Shorts al día; el agente lleva la cuenta y se detiene solo). Además, los videos subidos por la

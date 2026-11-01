@@ -111,6 +111,20 @@ def test_config_desde_entorno(monkeypatch):
     assert c.privacidad == "private"  # programar exige privado
 
 
+def test_token_desde_variable_de_entorno(monkeypatch, tmp_path):
+    from agentes_shorts.youtube_api import YouTube
+
+    cfg = Config(token=str(tmp_path / "no_existe.json"), client_secret=str(tmp_path / "tampoco.json"))
+    assert cfg.lectura_configurada is False
+    token = {"token": "abc", "refresh_token": "r", "client_id": "id", "client_secret": "sec",
+             "token_uri": "https://oauth2.googleapis.com/token", "scopes": ["https://www.googleapis.com/auth/youtube.upload"],
+             "expiry": "2999-01-01T00:00:00Z"}
+    monkeypatch.setenv("YOUTUBE_TOKEN_JSON", json.dumps(token))
+    assert cfg.lectura_configurada is True and cfg.token_disponible is True
+    creds = YouTube(cfg).credenciales()
+    assert creds.valid and creds.token == "abc"
+
+
 def test_parsear_duracion():
     assert parsear_duracion("PT1H2M3S") == 3723
     assert parsear_duracion("PT45S") == 45

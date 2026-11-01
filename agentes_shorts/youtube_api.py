@@ -5,6 +5,7 @@ Lectura: basta una API key (YOUTUBE_API_KEY). Subida: OAuth de tu cuenta
 Cada llamada descuenta su costo de la cuota diaria en la base de datos.
 """
 
+import json
 import logging
 import os
 import re
@@ -66,6 +67,9 @@ class YouTube:
         creds = None
         if os.path.exists(self.cfg.token):
             creds = Credentials.from_authorized_user_file(self.cfg.token, SCOPES)
+        elif os.environ.get("YOUTUBE_TOKEN_JSON", "").strip():
+            # Servidores y GitHub Actions: el contenido del token viene en una variable/secret, no en un archivo.
+            creds = Credentials.from_authorized_user_info(json.loads(os.environ["YOUTUBE_TOKEN_JSON"]), SCOPES)
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
@@ -79,6 +83,8 @@ class YouTube:
             raise RuntimeError(
                 f"No hay un token válido de YouTube en {self.cfg.token}. Ejecuta `python run_shorts.py auth` en tu PC."
             )
+        if not os.path.exists(self.cfg.client_secret) and os.environ.get("YOUTUBE_CLIENT_SECRET_JSON", "").strip():
+            self._escribir(self.cfg.client_secret, os.environ["YOUTUBE_CLIENT_SECRET_JSON"])
         if not os.path.exists(self.cfg.client_secret):
             raise RuntimeError(
                 f"Falta {self.cfg.client_secret}. Descárgalo desde Google Cloud → APIs y servicios → Credenciales "
@@ -92,11 +98,15 @@ class YouTube:
         return creds
 
     def _guardar_token(self, creds):
-        carpeta = os.path.dirname(self.cfg.token)
+        self._escribir(self.cfg.token, creds.to_json())
+
+    @staticmethod
+    def _escribir(ruta, contenido):
+        carpeta = os.path.dirname(ruta)
         if carpeta:
             os.makedirs(carpeta, exist_ok=True)
-        with open(self.cfg.token, "w", encoding="utf-8") as f:
-            f.write(creds.to_json())
+        with open(ruta, "w", encoding="utf-8") as f:
+            f.write(contenido)
 
     def _servicio_lectura(self):
         if self._lectura is None:

@@ -175,11 +175,15 @@ class Config:
     @property
     def lectura_configurada(self):
         """¿Podemos consultar tendencias? Basta la API key o el token OAuth."""
-        return bool(self.youtube_api_key) or os.path.exists(self.token)
+        return bool(self.youtube_api_key) or self.token_disponible
+
+    @property
+    def token_disponible(self):
+        return os.path.exists(self.token) or bool(os.environ.get("YOUTUBE_TOKEN_JSON", "").strip())
 
     @property
     def subida_configurada(self):
-        return os.path.exists(self.token) or os.path.exists(self.client_secret)
+        return self.token_disponible or os.path.exists(self.client_secret)
 
     @property
     def solo_canales_permitidos(self):
