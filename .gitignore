@@ -10,3 +10,7 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Trading agent runtime files
+data/KILL_SWITCH
+data/trader_heartbeat
+data/.kill_switch_probe

@@ -5,6 +5,7 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `run_trader.py` | **Agente de trading cripto 24/7** (investigación, esquema tipado para Jev, motor de estado, capa de riesgo, revisión nocturna con Claude Opus 5.5). Documentación en [`docs/trading/README.md`](docs/trading/README.md) | `python run_trader.py --mode backtest --synthetic` |
 
 ---
 
@@ -143,3 +144,20 @@ agentes_ebook/
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
 ```
+
+---
+
+## 📈 Agente de trading cripto 24/7
+
+Sistema de dos capas: **Jev** (TypeSafe AI, modelo System One) juzga cada vela con un esquema tipado;
+**Claude Opus 5.5** investiga, atiende escalaciones y revisa la sesión cada noche; el **código** es dueño de
+todos los umbrales, el tamaño (Kelly fraccional, tope en un cuarto de Kelly), los límites duros y el kill switch.
+
+```bash
+pip install -r requirements.txt pytest
+pytest -q tests/test_trading_*.py
+python run_trader.py --mode backtest --synthetic --candles 900 --seed 7
+```
+
+El informe completo (investigación de mercado con fuentes, finalistas, esquema, plan de construcción en seis
+fases, bucle de revisión y la sección "WHAT COULD I BE WRONG ABOUT?") está en [`docs/trading/README.md`](docs/trading/README.md).

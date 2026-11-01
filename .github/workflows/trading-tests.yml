@@ -1,0 +1,27 @@
+# Pruebas del agente de trading (sin red ni claves): suite completa + backtest sintético.
+name: Trading agent tests
+
+on:
+  push:
+    paths: ["trading_agent/**", "tests/**", "run_trader.py", "requirements.txt", ".github/workflows/trading-tests.yml"]
+  pull_request:
+    paths: ["trading_agent/**", "tests/**", "run_trader.py", "requirements.txt"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - run: pytest -q tests/test_trading_*.py
+      - name: Synthetic backtest smoke
+        run: python run_trader.py --mode backtest --synthetic --candles 600 --seed 7 --json > backtest.json && python -c "import json; d=json.load(open('backtest.json')); assert d['metrics']['max_drawdown_pct'] < 15, d['metrics']"

@@ -7,3 +7,5 @@ altair
 python-dotenv
 tzdata
 anthropic
+pydantic>=2
+ccxt
