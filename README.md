@@ -155,7 +155,7 @@ todos los umbrales, el tamaño (Kelly fraccional, tope en un cuarto de Kelly), l
 
 ```bash
 pip install -r requirements.txt pytest
-pytest -q tests/test_trading_*.py
+pytest -q tests
 python run_trader.py --mode backtest --synthetic --candles 900 --seed 7
 ```
 

@@ -49,11 +49,11 @@ VS Code lo recordará (está en `.vscode/settings.json`).
 ## 4. Comprobar que todo funciona (sin claves ni dinero)
 
 ```bash
-pytest -q tests/test_trading_*.py
+pytest -q tests
 python run_trader.py --mode backtest --synthetic --candles 900 --seed 7
 ```
 
-Deben pasar las 64 pruebas y el backtest imprime métricas (fills, drawdown, Brier).
+Deben pasar las 88 pruebas (64 del agente de trading y 24 del tablero del ebook) y el backtest imprime métricas (fills, drawdown, Brier). En Windows no uses el comodín `tests/test_trading_*.py`: PowerShell no lo expande y pytest responde "file or directory not found"; `pytest -q tests` funciona en todos los sistemas.
 En **Run and Debug** (`Ctrl+Shift+D`) tienes estos mismos comandos como botones.
 
 ## 5. Configurar claves
