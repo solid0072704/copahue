@@ -1,0 +1,64 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Trader: backtest sintético",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_trader.py",
+      "args": ["--mode", "backtest", "--synthetic", "--candles", "900", "--seed", "7"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Trader: comprobar exchange",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_trader.py",
+      "args": ["--check-exchange"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Trader: comprobar Jev",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_trader.py",
+      "args": ["--check-jev"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Trader: modo papel (datos reales)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_trader.py",
+      "args": ["--mode", "paper"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Trader: revisión nocturna",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_trader.py",
+      "args": ["--mode", "review"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Trader: pruebas",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-q", "tests"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
