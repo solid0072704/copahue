@@ -18,7 +18,7 @@ Read in this order: [`SPEC.md`](SPEC.md) → [`ARCHITECTURE.md`](ARCHITECTURE.md
 | Synthetic backtest reproduces byte-identical journals for the same seed | ✅ verified twice |
 | Research with dated sources | ✅ written, but every number came from **web-search snippets**: direct fetches to DefiLlama, Coinbase, CoinDesk and others were blocked by the session's network allowlist |
 | Jev wire shape | ⚠️ taken from the community SDK (`jevper`) and the unofficial guide; `docs.typesafe.ai` and `api.typesafe.ai` were unreachable. No live Jev call was made. |
-| Exchange connectivity (Binance, Coinbase, Kraken, Bybit public APIs) | ❌ blocked from this container; `CcxtExchange` and `CcxtFeed` are untested against a venue |
+| Exchange connectivity (Binance, Coinbase, Kraken, Bybit public APIs) | ❌ blocked from this container; `CcxtExchange` (spot and USDT perpetuals, reconciliation, emergency flatten) and `CcxtFeed` are tested only against a fake ccxt client |
 | AgenKit (agenkit.xyz) | ❌ did not resolve and did not appear in web search; the six-phase discipline is implemented in `BUILD_PLAN.md` with gate checklists |
 | Live trading | ❌ by design: `TRADER_LIVE=true` is refused until the Phase 5 checklist is signed |
 
@@ -167,8 +167,11 @@ python run_trader.py --mode backtest --replay BTC/USDT=data/btc_5m.csv   # ts,op
 cp .env.example .env                                        # fill JEV_API_KEY, ANTHROPIC_API_KEY, exchange keys
 python run_trader.py --mode paper                           # live data via ccxt, paper fills, journal in data/
 python run_trader.py --mode review --date 2026-11-02
+python run_trader.py --check-jev                            # one real Jev call, parsed decision and latency
+python run_trader.py --check-exchange                       # markets, fees, minimums, equity, positions
 python run_trader.py --kill "manual stop"                   # or: touch data/KILL_SWITCH
-TRADER_LIVE=true python run_trader.py --mode live           # only after the Phase 5 gate
+python -m trading_agent.watchdog [--flatten]                # cron/systemd: stale heartbeat -> kill switch
+TRADER_LIVE=true python run_trader.py --mode live           # only after the Phase 5 gate; see deploy/
 ```
 
 Synthetic backtest on seed 7 (900 candles, rules baseline, no model): 4 fills,
@@ -217,10 +220,12 @@ Jev's Brier on real paper-trading data in Phase 5.
    no funding, OI, cross-asset, ETF-flow or on-chain data. The regime a single symbol's
    candles imply can disagree with the regime the research describes. Jev is judging
    a narrow state.
-5. **Shorts on spot do not exist.** Five of nine setups are shorts; the exchange
-   adapters size spot-style notional and do not model margin, funding payments or
-   liquidation. Executing the shorts needs a perp adapter with margin modelling that
-   is not written.
+5. **Shorts need perpetuals, and the perpetual path is untested on a venue.**
+   `EXCHANGE_MARKET=swap` routes to USDT-margined perpetuals (Binance `binanceusdm`)
+   with leverage pinned at 1x and isolated margin, but it has only run against a fake
+   client. Funding payments reach the ledger only through the hourly equity re-sync,
+   and liquidation is not modelled: at 1x with a 20 % position cap it is far away, but
+   it is not zero.
 6. **The synthetic feed lies kindly.** Gaussian returns, no fat tails, no liquidity
    holes, order books that always refill. Paper fills are therefore optimistic. The
    backtest proves plumbing and determinism, not profitability.
@@ -231,9 +236,10 @@ Jev's Brier on real paper-trading data in Phase 5.
 8. **Daily and drawdown accounting.** The daily-loss window resets at UTC midnight and
    the equity peak never decays, so after a 12 % drawdown the system sits near its
    limit until a new high: safe, but it can stall for weeks.
-9. **Position truth lives locally.** `CcxtExchange` tracks positions from its own fills;
-   partial fills, exchange-side cancels or manual trades desynchronise it. The Phase 5
-   reconciliation is a requirement, not a nice-to-have.
+9. **Position truth lives locally between syncs.** `CcxtExchange` tracks positions
+   from its own fills; the venue is consulted at start (reconciliation, refusing to run
+   on a mismatch) and hourly for equity. A manual trade mid-session is invisible until
+   the next restart.
 10. **Operational state is not persisted.** A restart forgets paused entries and the
     previous regime; the kill switch is a file and the heartbeat is a file. There is no
     clock-drift handling and no multi-venue failover.

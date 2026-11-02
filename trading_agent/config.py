@@ -139,6 +139,8 @@ class TraderConfig:
     # Exchange credentials (live only) --------------------------------------
     exchange_api_key: str = ""
     exchange_api_secret: str = ""
+    exchange_market: str = "spot"         # spot | swap (USDT-margined perpetuals; needed for shorts)
+    exchange_leverage: int = 1            # perpetuals only; sizing is already capped by RiskLimits
     exchange_sandbox: bool = True
     live_confirmed: bool = False          # TRADER_LIVE=true is required for real orders
 
@@ -203,6 +205,8 @@ class TraderConfig:
             brain_timeout_s=_env_float("BRAIN_TIMEOUT_S", 120.0),
             exchange_api_key=_env("EXCHANGE_API_KEY"),
             exchange_api_secret=_env("EXCHANGE_API_SECRET"),
+            exchange_market="swap" if _env("EXCHANGE_MARKET", "spot").lower() in ("swap", "futures", "perp", "perps") else "spot",
+            exchange_leverage=min(3, max(1, _env_int("EXCHANGE_LEVERAGE", 1))),
             exchange_sandbox=_env_bool("EXCHANGE_SANDBOX", True),
             live_confirmed=_env_bool("TRADER_LIVE", False),
             journal_path=_env("TRADER_JOURNAL", "data/trader_journal.db"),

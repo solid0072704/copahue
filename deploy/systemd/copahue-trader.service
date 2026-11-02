@@ -1,0 +1,20 @@
+# Bucle del agente de trading. Instala en /etc/systemd/system/ y ajusta User y rutas.
+[Unit]
+Description=Copahue trading agent (loop)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trader
+WorkingDirectory=/opt/copahue
+EnvironmentFile=/opt/copahue/.env
+# Cambia --mode paper por --mode live sólo después de la fase 5
+ExecStart=/opt/copahue/.venv/bin/python run_trader.py --mode paper
+Restart=always
+RestartSec=15
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

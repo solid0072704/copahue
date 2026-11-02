@@ -1,0 +1,9 @@
+[Unit]
+Description=Copahue trading agent nightly review
+
+[Service]
+Type=oneshot
+User=trader
+WorkingDirectory=/opt/copahue
+EnvironmentFile=/opt/copahue/.env
+ExecStart=/opt/copahue/.venv/bin/python run_trader.py --mode review

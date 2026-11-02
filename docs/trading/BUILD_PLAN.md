@@ -75,17 +75,24 @@ Nothing here can be finished without the operator's keys and network.
    create a key, run one request with `trading_agent.reflex.build_jev_request`, and
    diff the response against `tests/test_trading_schema.py::JEV_RESPONSE`. Fix
    `parse_jev_response` if a field differs. Confirm latency on the 400-token state.
-2. **Exchange reconciliation.** `CcxtExchange` tracks positions locally from fills.
-   Before live: implement `sync_equity` checks against `fetch_balance` /
-   `fetch_positions` for the chosen venue, and add a startup reconciliation that
-   refuses to start if local and venue positions differ.
+2. **Exchange check and reconciliation.** `python run_trader.py --check-exchange`
+   lists each symbol's market, taker fee and minimums on the venue and, with keys,
+   the equity and positions it reports. Live start (`run_trader.prepare_live`)
+   pins leverage and isolated margin on perpetuals, reconciles venue positions with
+   the local ledger and refuses to start on a mismatch unless `--adopt-positions`
+   is given; equity is re-read from the venue hourly. Written against ccxt's
+   documented surface and tested with a fake client only: the first run against
+   Binance (testnet first) is part of this gate.
 3. **Paper trading.** `TRADER_MODE=paper REFLEX_BACKEND=jev python run_trader.py`
    for at least 14 days. Nightly `--mode review`. Pass criteria: zero limit
    breaches, resolved sample >= 200 decisions, Brier on fired decisions <= 0.25
    and below the always-0.5 baseline, p95 reflex latency inside `JEV_TIMEOUT_MS`.
-4. **Code review.** Security: keys only in `.env`/secrets; `TRADER_LIVE` default false;
-   kill switch drill (touch the file, verify flatten on the next candle, verify no
-   re-arm without `reset`).
+4. **Code review and drills.** Security: keys only in `.env`/secrets, no withdrawal
+   permission; `TRADER_LIVE` default false. Kill switch drill: touch the file, verify
+   flatten on the next candle, verify no re-arm without deleting it. Watchdog drill:
+   stop the loop, confirm `python -m trading_agent.watchdog` pulls the switch after
+   two candles (and `--flatten` closes venue positions in live). `deploy/` has the
+   systemd units and timers.
 5. **Costs and slippage.** Compare paper fills' `slippage_bps` and fees with the
    venue's real taker fee; re-run the backtest with the measured numbers.
 

@@ -1,0 +1,10 @@
+[Unit]
+Description=Copahue trading agent watchdog (heartbeat check)
+
+[Service]
+Type=oneshot
+User=trader
+WorkingDirectory=/opt/copahue
+EnvironmentFile=/opt/copahue/.env
+# Añade --flatten cuando operes en vivo para cerrar posiciones si el bucle muere
+ExecStart=/opt/copahue/.venv/bin/python -m trading_agent.watchdog
