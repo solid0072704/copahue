@@ -16,6 +16,17 @@ Tarea programada en Claude Code (claude.ai/code → Scheduled tasks) que cada d�
 | Conectores | Gmail (envío) |
 | Notificación | Push al terminar |
 
+## ⚠️ Paso pendiente: habilitar Gmail en la tarea
+
+La tarea se creó desde una sesión de Claude Code y esta organización no permite adjuntarle conectores por API.
+Sin el conector, cada ejecución termina con el aviso `SIN CONECTOR GMAIL` y no envía nada. Para activarlo:
+
+1. Entra a claude.ai/code → **Scheduled tasks** → `Ofertas freelance finanzas IA`.
+2. Edita la tarea y marca el conector **Gmail** (la misma cuenta que ya usaste para el envío de prueba).
+3. Si la pantalla no permite editar conectores, elimina la tarea y créala de nuevo desde ahí con:
+   nombre `Ofertas freelance finanzas IA`, horario diario 8:33 (America/Argentina/Buenos_Aires),
+   "nueva sesión en cada ejecución", conector Gmail, y pega el contenido de [`prompt.md`](prompt.md).
+
 ## Prompt de la tarea
 
 El prompt completo que recibe cada ejecución está en [`prompt.md`](prompt.md). Para cambiar el destinatario,
