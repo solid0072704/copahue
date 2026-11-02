@@ -1,5 +1,26 @@
 # Despliegue en un VPS (Linux con systemd)
 
+## Instalación automática (recomendada)
+
+En un VPS Ubuntu 22.04/24.04 o Debian 12 recién creado, como root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/solid0072704/copahue/claude/new-session-bb9omp/deploy/bootstrap.sh | bash
+```
+
+El script instala Python y Git, crea el usuario `trader`, clona el repositorio en `/opt/copahue`,
+crea el entorno virtual, ejecuta las pruebas, instala los servicios de systemd y al final imprime la
+**IP pública del servidor**, que es la que va en la lista blanca de la clave API de Binance.
+Después edita `/opt/copahue/.env` con tus claves y activa los servicios:
+
+```bash
+nano /opt/copahue/.env
+sudo -u trader /opt/copahue/.venv/bin/python /opt/copahue/run_trader.py --check-exchange
+systemctl enable --now copahue-trader.service copahue-watchdog.timer copahue-review.timer
+```
+
+## Instalación manual
+
 ```bash
 sudo useradd -r -m -s /bin/bash trader
 sudo git clone https://github.com/solid0072704/copahue /opt/copahue
