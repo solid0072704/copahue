@@ -101,19 +101,62 @@ En la simulación completa (cartolas de TPDV de enero y febrero de 2026 tratadas
 
 ## Instalación (una sola vez)
 
-1. **Preparar la planilla en Google Sheets**
-   - En Excel, en la hoja `FLUJO`, convierta en valores las columnas con fórmulas que apuntan a otro libro (`categoria 4`, `Fecha Participación`, `categoria 2`, `categoria 3`): seleccione la columna, copie y use *Pegado especial → Valores*. Google Sheets no puede leer el libro externo `[1]data`.
-   - Suba el `.xlsm` a Google Drive, ábralo con Google Sheets y elija *Archivo → Guardar como Hojas de cálculo de Google*.
-   - Deben existir las hojas `FLUJO` (obligatoria), `BBDD` (plan de cuentas y cuentas de provisión), `PAGOS POR HACER` y `base flujo caja` (opcionales, se usan si están).
-2. **Crear el proyecto Apps Script**
-   - En la planilla: *Extensiones → Apps Script*.
-   - Cree los archivos con el mismo nombre y copie su contenido: `Motor.gs`, `Cartola.gs`, `Sii.gs`, `Facturas.gs`, `Codigo.gs` (puede reemplazar el `Código.gs` inicial) y un archivo HTML llamado `Dialogo` (con el contenido de `Dialogo.html`).
-   - En *Configuración del proyecto* marque "Mostrar el archivo de manifiesto appsscript.json" y reemplácelo por el de esta carpeta (zona horaria `America/Santiago`, la misma que debe tener la planilla en *Archivo → Configuración*).
-   - Guarde y recargue la planilla. Aparece el menú **🏦 Conciliación bancaria**.
-   - La primera vez Google pedirá autorización. El script solo accede a esta planilla.
-3. Menú **Configuración inicial**. Crea las hojas `CONCILIACION`, `REGLAS`, `CUENTAS BANCARIAS`, `CONFIG` y `CARTOLA`.
+### Archivos a instalar
 
-> También puede subirse con [clasp](https://github.com/google/clasp): `clasp create --type sheets` o `clasp clone <scriptId>` y después `clasp push` desde esta carpeta. La carpeta `test/` no se sube; si usa clasp, agréguela a `.claspignore`.
+| Archivo en esta carpeta | Nombre en el editor de Apps Script | Tipo |
+|---|---|---|
+| `Motor.gs` | `Motor` | Secuencia de comandos |
+| `Cartola.gs` | `Cartola` | Secuencia de comandos |
+| `Sii.gs` | `Sii` | Secuencia de comandos |
+| `Facturas.gs` | `Facturas` | Secuencia de comandos |
+| `Codigo.gs` | `Codigo` (reemplaza al `Código` que trae el proyecto) | Secuencia de comandos |
+| `Dialogo.html` | `Dialogo` | HTML |
+| `appsscript.json` | `appsscript.json` (manifiesto) | — |
+
+La carpeta `test/` no se instala: son pruebas que se ejecutan con Node fuera de Google.
+
+### Paso 1 – Preparar la planilla en Google Sheets
+
+1. En Excel, en la hoja `FLUJO`, convierta en valores las columnas con fórmulas que apuntan a otro libro (`categoria 4`, `Fecha Participación`, `categoria 2`, `categoria 3`): seleccione la columna, copie y use *Pegado especial → Valores*. Google Sheets no puede leer el libro externo `[1]data`.
+2. Suba el `.xlsm` a Google Drive, ábralo con Google Sheets y elija *Archivo → Guardar como Hojas de cálculo de Google*.
+3. Revise que existan estas hojas, con los nombres exactos:
+   - `FLUJO`: obligatoria, es la historia.
+   - `BBDD`: plan de cuentas y tabla *Cta. Provisión de Fondos*.
+   - `PAGOS POR HACER` y `base flujo caja`: opcionales, se usan si existen.
+4. En *Archivo → Configuración*, deje la zona horaria en **(GMT-03:00) Santiago**.
+
+### Paso 2 – Crear el proyecto Apps Script
+
+1. En la planilla: *Extensiones → Apps Script*. Se abre el editor con un archivo `Código.gs`.
+2. Cambie el nombre de `Código` a `Codigo` y reemplace todo su contenido por el de `Codigo.gs`.
+3. Para cada uno de `Motor`, `Cartola`, `Sii` y `Facturas`:
+   - pulse **＋ → Secuencia de comandos**;
+   - escriba el nombre sin extensión;
+   - pegue el contenido del archivo `.gs` correspondiente.
+4. Pulse **＋ → HTML**, llámelo `Dialogo` y pegue el contenido de `Dialogo.html`.
+5. Configure el manifiesto:
+   - en ⚙️ *Configuración del proyecto*, marque **"Mostrar el archivo de manifiesto appsscript.json en el editor"**;
+   - vuelva al editor, abra `appsscript.json` y reemplace su contenido por el de esta carpeta.
+6. Guarde con 💾 (Ctrl+S).
+7. Vuelva a la planilla y recárguela (F5). Aparece el menú **🏦 Conciliación bancaria**.
+8. La primera vez que use el menú, Google pedirá autorización:
+   - elija su cuenta;
+   - pulse *Configuración avanzada → Ir a (nombre del proyecto)*;
+   - pulse *Permitir*.
+
+   El script solo accede a esta planilla.
+
+### Paso 3 – Configuración inicial
+
+1. Menú **🏦 → Configuración inicial (crear hojas)**. Crea `CONCILIACION`, `REGLAS`, `CUENTAS BANCARIAS`, `CONFIG` y `CARTOLA`.
+2. La hoja `FACTURAS COMPRA` se crea sola la primera vez que se carga un RCV del SII.
+3. Opcional: menú **Evaluar precisión del modelo**, para ver cómo clasifica con su historia antes de usarlo.
+
+### Actualizar a una versión nueva
+
+Reemplace el contenido de cada archivo en el editor, guarde y recargue la planilla. Las hojas y los datos no se tocan. Si la versión trae parámetros nuevos, se agregan solos a `CONFIG`.
+
+> También puede subirse con [clasp](https://github.com/google/clasp): `clasp clone <scriptId>` y después `clasp push` desde esta carpeta, con `test/**` en `.claspignore`.
 
 ## Uso mensual
 
