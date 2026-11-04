@@ -1,0 +1,5 @@
+# Datos de prueba exportados de la planilla (información de la empresa)
+test/*.json
+*.xlsx
+*.xlsm
+*.xls

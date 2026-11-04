@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #222; margin: 0; padding: 14px; }
+    h3 { margin: 0 0 6px; }
+    .zona { border: 2px dashed #9fb7d3; border-radius: 8px; padding: 18px; text-align: center; background: #f5f9fd; cursor: pointer; }
+    .zona.activa { background: #e3eefa; }
+    .tarjeta { border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-top: 10px; }
+    .tarjeta .tit { font-weight: bold; }
+    .muted { color: #666; font-size: 12px; }
+    .warn { color: #a15c00; font-size: 12px; }
+    .err { color: #b00020; }
+    select { width: 100%; padding: 4px; margin-top: 6px; }
+    .ok { color: #2e7d32; font-weight: bold; }
+    button { background: #1f4e78; color: #fff; border: 0; padding: 9px 18px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+    button:disabled { background: #9aa9b8; cursor: default; }
+    .pie { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; }
+    table { border-collapse: collapse; margin-top: 8px; }
+    td { padding: 3px 10px; }
+    table.cuentas { width: 100%; }
+    table.cuentas th { text-align: left; font-size: 12px; color: #555; border-bottom: 1px solid #ddd; padding: 3px 6px; }
+    table.cuentas td { border-bottom: 1px solid #eee; padding: 5px 6px; vertical-align: top; }
+    table.cuentas select { margin-top: 0; }
+    #lista { max-height: 360px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h3>Cartolas del período</h3>
+  <div class="muted">Suba una o más cartolas (Banco de Chile, Santander u otro formato con columnas Fecha / Detalle / Cargo / Abono). Formatos: .xls, .xlsx, .csv.</div>
+  <div id="zona" class="zona" style="margin-top:10px">
+    <b>Arrastre aquí los archivos</b> o haga clic para elegirlos
+    <input id="archivos" type="file" multiple accept=".xls,.xlsx,.xlsm,.csv,.txt" style="display:none">
+  </div>
+  <div id="lista"></div>
+  <div id="resultado"></div>
+  <div class="pie">
+    <span id="estado" class="muted"></span>
+    <button id="procesar" disabled>Clasificar movimientos</button>
+  </div>
+
+<script>
+  var cartolas = [];   // {nombre, filas, info}
+
+  var zona = document.getElementById('zona');
+  var input = document.getElementById('archivos');
+  zona.onclick = function () { input.click(); };
+  zona.ondragover = function (e) { e.preventDefault(); zona.classList.add('activa'); };
+  zona.ondragleave = function () { zona.classList.remove('activa'); };
+  zona.ondrop = function (e) { e.preventDefault(); zona.classList.remove('activa'); leerArchivos(e.dataTransfer.files); };
+  input.onchange = function () { leerArchivos(input.files); input.value = ''; };
+  document.getElementById('procesar').onclick = procesar;
+
+  function estado(t) { document.getElementById('estado').textContent = t; }
+
+  function leerArchivos(files) {
+    Array.prototype.forEach.call(files, function (f) {
+      var lector = new FileReader();
+      lector.onload = function (ev) {
+        try {
+          var filas;
+          if (/\.(csv|txt)$/i.test(f.name)) {
+            filas = leerCsv(new TextDecoder(detectarCodificacion(ev.target.result)).decode(ev.target.result));
+          } else {
+            var wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: false });
+            // Hoja con más filas
+            filas = wb.SheetNames.map(function (n) { return filasDe(wb.Sheets[n]); })
+              .sort(function (a, b) { return b.length - a.length; })[0] || [];
+          }
+          var item = { nombre: f.name, filas: filas, info: null };
+          cartolas.push(item);
+          pintar();
+          estado('Analizando ' + f.name + '…');
+          google.script.run
+            .withSuccessHandler(function (info) {
+              item.info = info;
+              item.empresas = {};
+              info.bloques.forEach(function (b) { if (b.n) item.empresas[b.i] = b.empresaSugerida; });
+              pintar(); estado('');
+            })
+            .withFailureHandler(function (err) { item.error = err.message; pintar(); estado(''); })
+            .analizarCartola(f.name, filas);
+        } catch (err) {
+          cartolas.push({ nombre: f.name, error: 'No se pudo leer el archivo: ' + err.message });
+          pintar();
+        }
+      };
+      lector.readAsArrayBuffer(f);
+    });
+  }
+
+  function filasDe(hoja) {
+    if (!hoja) return [];
+    var filas = XLSX.utils.sheet_to_json(hoja, { header: 1, raw: true, defval: '' });
+    // google.script.run no acepta objetos Date: se envían como texto aaaa-mm-dd
+    return filas.map(function (r) {
+      return r.map(function (c) {
+        if (c instanceof Date) return c.getFullYear() + '-' + ('0' + (c.getMonth() + 1)).slice(-2) + '-' + ('0' + c.getDate()).slice(-2);
+        return c;
+      });
+    });
+  }
+
+  /** CSV con separador ; , o tabulador (detectado). Se deja el texto tal cual: el servidor interpreta fechas dd/mm/aaaa y montos chilenos. */
+  function leerCsv(texto) {
+    var lineas = texto.replace(/\r/g, '').split('\n');
+    var muestra = lineas.slice(0, 30).join('\n');
+    var sep = [';', '\t', ','].map(function (s) { return [s, muestra.split(s).length]; })
+      .sort(function (a, b) { return b[1] - a[1]; })[0][0];
+    return lineas.map(function (l) {
+      var out = [], cur = '', q = false;
+      for (var i = 0; i < l.length; i++) {
+        var ch = l[i];
+        if (q) { if (ch === '"') { if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+        else if (ch === '"') q = true;
+        else if (ch === sep) { out.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      out.push(cur);
+      return out;
+    });
+  }
+
+  function detectarCodificacion(buf) {
+    try { new TextDecoder('utf-8', { fatal: true }).decode(buf); return 'utf-8'; } catch (e) { return 'windows-1252'; }
+  }
+
+  function fmt(n) { return Math.round(n).toLocaleString('es-CL'); }
+
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function pintar() {
+    var html = '';
+    cartolas.forEach(function (c, i) {
+      html += '<div class="tarjeta"><div class="tit">' + esc(c.nombre) +
+        ' <a href="#" onclick="quitar(' + i + ');return false" class="muted">(quitar)</a></div>';
+      if (c.error) html += '<div class="err">' + esc(c.error) + '</div>';
+      else if (!c.info) html += '<div class="muted">Analizando…</div>';
+      else {
+        var x = c.info;
+        x.advertencias.forEach(function (a) { html += '<div class="warn">⚠ ' + esc(a) + '</div>'; });
+        var conMov = x.bloques.filter(function (b) { return b.n; });
+        var vacias = x.bloques.length - conMov.length;
+        html += '<div class="muted">' + x.bloques.length + ' cuenta(s) en el archivo' +
+          (vacias ? ' · ' + vacias + ' sin movimientos (se omiten)' : '') + '</div>';
+        html += '<table class="cuentas"><tr><th>Cuenta</th><th>Movs.</th><th>Período</th><th>Empresa en FLUJO</th></tr>';
+        conMov.forEach(function (b) {
+          html += '<tr><td><b>' + esc(b.titular) + '</b><br><span class="muted">' + (b.cuenta ? 'Cta ' + esc(b.cuenta) : '') +
+            (b.banco ? ' · ' + esc(b.banco) : '') + '</span>' +
+            b.advertencias.map(function (a) { return '<div class="warn">⚠ ' + esc(a) + '</div>'; }).join('') + '</td>' +
+            '<td>' + b.n + '<br><span class="muted">-$' + fmt(b.cargos) + '<br>+$' + fmt(b.abonos) + '</span></td>' +
+            '<td class="muted">' + esc(b.desde) + '<br>' + esc(b.hasta) + '</td><td>' +
+            '<select onchange="cartolas[' + i + '].empresas[' + b.i + ']=this.value;validar()"><option value="">— omitir esta cuenta —</option>';
+          x.empresas.forEach(function (e) {
+            html += '<option' + (e === c.empresas[b.i] ? ' selected' : '') + ' value="' + esc(e) + '">' + esc(e) + '</option>';
+          });
+          html += '</select>' + (b.seguro ? '<div class="ok">✔ cuenta conocida</div>' : (c.empresas[b.i] ? '<div class="muted">sugerida, confirme</div>' : '')) + '</td></tr>';
+        });
+        html += '</table>';
+      }
+      html += '</div>';
+    });
+    document.getElementById('lista').innerHTML = html;
+    validar();
+  }
+
+  function quitar(i) { cartolas.splice(i, 1); pintar(); }
+
+  function asignadas(c) {
+    return c.info ? c.info.bloques.filter(function (b) { return b.n && c.empresas[b.i]; }) : [];
+  }
+
+  function validar() {
+    var listas = cartolas.every(function (c) { return c.info || c.error; });
+    var n = cartolas.reduce(function (s, c) { return s + asignadas(c).reduce(function (t, b) { return t + b.n; }, 0); }, 0);
+    document.getElementById('procesar').disabled = !(listas && n > 0);
+    document.getElementById('procesar').textContent = n ? 'Clasificar ' + n + ' movimientos' : 'Clasificar movimientos';
+  }
+
+  function procesar() {
+    var btn = document.getElementById('procesar');
+    btn.disabled = true;
+    estado('Clasificando contra la historia… (puede tardar unos segundos)');
+    var payload = cartolas.filter(function (c) { return asignadas(c).length; })
+      .map(function (c) { return { nombre: c.nombre, filas: c.filas, empresas: c.empresas }; });
+    google.script.run
+      .withSuccessHandler(function (r) {
+        estado('');
+        var e = r.porEstado;
+        document.getElementById('lista').innerHTML = '';
+        cartolas = [];
+        document.getElementById('resultado').innerHTML =
+          '<div class="tarjeta"><div class="tit">Listo: ' + r.total + ' movimientos en la hoja CONCILIACION</div><table>' +
+          '<tr><td style="background:#d9ead3">IDENTIFICADO</td><td>' + e['IDENTIFICADO'] + '</td><td class="muted">aprobados automáticamente</td></tr>' +
+          '<tr><td style="background:#fff2cc">POR REVISAR</td><td>' + e['POR REVISAR'] + '</td><td class="muted">sugerencia a confirmar</td></tr>' +
+          '<tr><td style="background:#f4cccc">PENDIENTE</td><td>' + e['PENDIENTE'] + '</td><td class="muted">clasificar manualmente</td></tr>' +
+          '<tr><td style="background:#d9d9d9">YA EN FLUJO</td><td>' + e['YA EN FLUJO'] + '</td><td class="muted">no se volverán a cargar</td></tr>' +
+          '</table><p class="muted">Complete los pendientes en CONCILIACION y luego use el menú <b>3. Traspasar aprobados a FLUJO</b>.</p>' +
+          '<button onclick="google.script.host.close()">Cerrar</button></div>';
+      })
+      .withFailureHandler(function (err) { estado(''); btn.disabled = false; alert('Error: ' + err.message); })
+      .procesarCartolas(payload);
+  }
+</script>
+</body>
+</html>
