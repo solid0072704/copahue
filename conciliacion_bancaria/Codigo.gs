@@ -487,6 +487,8 @@ function clasificarYEscribir_(lotes) {
   var modelo = new ModeloConciliacion(H.hist, cfg);
   var reglas = leerReglas_(plan);
   var pagos = cfg.usarPagosPorHacer ? leerPagos_() : [];
+  cfg.cuentasPropias = mtIndiceCuentasPropias(plan);
+  cfg.cuentasBancarias = leerCuentasBancarias_();
 
   // Movimientos ya registrados (FLUJO y CONCILIACION) para no duplicar
   var existentes = {};
@@ -596,6 +598,30 @@ function clasificarMovimiento_(m, modelo, reglas, pagos, plan, cfg, existentes) 
                        pg.nombre + ': "' + pg.asunto + '".' + (mismo ? ' La historia sugiere la misma cuenta.' : '')
         };
       }
+    }
+  }
+
+  // 4. Traspaso entre cuentas propias: el detalle trae el N° de una cuenta que está en el plan de cuentas
+  var cpi = mtCuentaPropia(cfg.cuentasPropias, m.detalle);
+  if (cpi) {
+    var umbral = cfg.umbralIdentificado || MOTOR_DEFAULTS.umbralIdentificado;
+    var dueña = (cfg.cuentasBancarias || {})[cpi.numero];
+    var desc = 'cuenta propia ' + cpi.numero + (dueña ? ' (' + dueña + ')' : '') + ' = ' + cpi.cuenta + ' ' + cpi.nombre;
+    if (p.label && String(p.label.cuenta) === String(cpi.cuenta)) {
+      p.confianza = Math.max(p.confianza, 0.85);
+      p.estado = p.confianza >= umbral ? ESTADO.IDENTIFICADO : p.estado;
+      p.explicacion = 'Traspaso con ' + desc + '; la historia confirma. ' + p.explicacion;
+    } else if (p.confianza < umbral) {
+      var hc3 = modelo.ccostoHabitual(m.empresa, cpi.cuenta);
+      var abono = mtNum(m.abono) > mtNum(m.cargo);
+      return {
+        estado: ESTADO.REVISAR, confianza: 0.7, fuente: 'CUENTA PROPIA',
+        label: { detalle1: 'Traspaso de Fondos', ccosto: hc3.ccosto, centro: hc3.centro,
+                 glosa: 'Traspaso ' + (abono ? 'desde ' : 'a ') + (dueña || 'cuenta ' + cpi.numero),
+                 cuenta: cpi.cuenta, nombreCuenta: cpi.nombre, rut: '', razon: '' },
+        explicacion: 'Traspaso con ' + desc + '. Verifique si corresponde a un reparto o venta (la historia sugería ' +
+                     (p.label ? p.label.cuenta + ' ' + (p.label.nombreCuenta || '') + ' con ' + Math.round(p.confianza * 100) + '%' : 'nada') + ').'
+      };
     }
   }
   return p;

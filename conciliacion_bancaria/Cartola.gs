@@ -55,6 +55,12 @@ function crReparar_(s) {
   try { return decodeURIComponent(bytes); } catch (e) { return s; }
 }
 
+/** "00000000000" -> 0, "0958145" -> 958145 (como en FLUJO); otros textos quedan igual. */
+function crCodigo_(v) {
+  if (typeof v === 'string' && /^\s*\d{1,15}\s*$/.test(v)) return +v;
+  return v === null || v === undefined ? '' : v;
+}
+
 /** ¿La fila es de encabezados de movimientos? */
 function crEsEncabezado_(f) {
   var tieneFecha = false, tieneDet = false, tieneMonto = false;
@@ -71,7 +77,7 @@ function crEsEncabezado_(f) {
 /** Extrae titular / RUT / N° de cuenta de las líneas previas a un encabezado. */
 function crDatosCuenta_(lineas, nombreArchivo) {
   var b = { titular: '', rut: '', cuenta: '', banco: '' };
-  var txt = lineas.join(' ') + ' ' + (nombreArchivo || '');
+  var txt = lineas.join(' ');
   var m = txt.match(/(?:cta|cuenta|n[°º] ?de cuenta|cuenta corriente)[\s.:Nº°#]*([\d][\d\-. ]{5,})/i);
   if (m) b.cuenta = m[1].replace(/\D/g, '').replace(/^0+/, '');
   m = txt.match(/(\d{1,2}\.?\d{3}\.?\d{3}-[\dkK])/);
@@ -80,8 +86,9 @@ function crDatosCuenta_(lineas, nombreArchivo) {
   for (var i = lineas.length - 1; i >= 0; i--) if (String(lineas[i]).trim()) { primera = String(lineas[i]); break; }
   m = primera.match(/^\s*([^(]+?)\s*\(/);
   b.titular = m ? m[1].trim() : primera.trim().slice(0, 60);
-  if (/banco de chile|edwards/i.test(txt)) b.banco = 'CHILE';
-  else if (/santander/i.test(txt)) b.banco = 'SANTANDER';
+  var conArchivo = txt + ' ' + (nombreArchivo || '');
+  if (/banco de chile|edwards/i.test(conArchivo)) b.banco = 'CHILE';
+  else if (/santander/i.test(conArchivo)) b.banco = 'SANTANDER';
   return b;
 }
 
@@ -147,9 +154,9 @@ function parsearCartola(filas, nombreArchivo) {
         detalle: String(detalle === null || detalle === undefined ? '' : detalle),
         cargo: cargo, abono: abono,
         saldo: c.saldo !== undefined ? mtNum(f[c.saldo]) : '',
-        docto: c.docto !== undefined ? f[c.docto] : '',
-        trn: c.trn !== undefined ? f[c.trn] : '',
-        caja: c.caja !== undefined ? f[c.caja] : '',
+        docto: c.docto !== undefined ? crCodigo_(f[c.docto]) : '',
+        trn: c.trn !== undefined ? crCodigo_(f[c.trn]) : '',
+        caja: c.caja !== undefined ? crCodigo_(f[c.caja]) : '',
         sucursal: c.sucursal !== undefined ? f[c.sucursal] : ''
       });
     }

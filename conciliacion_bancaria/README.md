@@ -5,7 +5,7 @@ Aplicativo para Google Sheets que **clasifica automáticamente los movimientos d
 ## Cómo funciona
 
 ```
- Cartolas (.xls/.xlsx/.csv)          Historia (hoja FLUJO)
+ Cartolas (.csv/.xls/.xlsx)          Historia (hoja FLUJO)
             │                                │
             ▼                                ▼
    Lectura por cuenta ─────────► Motor predictivo (vecinos más cercanos)
@@ -13,8 +13,13 @@ Aplicativo para Google Sheets que **clasifica automáticamente los movimientos d
     Santander, genérico)            • misma empresa / cuenta
             │                       • cargo o abono, monto parecido, antigüedad
             │                       • patrón de la empresa para contrapartes nuevas
+            │                       • se vota la cuenta contable; el centro de costo
+            │                         sigue la forma de asignarlo de los últimos meses
             │                       + REGLAS manuales (prioridad)
             │                       + cruce con PAGOS POR HACER (monto exacto + nombre)
+            │                       + traspasos entre cuentas propias ("Traspaso De
+            │                         Cuenta:008860515009" → 1101221 Banco de Chile
+            │                         Los Coihues 886-05150-09, según el plan de cuentas)
             ▼
    Hoja CONCILIACION
      🟩 IDENTIFICADO  (confianza ≥ 80 %, queda aprobado)
@@ -34,11 +39,16 @@ Probado con `BANCO_2025.xlsm` en abr–sep 2026. Cada mes se clasificó entrenan
 
 | Estado | % de los movimientos | Cuenta contable correcta |
 |---|---|---|
-| IDENTIFICADO | ~39 % | **~95 %** |
-| POR REVISAR | ~26 % | ~75 % (el analista solo confirma) |
-| PENDIENTE | ~35 % | (clasificación manual) |
+| IDENTIFICADO | ~53 % | **~94 %** (cuenta + centro de costo: ~83 %) |
+| POR REVISAR | ~24 % | ~65 % (el analista confirma o corrige) |
+| PENDIENTE | ~23 % | (clasificación manual) |
 
-Con la cartola consolidada de julio (31 cuentas, 185 movimientos), simulando que era nueva: **93 identificados, 55 por revisar y 37 pendientes**.
+Con las cartolas reales del Banco de Chile, simulando el aplicativo completo:
+
+| Cartola | Movimientos | Identificados | Por revisar | Pendientes |
+|---|---|---|---|---|
+| `Consolidado_cuentas_01-11-2026-04-11-2026.csv` | 51 | **34** | 7 | 10 |
+| Consolidado de julio 2026 (como si fuera nueva) | 185 | **116** | 44 | 25 |
 
 Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas nuevas que transfieren, proveedores nuevos) y movimientos genéricos como `Dep.cheq.otros Bancos`, donde el proyecto o la parcela no se deducen del texto. A medida que se traspasan meses a `FLUJO`, y si se agregan **REGLAS** para los casos repetitivos, el porcentaje identificado sube. Puede volver a medirse cuando quiera desde el menú *Evaluar precisión del modelo*.
 
@@ -61,7 +71,7 @@ Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas
 ## Uso mensual
 
 1. **🏦 → 1. Cargar cartolas (archivos)…** y arrastre las cartolas del período.
-   - La cartola consolidada del Banco de Chile (varias cuentas en un archivo) se separa por cuenta automáticamente.
+   - El archivo típico es el **CSV consolidado del Banco de Chile** (`Consolidado_cuentas_DD-MM-AAAA-DD-MM-AAAA.csv`): separado por `;`, una línea `Titular (RUT) cta:NNNN` y su fila de encabezados por cada cuenta, y montos con ceros a la izquierda (`0000000000000025473339`). El aplicativo lo separa por cuenta y omite las que no tienen movimientos.
    - Para cada cuenta se sugiere la empresa como aparece en `FLUJO`. La sugerencia sale de la hoja `CUENTAS BANCARIAS`, de la tabla *Cta. Provisión de Fondos* de `BBDD` (p.ej. `886-05140-01 → Octay`) o del nombre del titular. Confírmela la primera vez; queda guardada y el mes siguiente sale con ✔.
    - Si una cuenta queda en "omitir", no se procesa.
    - Alternativa: pegue la cartola en la hoja `CARTOLA` y use **1b**.

@@ -2,12 +2,25 @@
  * Simulación de punta a punta de Codigo.gs con un SpreadsheetApp falso:
  * configuración → carga de cartola → edición manual → traspaso a FLUJO.
  *
- * Uso: node test/simulacion.js flujo.json cartola.json [bbdd.json] [AAAA-MM]
+ * Uso: node test/simulacion.js flujo.json cartola.(json|csv) [bbdd.json] [AAAA-MM]
+ *   cartola.json: hoja exportada (se procesa como si se pegara en la hoja CARTOLA).
+ *   cartola.csv:  archivo descargado del banco (se procesa como en el diálogo de carga,
+ *                 con el mismo lector CSV de Dialogo.html).
  *   AAAA-MM: deja en FLUJO solo la historia anterior a ese mes (simula cartola nueva).
  */
 var fs = require('fs'), vm = require('vm'), path = require('path');
 var flujo = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-var cartola = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+var esCsv = /\.csv$/i.test(process.argv[3]);
+var cartola = esCsv ? leerCsvDialogo(fs.readFileSync(process.argv[3], 'utf8')) : JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+
+/** Usa la misma función leerCsv del diálogo, para probar exactamente lo que corre en el navegador. */
+function leerCsvDialogo(texto) {
+  var html = fs.readFileSync(path.join(__dirname, '..', 'Dialogo.html'), 'utf8');
+  var js = html.slice(html.indexOf('  function leerCsv'), html.indexOf('  function detectarCodificacion'));
+  var c = {}; vm.createContext(c); vm.runInContext(js, c);
+  c.__t = texto;
+  return JSON.parse(vm.runInContext('JSON.stringify(leerCsv(__t))', c));
+}
 var bbdd = process.argv[4] ? JSON.parse(fs.readFileSync(process.argv[4], 'utf8')) : null;
 var corte = process.argv[5];
 
@@ -75,7 +88,7 @@ Rango.prototype.insertCheckboxes = function () {
 };
 Rango.prototype.createFilter = function () { var f = { setColumnFilterCriteria: function () { return f; }, remove: function () {} }; this.h.filtro = f; return f; };
 
-var hojas = { 'FLUJO': new Hoja('FLUJO', flujo), 'CARTOLA': new Hoja('CARTOLA', limpiar(cartola)) };
+var hojas = { 'FLUJO': new Hoja('FLUJO', flujo), 'CARTOLA': new Hoja('CARTOLA', esCsv ? [] : limpiar(cartola)) };
 if (bbdd) hojas['BBDD'] = new Hoja('BBDD', limpiar(bbdd));
 var alertas = [];
 var ss = {
@@ -106,13 +119,32 @@ vm.createContext(ctx);
 /* ---------- Escenario ---------- */
 var filasFlujoAntes = hojas.FLUJO.getLastRow();
 ctx.configurar();
-ctx.procesarHojaCartola();
+function cargar() {
+  if (!esCsv) return ctx.procesarHojaCartola();
+  // Igual que el diálogo: analizar, aceptar la empresa sugerida de cada cuenta y procesar
+  var nombre = path.basename(process.argv[3]);
+  var an = ctx.analizarCartola(nombre, cartola);
+  var empresas = {};
+  an.bloques.forEach(function (b) {
+    if (!b.n) return;
+    empresas[b.i] = b.empresaSugerida;
+    console.log('  cuenta ' + b.cuenta + ' ' + b.titular + ' (' + b.n + ' movs) → ' + (b.empresaSugerida || '(sin sugerencia: se omite)'));
+  });
+  var res = ctx.procesarCartolas([{ nombre: nombre, filas: cartola, empresas: empresas }]);
+  alertas.push(vm.runInContext('textoResumen_', ctx)(res));
+}
+cargar();
 var conc = hojas.CONCILIACION;
 var C = vm.runInContext('C', ctx);
 var filas = conc.getRange(2, 1, conc.getLastRow() - 1, 24).getValues();
 var cnt = {};
 filas.forEach(function (r) { cnt[r[0]] = (cnt[r[0]] || 0) + 1; });
 console.log('CONCILIACION:', filas.length, 'filas', cnt);
+if (process.env.DETALLE) filas.forEach(function (r) {
+  console.log([r[C['ESTADO']], Math.round(r[C['CONFIANZA']] * 100) + '%', r[C['EMPRESA']], String(r[C['Detalle Movimiento']]).trim(),
+    r[C['Cheque o Cargo']] ? '-' + r[C['Cheque o Cargo']] : '+' + r[C['Deposito o Abono']],
+    '→ ' + r[C['CUENTA CONTABLE']] + ' ' + r[C['NOMBRE CUENTA']], '"' + r[C['GLOSA']] + '"', r[C['C.COSTO']]].join(' | '));
+});
 
 // El analista clasifica el primer PENDIENTE a mano
 var iPend = filas.findIndex(function (r) { return r[0] === 'PENDIENTE'; });
@@ -131,7 +163,7 @@ var ult = hojas.FLUJO.d[hojas.FLUJO.getLastRow() - 1];
 console.log('Última fila FLUJO:', flujo[0].map(function (h, i) { return h + '=' + (ult[i] instanceof Date ? ult[i].toISOString().slice(0, 10) : ult[i]); }).join(' | '));
 
 // Reprocesar la misma cartola: ahora todo lo traspasado debe salir como YA EN FLUJO
-ctx.procesarHojaCartola();
+cargar();
 var f2 = conc.getRange(2, 1, conc.getLastRow() - 1, 24).getValues();
 var cnt2 = {};
 f2.forEach(function (r) { cnt2[r[0]] = (cnt2[r[0]] || 0) + 1; });

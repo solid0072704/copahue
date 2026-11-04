@@ -107,7 +107,7 @@ function mtNum(v) {
 }
 
 function mtFecha(v) {
-  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  if (Object.prototype.toString.call(v) === '[object Date]') return isNaN(v.getTime()) ? null : v;
   if (v === null || v === undefined || v === '') return null;
   if (typeof v === 'number') {             // número de serie de Excel
     if (v < 20000 || v > 80000) return null;
@@ -118,12 +118,12 @@ function mtFecha(v) {
   var m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);   // dd/mm/aaaa
   if (m) {
     var y = +m[3]; if (y < 100) y += 2000;
+    if (+m[2] < 1 || +m[2] > 12 || +m[1] < 1 || +m[1] > 31) return null;
     return new Date(y, +m[2] - 1, +m[1]);
   }
   m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);                         // aaaa-mm-dd
   if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
-  var d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
+  return null;   // otros textos (títulos, totales) no son fechas
 }
 
 function mtClaveFecha(d) {
@@ -161,6 +161,7 @@ function ModeloConciliacion(historia, opciones) {
   this.df = {};
   this.fechaMax = 0;
   this.ccostoPorEmpresa = {};
+  this.ccostoPorEmpresaCuenta = {};
   this.grupos = {};
 
   for (var i = 0; i < historia.length; i++) {
@@ -182,7 +183,8 @@ function ModeloConciliacion(historia, opciones) {
         rut: h.rut || '', razon: h.razon || ''
       }
     };
-    e.claveLabel = [e.label.cuenta, e.label.ccosto, e.label.centro].join('|');
+    // Se vota por la CUENTA CONTABLE; el centro de costo se elige después, dentro de la cuenta ganadora
+    e.claveLabel = String(e.label.cuenta);
     var idx = this.ej.length;
     this.ej.push(e);
     if (e.t > this.fechaMax) this.fechaMax = e.t;
@@ -204,6 +206,9 @@ function ModeloConciliacion(historia, opciones) {
     var cc = this.ccostoPorEmpresa[e.empresaN] = this.ccostoPorEmpresa[e.empresaN] || {};
     var ck = e.label.ccosto + '|' + e.label.centro;
     cc[ck] = (cc[ck] || 0) + 1;
+    var kc = e.empresaN + '§' + e.claveLabel;
+    var cc2 = this.ccostoPorEmpresaCuenta[kc] = this.ccostoPorEmpresaCuenta[kc] || {};
+    cc2[ck] = (cc2[ck] || 0) + 1;
   }
   this.N = this.ej.length;
 }
@@ -214,7 +219,8 @@ function ModeloConciliacion(historia, opciones) {
  */
 function mtTipoOperacion_(texto) {
   var t = texto.replace(/\d+/g, ' ').replace(/\s+/g, ' ').trim().split(' ');
-  return t.slice(0, 2).join(' ');
+  // "traspaso de cuenta 0088..." (entre cuentas propias) es distinto de "traspaso de juan perez"
+  return t.slice(0, t[2] === 'cuenta' ? 3 : 2).join(' ');
 }
 
 function mtClavesGrupo_(empN, sentido, texto, monto) {
@@ -323,15 +329,32 @@ ModeloConciliacion.prototype.predecir = function (mov) {
     var votos = {}, total = 0;
     for (i = 0; i < top.length; i++) {
       var p = top[i], ej = this.ej[p.idx], w = p.s * p.s;
-      var v = votos[ej.claveLabel] = votos[ej.claveLabel] || { w: 0, n: 0, mejor: p, mejorS: 0 };
+      var v = votos[ej.claveLabel] = votos[ej.claveLabel] || { w: 0, n: 0, mejor: p, mejorS: 0, mejorEmp: null };
       v.w += w; v.n++; total += w;
       if (p.s > v.mejorS) { v.mejorS = p.s; v.mejor = p; }
+      if (p.mismaEmp && (!v.mejorEmp || p.s > v.mejorEmp.s)) v.mejorEmp = p;
     }
-    for (var kl in votos) if (!ganador || votos[kl].w > ganador.w) ganador = votos[kl];
+    var ganadorClave = null;
+    for (var kl in votos) if (!ganador || votos[kl].w > ganador.w) { ganador = votos[kl]; ganadorClave = kl; }
     var share = ganador.w / total;
     var soporte = Math.min(1, 0.80 + 0.10 * ganador.n);
     conf = share * ganador.mejorS * soporte;
-    base = this.ej[ganador.mejor.idx];
+    // Centro de costo: votación entre los vecinos de la cuenta ganadora (los de la misma empresa pesan más)
+    var ccVotos = {}, ccMejor = null;
+    for (i = 0; i < top.length; i++) {
+      var pe = this.ej[top[i].idx];
+      if (pe.claveLabel !== ganadorClave) continue;
+      var kcc = pe.label.ccosto + '|' + pe.label.centro;
+      var vc = ccVotos[kcc] = ccVotos[kcc] || { w: 0, mejor: top[i] };
+      // Recencia fuerte: si el equipo cambió la forma de asignar el centro de costo, manda lo último
+      var edad = Math.max(0, (tRef - pe.t) / 86400000);
+      vc.w += top[i].s * top[i].s * (top[i].mismaEmp ? 1 : 0.25) * Math.exp(-edad / 60);
+      if (top[i].s > vc.mejor.s || (top[i].s === vc.mejor.s && pe.t > this.ej[vc.mejor.idx].t)) vc.mejor = top[i];
+    }
+    for (var kv in ccVotos) if (!ccMejor || ccVotos[kv].w > ccMejor.w) ccMejor = ccVotos[kv];
+    // Ejemplo a copiar (glosa, etc.): el más parecido con esa cuenta y centro de costo
+    base = this.ej[(ganador.mejorEmp && this.ej[ganador.mejorEmp.idx].label.ccosto + '|' + this.ej[ganador.mejorEmp.idx].label.centro ===
+                    this.ej[ccMejor.mejor.idx].label.ccosto + '|' + this.ej[ccMejor.mejor.idx].label.centro ? ganador.mejorEmp : ccMejor.mejor).idx];
     explicacion = ganador.n + ' de ' + top.length + ' movimientos parecidos usan esta cuenta; similitud del mejor: ' +
                   Math.round(ganador.mejorS * 100) + '%' + (base.empresaN === empN ? '' : ' (otra empresa)') +
                   '. Ej.: ' + mtClaveFecha(base.fecha) + ' "' + String(base.detalle).trim() + '" → ' + base.label.glosa;
@@ -357,6 +380,11 @@ ModeloConciliacion.prototype.predecir = function (mov) {
 
   var label = {};
   for (var lk in base.label) label[lk] = base.label[lk];
+  if (base.empresaN !== empN) {
+    // El ejemplo es de otra empresa: usar el centro de costo habitual de ESTA empresa
+    var hc = this.ccostoHabitual(mov.empresa, label.cuenta);
+    if (hc.ccosto || hc.centro) { label.ccosto = hc.ccosto; label.centro = hc.centro; }
+  }
 
   var estado = conf >= op.umbralIdentificado ? ESTADO.IDENTIFICADO
              : conf >= op.umbralRevisar ? ESTADO.REVISAR : ESTADO.PENDIENTE;
@@ -375,9 +403,14 @@ ModeloConciliacion.prototype.predecir = function (mov) {
   };
 };
 
-/** Centro de costo más usado por una empresa (para clasificaciones que vienen de reglas/pagos). */
-ModeloConciliacion.prototype.ccostoHabitual = function (empresa) {
-  var cc = this.ccostoPorEmpresa[mtNormEmpresa(empresa)];
+/**
+ * Centro de costo más usado por una empresa (si se indica cuenta, el más usado
+ * por esa empresa en esa cuenta). Para clasificaciones que vienen de reglas,
+ * pagos o ejemplos de otra empresa.
+ */
+ModeloConciliacion.prototype.ccostoHabitual = function (empresa, cuenta) {
+  var empN = mtNormEmpresa(empresa);
+  var cc = (cuenta !== undefined && cuenta !== '' && this.ccostoPorEmpresaCuenta[empN + '§' + cuenta]) || this.ccostoPorEmpresa[empN];
   if (!cc) return { ccosto: '', centro: '' };
   var mejor = null, n = -1;
   for (var k in cc) if (cc[k] > n) { n = cc[k]; mejor = k; }
@@ -427,7 +460,7 @@ var MT_MESES = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7,
 
 /** Interpreta 'SEMANA 10 NOV 2025', '10/11/2025', fechas, etc. */
 function mtFechaPago(v) {
-  if (v instanceof Date) return v;
+  if (Object.prototype.toString.call(v) === '[object Date]') return v;
   var s = mtNormTexto(v);
   var m = s.match(/(\d{1,2}) ([a-z]{3})[a-z]* (\d{4})/);
   if (m && MT_MESES[m[2]] !== undefined) return new Date(+m[3], MT_MESES[m[2]], +m[1]);
@@ -471,9 +504,45 @@ function mtCruzarPago(pagos, mov, diasVentana) {
   return { pago: mejor, puntos: mejorPts };
 }
 
+/* ------------------------------------------------------------------ */
+/* Traspasos entre cuentas propias                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Índice N° de cuenta bancaria -> cuenta contable, a partir de los nombres del
+ * plan de cuentas que incluyen el número (p.ej. 1101221 "Banco de Chile Los
+ * Coihues 886-05150-09" -> 8860515009).
+ * @param {Object} plan  {codigo: nombre}
+ */
+function mtIndiceCuentasPropias(plan) {
+  var idx = {};
+  for (var cod in plan) {
+    var nom = String(plan[cod]);
+    if (/no ocupar/i.test(nom)) continue;
+    var nums = nom.match(/\d[\d\-. ]{5,}\d/g) || [];
+    for (var i = 0; i < nums.length; i++) {
+      var d = nums[i].replace(/\D/g, '').replace(/^0+/, '');
+      if (d.length >= 7 && !idx[d]) idx[d] = { cuenta: /^\d+$/.test(cod) ? +cod : cod, nombre: nom };
+    }
+  }
+  return idx;
+}
+
+/** Si el detalle menciona una cuenta propia ("Traspaso De Cuenta:008860515009"), la devuelve. */
+function mtCuentaPropia(idx, detalle) {
+  if (!idx) return null;
+  var nums = String(detalle || '').match(/\d{7,}/g) || [];
+  for (var i = 0; i < nums.length; i++) {
+    var d = nums[i].replace(/^0+/, '');
+    if (idx[d]) return { cuenta: idx[d].cuenta, nombre: idx[d].nombre, numero: d };
+  }
+  return null;
+}
+
 /* Exportación para pruebas en Node (no afecta a Apps Script). */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { ModeloConciliacion: ModeloConciliacion, mtAplicarReglas: mtAplicarReglas, mtCruzarPago: mtCruzarPago,
     mtFechaPago: mtFechaPago, mtNormTexto: mtNormTexto, mtTokens: mtTokens, mtNum: mtNum, mtFecha: mtFecha,
-    mtClaveDuplicado: mtClaveDuplicado, mtClaveFecha: mtClaveFecha, ESTADO: ESTADO, MOTOR_DEFAULTS: MOTOR_DEFAULTS };
+    mtClaveDuplicado: mtClaveDuplicado, mtClaveFecha: mtClaveFecha, ESTADO: ESTADO, MOTOR_DEFAULTS: MOTOR_DEFAULTS,
+    mtIndiceCuentasPropias: mtIndiceCuentasPropias, mtCuentaPropia: mtCuentaPropia };
 }

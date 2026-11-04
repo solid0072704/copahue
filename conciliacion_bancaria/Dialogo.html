@@ -155,7 +155,7 @@
           html += '<tr><td><b>' + esc(b.titular) + '</b><br><span class="muted">' + (b.cuenta ? 'Cta ' + esc(b.cuenta) : '') +
             (b.banco ? ' · ' + esc(b.banco) : '') + '</span>' +
             b.advertencias.map(function (a) { return '<div class="warn">⚠ ' + esc(a) + '</div>'; }).join('') + '</td>' +
-            '<td>' + b.n + '<br><span class="muted">-$' + fmt(b.cargos) + '<br>+$' + fmt(b.abonos) + '</span></td>' +
+            '<td>' + b.n + '<br><span class="muted">' + (b.cargos ? '-$' + fmt(b.cargos) + '<br>' : '') + (b.abonos ? '+$' + fmt(b.abonos) : '') + '</span></td>' +
             '<td class="muted">' + esc(b.desde) + '<br>' + esc(b.hasta) + '</td><td>' +
             '<select onchange="cartolas[' + i + '].empresas[' + b.i + ']=this.value;validar()"><option value="">— omitir esta cuenta —</option>';
           x.empresas.forEach(function (e) {
