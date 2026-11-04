@@ -2,7 +2,8 @@
  * Simulación de punta a punta de Codigo.gs con un SpreadsheetApp falso:
  * configuración → carga de cartola → edición manual → traspaso a FLUJO.
  *
- * Uso: node test/simulacion.js flujo.json cartola.(json|csv) [bbdd.json] [AAAA-MM]
+ * Uso: [RCV=rcv1.csv,rcv2.csv] [DETALLE=1] node test/simulacion.js flujo.json cartola.(json|csv) [bbdd.json] [AAAA-MM]
+ *   RCV: Registro(s) de Compras del SII a cargar después de la cartola (como en el diálogo).
  *   cartola.json: hoja exportada (se procesa como si se pegara en la hoja CARTOLA).
  *   cartola.csv:  archivo descargado del banco (se procesa como en el diálogo de carga,
  *                 con el mismo lector CSV de Dialogo.html).
@@ -81,6 +82,8 @@ Rango.prototype.setValues = function (v) {
   return this;
 };
 Rango.prototype.setValue = function (v) { return this.setValues([[v]]); };
+Rango.prototype.getValue = function () { return this.getValues()[0][0]; };
+Rango.prototype.getLastRow = function () { return this.r + this.nr - 1; };
 Rango.prototype.clearContent = function () { return this.setValues(this.getValues().map(function (r) { return r.map(function () { return ''; }); })); };
 Rango.prototype.insertCheckboxes = function () {
   var v = this.getValues().map(function (r) { return r.map(function (c) { return c === '' ? false : c; }); });
@@ -112,7 +115,7 @@ var ctx = {
   CacheService: { getDocumentCache: function () { var m = {}; return { get: function (k) { return m[k] || null; }, put: function (k, v) { m[k] = v; }, remove: function (k) { delete m[k]; } }; } }
 };
 vm.createContext(ctx);
-['Motor.gs', 'Cartola.gs', 'Codigo.gs'].forEach(function (f) {
+['Motor.gs', 'Cartola.gs', 'Sii.gs', 'Codigo.gs', 'Facturas.gs'].forEach(function (f) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), ctx, { filename: f });
 });
 
@@ -146,6 +149,65 @@ if (process.env.DETALLE) filas.forEach(function (r) {
     '→ ' + r[C['CUENTA CONTABLE']] + ' ' + r[C['NOMBRE CUENTA']], '"' + r[C['GLOSA']] + '"', r[C['C.COSTO']]].join(' | '));
 });
 
+/* ---------- Facturas SII ---------- */
+var FC = vm.runInContext('FC', ctx);
+function verFacturas(titulo) {
+  var sh = hojas['FACTURAS COMPRA'];
+  if (!sh) return;
+  var fs_ = sh.getRange(2, 1, sh.getLastRow() - 1, 26).getValues();
+  var c = {};
+  fs_.forEach(function (r) { c[r[0]] = (c[r[0]] || 0) + 1; });
+  console.log(titulo, fs_.length, 'documentos', c);
+  if (process.env.DETALLE_F) fs_.forEach(function (r) {
+    console.log('  ' + [r[FC['ESTADO']], Math.round(r[FC['CONFIANZA']] * 100) + '%', r[FC['FOLIO']], r[FC['RAZON SOCIAL']], '$' + r[FC['MONTO A PAGAR']], '→',
+      r[FC['FECHA PAGO']] instanceof Date || (r[FC['FECHA PAGO']] && r[FC['FECHA PAGO']].getTime) ? r[FC['FECHA PAGO']].toISOString().slice(0, 10) : '',
+      r[FC['CUENTA DE PAGO']], '"' + r[FC['DETALLE TRANSFERENCIA']] + '"', r[FC['MONTO TRANSFERIDO']], r[FC['UBICACIÓN']],
+      r[FC['PAGO CONJUNTO CON']] ? 'con ' + r[FC['PAGO CONJUNTO CON']] : ''].join(' | ').slice(0, 240));
+  });
+  return fs_;
+}
+if (process.env.RCV) {
+  var rcv = process.env.RCV.split(',').map(function (p) {
+    var filasR = leerCsvDialogo(fs.readFileSync(p, 'utf8'));
+    var an = ctx.analizarRcv(path.basename(p), filasR);
+    console.log('RCV ' + path.basename(p) + ': RUT ' + an.rutEmpresa + ' período ' + an.periodo + ', ' + an.n + ' docs (' + an.nuevos + ' nuevos), pagos se buscan en: ' +
+      (an.empresasAsignadas.join(', ') || '(sin asignar → ' + (process.env.RCV_EMPRESA || '') + ')'));
+    return { nombre: path.basename(p), filas: filasR, empresa: an.empresasAsignadas.length ? '' : (process.env.RCV_EMPRESA || '') };
+  });
+  var t0 = Date.now();
+  var rr = ctx.procesarArchivos({ cartolas: [], rcv: rcv });
+  console.log('procesarArchivos:', Date.now() - t0, 'ms; nuevos', rr.carga.nuevos, '| aplicados a CONCILIACION:', rr.facturas.aplicados);
+  var ff = verFacturas('FACTURAS COMPRA:');
+  var conSii = conc.getRange(2, 1, conc.getLastRow() - 1, 24).getValues().filter(function (r) { return r[C['FUENTE']] === 'FACTURA SII'; });
+  console.log('Movimientos de CONCILIACION completados con factura:', conSii.length);
+  conSii.slice(0, 6).forEach(function (r) {
+    console.log('  ' + [String(r[C['Detalle Movimiento']]).trim(), '-' + r[C['Cheque o Cargo']], '→', r[C['CUENTA CONTABLE']], '"' + r[C['GLOSA']] + '"',
+      r[C['RUT']], r[C['RAZON SOCIAL']], r[C['ESTADO']], r[C['APROBAR']]].join(' | '));
+  });
+  // El analista confirma un POR REVISAR y rechaza una CONCILIADA
+  var shF = hojas['FACTURAS COMPRA'];
+  var iRev = ff.findIndex(function (r) { return r[0] === 'POR REVISAR'; });
+  if (iRev >= 0) {
+    shF.getRange(iRev + 2, FC['CONFIRMAR'] + 1).setValue(true);
+    ctx.onEdit({ range: shF.getRange(iRev + 2, FC['CONFIRMAR'] + 1) });
+    console.log('Confirmada a mano fila', iRev + 2, '→', shF.getRange(iRev + 2, 1).getValue());
+  }
+  var cons = ff.map(function (r, i) { return i; }).filter(function (i) { return ff[i][0] === 'CONCILIADA' && String(ff[i][FC['UBICACIÓN']]).indexOf('CONCILIACION') === 0; });
+  var iCon = cons.length > 1 ? cons[cons.length - 1] : -1;
+  if (iCon >= 0) {
+    var ubic = String(shF.getRange(iCon + 2, FC['UBICACIÓN'] + 1).getValue());
+    var filaC = +ubic.replace(/\D+/g, ' ').trim().split(' ')[0];
+    var antes = shF.getRange(iCon + 2, FC['DETALLE TRANSFERENCIA'] + 1).getValue();
+    shF.getRange(iCon + 2, FC['CONFIRMAR'] + 1).setValue(false);
+    ctx.onEdit({ range: shF.getRange(iCon + 2, FC['CONFIRMAR'] + 1) });
+    ctx.cruzarFacturas();
+    console.log('Rechazada fila', iCon + 2, '(era "' + antes + '") → ahora', shF.getRange(iCon + 2, 1).getValue(), '"' +
+      shF.getRange(iCon + 2, FC['DETALLE TRANSFERENCIA'] + 1).getValue() + '"');
+    var xc = conc.getRange(filaC, 1, 1, 24).getValues()[0];
+    console.log('  CONCILIACION fila', filaC, 'quedó:', xc[C['ESTADO']], xc[C['FUENTE']], '| glosa "' + xc[C['GLOSA']] + '" | ' + String(xc[C['EXPLICACIÓN']]).slice(0, 110));
+  }
+}
+
 // El analista clasifica el primer PENDIENTE a mano
 var iPend = filas.findIndex(function (r) { return r[0] === 'PENDIENTE'; });
 if (iPend >= 0) {
@@ -158,6 +220,13 @@ if (iPend >= 0) {
 
 ctx.traspasarAFlujo();
 var agregadas = hojas.FLUJO.getLastRow() - filasFlujoAntes;
+if (process.env.RCV) {
+  ctx.cruzarFacturas();
+  var ub = hojas['FACTURAS COMPRA'].getRange(2, FC['UBICACIÓN'] + 1, hojas['FACTURAS COMPRA'].getLastRow() - 1, 1).getValues()
+    .map(function (r) { return String(r[0]).split(' ')[0]; });
+  var cu = {}; ub.forEach(function (u) { cu[u || '(sin pago)'] = (cu[u || '(sin pago)'] || 0) + 1; });
+  console.log('Tras traspasar, ubicación de los pagos de las facturas:', cu);
+}
 console.log('Filas agregadas a FLUJO:', agregadas, '| quedan en CONCILIACION:', Math.max(0, conc.getLastRow() - 1));
 var ult = hojas.FLUJO.d[hojas.FLUJO.getLastRow() - 1];
 console.log('Última fila FLUJO:', flujo[0].map(function (h, i) { return h + '=' + (ult[i] instanceof Date ? ult[i].toISOString().slice(0, 10) : ult[i]); }).join(' | '));

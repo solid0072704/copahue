@@ -21,7 +21,8 @@ var HOJA = {
   PLAN: 'BBDD',
   BASE: 'base flujo caja',
   CONFIG: 'CONFIG',
-  CARTOLA: 'CARTOLA'
+  CARTOLA: 'CARTOLA',
+  FACTURAS: 'FACTURAS COMPRA'
 };
 
 /** Columnas de la hoja CONCILIACION (en este orden). */
@@ -48,7 +49,7 @@ function colores_() {
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('🏦 Conciliación bancaria')
-    .addItem('1. Cargar cartolas (archivos)…', 'abrirCargaCartolas')
+    .addItem('1. Cargar cartolas y facturas SII (archivos)…', 'abrirCargaCartolas')
     .addItem('1b. Procesar cartola pegada en hoja "' + HOJA.CARTOLA + '"', 'procesarHojaCartola')
     .addSeparator()
     .addItem('2. Ver solo pendientes / por revisar', 'filtrarPendientes')
@@ -56,6 +57,9 @@ function onOpen() {
     .addItem('    Crear regla desde la fila seleccionada', 'crearReglaDesdeSeleccion')
     .addSeparator()
     .addItem('3. Traspasar aprobados a FLUJO', 'traspasarAFlujo')
+    .addSeparator()
+    .addItem('4. Cruzar facturas SII con movimientos', 'cruzarFacturas')
+    .addItem('    Ver facturas sin pago / por revisar', 'filtrarFacturasPendientes')
     .addSeparator()
     .addItem('Evaluar precisión del modelo (últimos 3 meses)', 'evaluarModelo')
     .addItem('Limpiar hoja CONCILIACION', 'limpiarConciliacion')
@@ -66,7 +70,7 @@ function onOpen() {
 function abrirCargaCartolas() {
   configurarSiFalta_();
   var html = HtmlService.createHtmlOutputFromFile('Dialogo').setWidth(760).setHeight(560);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Cargar cartolas bancarias');
+  SpreadsheetApp.getUi().showModalDialog(html, 'Cargar cartolas bancarias y Registro de Compras SII');
 }
 
 /* ================================================================== */
@@ -84,20 +88,29 @@ function configurarSiFalta_() {
   if (!ss.getSheetByName(HOJA.FLUJO)) throw new Error('No existe la hoja "' + HOJA.FLUJO + '" con la historia de movimientos.');
 
   var sh = ss.getSheetByName(HOJA.CONFIG);
+  var params = [
+    ['umbralIdentificado', 0.80, 'Confianza mínima para marcar IDENTIFICADO (y aprobar automáticamente).'],
+    ['umbralRevisar', 0.55, 'Confianza mínima para POR REVISAR. Bajo esto queda PENDIENTE (manual).'],
+    ['usarPagosPorHacer', 'SI', 'Cruzar cargos con la hoja PAGOS POR HACER (monto exacto + nombre).'],
+    ['diasPagoVentana', 60, 'Días máximos entre la semana de pago programada y el cargo en el banco.'],
+    ['pesoOtraEmpresa', 0.70, 'Peso (0-1) de ejemplos de otras empresas frente a los de la misma empresa.'],
+    ['vecinos', 12, 'Cantidad de movimientos parecidos que votan la clasificación.'],
+    ['umbralFactura', 0.85, 'Facturas SII: confianza mínima para dar el pago por CONCILIADO y aplicarlo a CONCILIACION.'],
+    ['umbralFacturaRevisar', 0.50, 'Facturas SII: confianza mínima para proponer un pago POR REVISAR.'],
+    ['diasAntes', 30, 'Facturas SII: días que el pago puede ser ANTERIOR a la fecha de la factura (anticipos).'],
+    ['diasDespues', 180, 'Facturas SII: días que el pago puede ser POSTERIOR a la fecha de la factura.'],
+    ['buscarOtrasEmpresas', 'SI', 'Facturas SII: si no aparece el pago en la empresa, buscarlo en las demás (queda POR REVISAR).'],
+    ['cuentaProveedores', 2102001, 'Facturas SII: cuenta contable que se asigna al pago de facturas (Proveedores Nacionales).']
+  ];
   if (!sh) {
     sh = ss.insertSheet(HOJA.CONFIG);
-    sh.getRange(1, 1, 7, 3).setValues([
-      ['PARÁMETRO', 'VALOR', 'DESCRIPCIÓN'],
-      ['umbralIdentificado', 0.80, 'Confianza mínima para marcar IDENTIFICADO (y aprobar automáticamente).'],
-      ['umbralRevisar', 0.55, 'Confianza mínima para POR REVISAR. Bajo esto queda PENDIENTE (manual).'],
-      ['usarPagosPorHacer', 'SI', 'Cruzar cargos con la hoja PAGOS POR HACER (monto exacto + nombre).'],
-      ['diasPagoVentana', 60, 'Días máximos entre la semana de pago programada y el cargo en el banco.'],
-      ['pesoOtraEmpresa', 0.70, 'Peso (0-1) de ejemplos de otras empresas frente a los de la misma empresa.'],
-      ['vecinos', 12, 'Cantidad de movimientos parecidos que votan la clasificación.']
-    ]);
+    sh.getRange(1, 1, 1, 3).setValues([['PARÁMETRO', 'VALOR', 'DESCRIPCIÓN']]);
     sh.getRange('A1:C1').setFontWeight('bold').setBackground('#cfe2f3');
     sh.setColumnWidth(3, 520);
   }
+  var ya = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().map(function (r) { return String(r[0]).trim(); }) : [];
+  var faltan = params.filter(function (p) { return ya.indexOf(p[0]) < 0; });
+  if (faltan.length) sh.getRange(sh.getLastRow() + 1, 1, faltan.length, 3).setValues(faltan);
 
   sh = ss.getSheetByName(HOJA.REGLAS);
   if (!sh) {
@@ -116,10 +129,13 @@ function configurarSiFalta_() {
   sh = ss.getSheetByName(HOJA.CUENTAS);
   if (!sh) {
     sh = ss.insertSheet(HOJA.CUENTAS);
-    sh.getRange(1, 1, 1, 4).setValues([['N° CUENTA', 'EMPRESA (como en FLUJO)', 'TITULAR EN CARTOLA', 'BANCO']])
+    sh.getRange(1, 1, 1, 5).setValues([['N° CUENTA', 'EMPRESA (como en FLUJO)', 'TITULAR EN CARTOLA', 'BANCO', 'RUT TITULAR']])
       .setFontWeight('bold').setBackground('#cfe2f3');
     sh.setFrozenRows(1);
-    sh.getRange('A1').setNote('Se completa sola cada vez que se confirma la empresa de una cartola. Puede editarse.');
+    sh.getRange('A1').setNote('Se completa sola cada vez que se confirma la empresa de una cartola. Puede editarse.\n' +
+      'El RUT TITULAR se usa para saber en qué cuentas buscar el pago de las facturas del SII de cada empresa.');
+  } else if (!sh.getRange(1, 5).getValue()) {
+    sh.getRange(1, 5).setValue('RUT TITULAR').setFontWeight('bold').setBackground('#cfe2f3');
   }
 
   sh = ss.getSheetByName(HOJA.CARTOLA);
@@ -139,10 +155,14 @@ function leerConfig_() {
       if (r[0]) cfg[String(r[0]).trim()] = r[1];
     });
   }
-  ['umbralIdentificado', 'umbralRevisar', 'diasPagoVentana', 'pesoOtraEmpresa', 'vecinos'].forEach(function (k) {
+  ['umbralIdentificado', 'umbralRevisar', 'diasPagoVentana', 'pesoOtraEmpresa', 'vecinos', 'umbralFactura', 'umbralFacturaRevisar',
+   'diasAntes', 'diasDespues', 'cuentaProveedores'].forEach(function (k) {
     if (cfg[k] !== undefined && cfg[k] !== '') cfg[k] = mtNum(cfg[k]); else delete cfg[k];
   });
   cfg.usarPagosPorHacer = String(cfg.usarPagosPorHacer || 'SI').toUpperCase().indexOf('S') === 0;
+  if (cfg.buscarOtrasEmpresas !== undefined && cfg.buscarOtrasEmpresas !== '')
+    cfg.buscarOtrasEmpresas = String(cfg.buscarOtrasEmpresas).toUpperCase().indexOf('S') === 0;
+  else delete cfg.buscarOtrasEmpresas;
   return cfg;
 }
 
@@ -314,21 +334,22 @@ function leerCuentasBBDD_() {
   return m;
 }
 
-function guardarCuentaBancaria_(cuenta, empresa, titular, banco) {
+function guardarCuentaBancaria_(cuenta, empresa, titular, banco, rut) {
   if (!cuenta || !empresa) return;
   var sh = SpreadsheetApp.getActive().getSheetByName(HOJA.CUENTAS);
   if (!sh) return;
   var n = sh.getLastRow();
   if (n > 1) {
-    var datos = sh.getRange(2, 1, n - 1, 1).getValues();
+    var datos = sh.getRange(2, 1, n - 1, 5).getValues();
     for (var i = 0; i < datos.length; i++) {
       if (normCuenta_(datos[i][0]) === cuenta) {
         sh.getRange(i + 2, 2).setValue(empresa);
+        if (rut && !datos[i][4]) sh.getRange(i + 2, 5).setValue(rut);
         return;
       }
     }
   }
-  sh.appendRow(["'" + cuenta, empresa, titular || '', banco || '']);
+  sh.appendRow(["'" + cuenta, empresa, titular || '', banco || '', rut || '']);
 }
 
 var PALABRAS_GENERICAS_ = ['spa', 'ltda', 'sa', 'limitada', 'agricola', 'sociedad', 'inversiones', 'de', 'la', 'el', 'los', 'las', 'y'];
@@ -421,7 +442,7 @@ function procesarCartolas(archivos) {
     info.bloques.forEach(function (b, i) {
       var emp = (a.empresas || {})[i];
       if (!b.movimientos.length || !emp) return;
-      guardarCuentaBancaria_(b.cuenta, emp, b.titular, b.banco);
+      guardarCuentaBancaria_(b.cuenta, emp, b.titular, b.banco, b.rut);
       lotes.push({ nombre: a.nombre + (b.cuenta ? ' · cta ' + b.cuenta : ''), empresa: emp, movimientos: b.movimientos });
     });
   });
@@ -458,13 +479,16 @@ function procesarHojaCartola() {
         empresa = e;
       }
       if (!empresa) continue;
-      guardarCuentaBancaria_(b.cuenta, empresa, b.titular, b.banco);
+      guardarCuentaBancaria_(b.cuenta, empresa, b.titular, b.banco, b.rut);
       cuentas[b.cuenta] = empresa;
     }
+    if (sug.seguro) guardarCuentaBancaria_(b.cuenta, empresa, b.titular, b.banco, b.rut);
     lotes.push({ nombre: 'Hoja ' + HOJA.CARTOLA + (b.cuenta ? ' · cta ' + b.cuenta : ''), empresa: empresa, movimientos: b.movimientos });
   }
   if (!lotes.length) return;
-  ui.alert(textoResumen_(clasificarYEscribir_(lotes)));
+  var res = clasificarYEscribir_(lotes);
+  var rf = hayFacturas_() ? cruzarFacturas_() : null;
+  ui.alert(textoResumen_(res) + (rf ? '\n\n' + textoResumenFacturas_(rf) : ''));
 }
 
 function textoResumen_(res) {
@@ -675,6 +699,7 @@ function colorear_(sh, ini, n) {
 /** Al elegir/escribir una cuenta en CONCILIACION se completa el nombre y queda MANUAL + APROBAR. */
 function onEdit(e) {
   var sh = e.range.getSheet();
+  if (sh.getName() === HOJA.FACTURAS) { onEditFacturas_(e); return; }
   if (sh.getName() !== HOJA.CONCILIACION || e.range.getRow() < 2) return;
   var col = e.range.getColumn();
   var editables = [C['DETALLE 1'], C['C.COSTO'], C['GLOSA'], C['CUENTA CONTABLE'], C['NOMBRE CUENTA'],
@@ -764,6 +789,8 @@ function traspasarAFlujo() {
   var n = sh.getLastRow() - 1;
   if (n < 1) { ui.alert('No hay movimientos en ' + HOJA.CONCILIACION + '.'); return; }
   quitarFiltro();
+  // Antes de traspasar, aplicar los cruces con facturas confirmados (glosa, RUT, razón social)
+  if (hayFacturas_()) cruzarFacturas_();
   var datos = sh.getRange(2, 1, n, COLS.length).getValues();
 
   var aprobados = [], quedan = [], sinCuenta = 0;

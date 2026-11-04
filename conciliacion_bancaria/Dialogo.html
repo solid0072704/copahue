@@ -29,8 +29,10 @@
   </style>
 </head>
 <body>
-  <h3>Cartolas del período</h3>
-  <div class="muted">Suba una o más cartolas (Banco de Chile, Santander u otro formato con columnas Fecha / Detalle / Cargo / Abono). Formatos: .xls, .xlsx, .csv.</div>
+  <h3>Cartolas y facturas del período</h3>
+  <div class="muted">Suba las <b>cartolas</b> (CSV consolidado del Banco de Chile, Santander u otro formato con Fecha / Detalle / Cargo / Abono)
+    y, para cruzar los pagos a proveedores, el <b>Registro de Compras del SII</b> de cada empresa (RCV_COMPRA_REGISTRO_&lt;RUT&gt;_&lt;AAAAMM&gt;.csv).
+    Formatos: .csv, .xls, .xlsx.</div>
   <div id="zona" class="zona" style="margin-top:10px">
     <b>Arrastre aquí los archivos</b> o haga clic para elegirlos
     <input id="archivos" type="file" multiple accept=".xls,.xlsx,.xlsm,.csv,.txt" style="display:none">
@@ -70,19 +72,19 @@
             filas = wb.SheetNames.map(function (n) { return filasDe(wb.Sheets[n]); })
               .sort(function (a, b) { return b.length - a.length; })[0] || [];
           }
-          var item = { nombre: f.name, filas: filas, info: null };
+          var esRcv = esRegistroSii(filas);
+          var item = { nombre: f.name, filas: filas, info: null, tipo: esRcv ? 'RCV' : 'CARTOLA', empresas: {}, empresa: '' };
           cartolas.push(item);
           pintar();
           estado('Analizando ' + f.name + '…');
-          google.script.run
+          var run = google.script.run
             .withSuccessHandler(function (info) {
               item.info = info;
-              item.empresas = {};
-              info.bloques.forEach(function (b) { if (b.n) item.empresas[b.i] = b.empresaSugerida; });
+              if (!esRcv) info.bloques.forEach(function (b) { if (b.n) item.empresas[b.i] = b.empresaSugerida; });
               pintar(); estado('');
             })
-            .withFailureHandler(function (err) { item.error = err.message; pintar(); estado(''); })
-            .analizarCartola(f.name, filas);
+            .withFailureHandler(function (err) { item.error = err.message; pintar(); estado(''); });
+          if (esRcv) run.analizarRcv(f.name, filas); else run.analizarCartola(f.name, filas);
         } catch (err) {
           cartolas.push({ nombre: f.name, error: 'No se pudo leer el archivo: ' + err.message });
           pintar();
@@ -90,6 +92,15 @@
       };
       lector.readAsArrayBuffer(f);
     });
+  }
+
+  /** Registro de Compras/Ventas del SII: encabezado con "Folio" y "RUT Proveedor"/"RUT Cliente". */
+  function esRegistroSii(filas) {
+    for (var i = 0; i < Math.min(filas.length, 10); i++) {
+      var t = (filas[i] || []).join('|').toLowerCase();
+      if (t.indexOf('folio') >= 0 && /rut (proveedor|cliente)/.test(t)) return true;
+    }
+    return false;
   }
 
   function filasDe(hoja) {
@@ -143,6 +154,7 @@
         ' <a href="#" onclick="quitar(' + i + ');return false" class="muted">(quitar)</a></div>';
       if (c.error) html += '<div class="err">' + esc(c.error) + '</div>';
       else if (!c.info) html += '<div class="muted">Analizando…</div>';
+      else if (c.tipo === 'RCV') html += tarjetaRcv(c, i);
       else {
         var x = c.info;
         x.advertencias.forEach(function (a) { html += '<div class="warn">⚠ ' + esc(a) + '</div>'; });
@@ -171,42 +183,89 @@
     validar();
   }
 
+  function tarjetaRcv(c, i) {
+    var x = c.info, html = '<div class="muted">📄 Registro de ' + (x.libro === 'VENTA' ? 'Ventas' : 'Compras') + ' SII' +
+      (x.estadoRcv ? ' (' + esc(x.estadoRcv) + ')' : '') + '</div>';
+    x.advertencias.forEach(function (a) { html += '<div class="warn">⚠ ' + esc(a) + '</div>'; });
+    if (x.libro !== 'COMPRA' || !x.n) return html;
+    html += '<div>Empresa RUT <b>' + esc(x.rutEmpresa || '¿?') + '</b> · período ' + esc(x.periodo) + ' · ' + x.n + ' documentos de ' +
+      x.proveedores + ' proveedor(es) · $' + fmt(x.total) +
+      (x.nuevos < x.n ? ' · <b>' + x.nuevos + ' nuevos</b> (' + (x.n - x.nuevos) + ' ya cargados)' : '') + '</div>';
+    if (x.empresasAsignadas.length) {
+      html += '<div class="ok">✔ Se buscarán los pagos en: ' + x.empresasAsignadas.map(esc).join(', ') + '</div>';
+    } else {
+      html += '<label>Este RUT aún no tiene cuentas asociadas. ¿Desde qué empresa/cuenta se pagan estas facturas?</label>' +
+        '<select onchange="cartolas[' + i + '].empresa=this.value;validar()"><option value="">— elegir —</option>';
+      x.empresas.forEach(function (e) {
+        html += '<option' + (e === c.empresa ? ' selected' : '') + ' value="' + esc(e) + '">' + esc(e) + '</option>';
+      });
+      html += '</select><div class="muted">Al cargar la cartola de esa empresa, su RUT queda asociado solo.</div>' +
+        (c.empresa ? '' : '<div class="warn">⚠ Si no elige una empresa, este archivo no se procesará.</div>');
+    }
+    return html;
+  }
+
   function quitar(i) { cartolas.splice(i, 1); pintar(); }
 
   function asignadas(c) {
-    return c.info ? c.info.bloques.filter(function (b) { return b.n && c.empresas[b.i]; }) : [];
+    return c.info && c.tipo === 'CARTOLA' ? c.info.bloques.filter(function (b) { return b.n && c.empresas[b.i]; }) : [];
+  }
+
+  function rcvListo(c) {
+    return !!(c.tipo === 'RCV' && c.info && c.info.libro === 'COMPRA' && c.info.n > 0 && (c.info.empresasAsignadas.length || c.empresa));
   }
 
   function validar() {
     var listas = cartolas.every(function (c) { return c.info || c.error; });
     var n = cartolas.reduce(function (s, c) { return s + asignadas(c).reduce(function (t, b) { return t + b.n; }, 0); }, 0);
-    document.getElementById('procesar').disabled = !(listas && n > 0);
-    document.getElementById('procesar').textContent = n ? 'Clasificar ' + n + ' movimientos' : 'Clasificar movimientos';
+    var nf = cartolas.reduce(function (s, c) { return s + (rcvListo(c) ? c.info.n : 0); }, 0);
+    document.getElementById('procesar').disabled = !(listas && (n > 0 || nf > 0));
+    var partes = [];
+    if (n) partes.push(n + (n === 1 ? ' movimiento' : ' movimientos'));
+    if (nf) partes.push(nf + (nf === 1 ? ' factura' : ' facturas'));
+    document.getElementById('procesar').textContent = partes.length ? 'Procesar ' + partes.join(' y ') : 'Procesar';
   }
 
   function procesar() {
     var btn = document.getElementById('procesar');
     btn.disabled = true;
-    estado('Clasificando contra la historia… (puede tardar unos segundos)');
-    var payload = cartolas.filter(function (c) { return asignadas(c).length; })
-      .map(function (c) { return { nombre: c.nombre, filas: c.filas, empresas: c.empresas }; });
+    estado('Clasificando y cruzando con la historia… (puede tardar unos segundos)');
+    var payload = {
+      cartolas: cartolas.filter(function (c) { return asignadas(c).length; })
+        .map(function (c) { return { nombre: c.nombre, filas: c.filas, empresas: c.empresas }; }),
+      rcv: cartolas.filter(rcvListo).map(function (c) { return { nombre: c.nombre, filas: c.filas, empresa: c.empresa || '' }; })
+    };
     google.script.run
       .withSuccessHandler(function (r) {
         estado('');
-        var e = r.porEstado;
         document.getElementById('lista').innerHTML = '';
         cartolas = [];
-        document.getElementById('resultado').innerHTML =
-          '<div class="tarjeta"><div class="tit">Listo: ' + r.total + ' movimientos en la hoja CONCILIACION</div><table>' +
-          '<tr><td style="background:#d9ead3">IDENTIFICADO</td><td>' + e['IDENTIFICADO'] + '</td><td class="muted">aprobados automáticamente</td></tr>' +
-          '<tr><td style="background:#fff2cc">POR REVISAR</td><td>' + e['POR REVISAR'] + '</td><td class="muted">sugerencia a confirmar</td></tr>' +
-          '<tr><td style="background:#f4cccc">PENDIENTE</td><td>' + e['PENDIENTE'] + '</td><td class="muted">clasificar manualmente</td></tr>' +
-          '<tr><td style="background:#d9d9d9">YA EN FLUJO</td><td>' + e['YA EN FLUJO'] + '</td><td class="muted">no se volverán a cargar</td></tr>' +
-          '</table><p class="muted">Complete los pendientes en CONCILIACION y luego use el menú <b>3. Traspasar aprobados a FLUJO</b>.</p>' +
+        var html = '<div class="tarjeta">';
+        if (r.cartolas) {
+          var e = r.cartolas.porEstado;
+          html += '<div class="tit">' + r.cartolas.total + ' movimientos en la hoja CONCILIACION</div><table>' +
+            '<tr><td style="background:#d9ead3">IDENTIFICADO</td><td>' + e['IDENTIFICADO'] + '</td><td class="muted">aprobados automáticamente</td></tr>' +
+            '<tr><td style="background:#fff2cc">POR REVISAR</td><td>' + e['POR REVISAR'] + '</td><td class="muted">sugerencia a confirmar</td></tr>' +
+            '<tr><td style="background:#f4cccc">PENDIENTE</td><td>' + e['PENDIENTE'] + '</td><td class="muted">clasificar manualmente</td></tr>' +
+            '<tr><td style="background:#d9d9d9">YA EN FLUJO</td><td>' + e['YA EN FLUJO'] + '</td><td class="muted">no se volverán a cargar</td></tr></table>';
+        }
+        if (r.facturas) {
+          var f = r.facturas.porEstado;
+          html += '<div class="tit" style="margin-top:10px">Facturas SII: ' + r.facturas.total + ' documentos en FACTURAS COMPRA' +
+            (r.carga ? ' (' + r.carga.nuevos + ' nuevos' + (r.carga.repetidos ? ', ' + r.carga.repetidos + ' ya estaban' : '') + ')' : '') + '</div><table>' +
+            '<tr><td style="background:#d9ead3">PAGADAS</td><td>' + ((f['CONCILIADA'] || 0) + (f['CONFIRMADA'] || 0)) + '</td><td class="muted">pago encontrado; ' +
+              r.facturas.aplicados + ' movimientos de CONCILIACION completados con la factura</td></tr>' +
+            '<tr><td style="background:#d9d9d9">YA REGISTRADAS</td><td>' + (f['YA REGISTRADA'] || 0) + '</td><td class="muted">pago ya en FLUJO con el folio en la glosa</td></tr>' +
+            '<tr><td style="background:#fff2cc">POR REVISAR</td><td>' + (f['POR REVISAR'] || 0) + '</td><td class="muted">pago propuesto: marque CONFIRMAR</td></tr>' +
+            '<tr><td style="background:#f4cccc">SIN PAGO</td><td>' + (f['SIN PAGO'] || 0) + '</td><td class="muted">no se encontró la transferencia</td></tr></table>';
+          if (r.carga) r.carga.advertencias.forEach(function (a) { html += '<div class="warn">⚠ ' + esc(a) + '</div>'; });
+        }
+        html += '<p class="muted">Complete los pendientes en CONCILIACION, confirme los pagos propuestos en FACTURAS COMPRA y luego use el menú <b>3. Traspasar aprobados a FLUJO</b>.</p>' +
           '<button onclick="google.script.host.close()">Cerrar</button></div>';
+        document.getElementById('resultado').innerHTML = html;
       })
       .withFailureHandler(function (err) { estado(''); btn.disabled = false; alert('Error: ' + err.message); })
-      .procesarCartolas(payload);
+      .procesarArchivos(payload);
   }
 </script>
 </body>

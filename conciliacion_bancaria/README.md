@@ -52,6 +52,53 @@ Con las cartolas reales del Banco de Chile, simulando el aplicativo completo:
 
 Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas nuevas que transfieren, proveedores nuevos) y movimientos genéricos como `Dep.cheq.otros Bancos`, donde el proyecto o la parcela no se deducen del texto. A medida que se traspasan meses a `FLUJO`, y si se agregan **REGLAS** para los casos repetitivos, el porcentaje identificado sube. Puede volver a medirse cuando quiera desde el menú *Evaluar precisión del modelo*.
 
+## Facturas del SII y pagos a proveedores
+
+Junto con las cartolas puede subir el **Registro de Compras del SII** de cada empresa
+(`RCV_COMPRA_REGISTRO_<RUT>_<AAAAMM>.csv`, tal como se descarga del SII). El aplicativo:
+
+1. Lee las facturas, notas de crédito y otros documentos, y los acumula en la hoja **FACTURAS COMPRA** sin duplicarlos.
+2. Identifica la empresa por el RUT del nombre del archivo. Cada vez que se carga una cartola, el RUT del titular queda asociado a sus cuentas en `CUENTAS BANCARIAS`. Si el RUT todavía no tiene cuentas, la pantalla pregunta desde qué empresa se pagan.
+3. Busca, para cada documento, la transferencia que lo paga entre los cargos de `CONCILIACION` y de `FLUJO`:
+   - **monto exacto**, una factura con una transferencia;
+   - **varias facturas en un solo pago** del mismo proveedor, descontando las notas de crédito;
+   - **una factura en varias transferencias** (cuotas o abonos);
+   - **nombre del beneficiario**: el banco lo trunca, por ejemplo "Traspaso A:sociedad De Servicios Agropec";
+   - **RUT** del proveedor, si aparece en el detalle;
+   - **alias aprendidos de la historia**: "Traspaso A:cerda Sofia" paga a DISEÑO GRÁFICO FOLLOWUS, "Pago:eds Frutillar" a ESMAX RED, "Pac Movistar" a Telefónica;
+   - **fecha**: de 30 días antes a 180 días después de la factura, prefiriendo el pago más cercano;
+   - si no lo encuentra en la empresa, lo busca en **las demás empresas del grupo** y lo deja POR REVISAR.
+4. Muestra en FACTURAS COMPRA, para cada factura, la transferencia propuesta: fecha, cuenta, detalle, monto, ubicación (`CONCILIACION fila N` o `FLUJO fila N`) y los otros documentos que se pagaron junto con ella.
+
+| Estado en FACTURAS COMPRA | Significado |
+|---|---|
+| 🟩 CONCILIADA | Pago encontrado con alta confianza (≥ 85 %). Se aplica solo al movimiento. |
+| 🟦 CONFIRMADA | El analista marcó **CONFIRMAR**. |
+| ⬜ YA REGISTRADA | El pago ya está en FLUJO y su glosa menciona el folio. |
+| 🟨 POR REVISAR | Hay una propuesta: revísela y marque CONFIRMAR. |
+| 🟥 SIN PAGO | No se encontró la transferencia (factura por pagar). Si hay transferencias al mismo proveedor por otros montos, se indican. |
+
+Al aplicarse una factura, el movimiento de `CONCILIACION` queda IDENTIFICADO con:
+- GLOSA **"Pago FC.69 COMPRAVENTA FRESIA SPA"** (con varias facturas: "Pago FC.304, FC.305 …");
+- RUT y RAZÓN SOCIAL del proveedor;
+- cuenta 2102001 Proveedores Nacionales (parámetro `cuentaProveedores` en CONFIG).
+
+Si la fila la había editado el analista (MANUAL), solo se completan los campos vacíos. En los pagos que ya están en FLUJO se completan el RUT y la razón social si estaban vacíos.
+
+Si una propuesta está mal, **desmarque CONFIRMAR**: el aplicativo deshace los datos que había puesto en `CONCILIACION`, recuerda ese movimiento como rechazado y, en el siguiente cruce (menú **4**), busca otro.
+
+**Prueba con su historia.** Con los 139 documentos de la hoja `COMPRAS SII` cruzados contra FLUJO, sin usar las glosas y con alias aprendidos solo de meses anteriores:
+
+| Estado | Documentos |
+|---|---|
+| CONCILIADA | 66 |
+| POR REVISAR | 30 |
+| SIN PAGO | 42 |
+
+En 24 de las 66 conciliadas se puede verificar el resultado, porque la glosa que puso el analista menciona el folio, y 22 coinciden. Los 2 casos que no coinciden son facturas mensuales del mismo monto (Laudus), donde la propia historia es ambigua sobre qué mes pagó cuál.
+
+En la simulación completa (cartolas de TPDV de enero y febrero de 2026 tratadas como nuevas, más el RCV), 61 movimientos de CONCILIACION quedaron completados con la factura.
+
 ## Instalación (una sola vez)
 
 1. **Preparar la planilla en Google Sheets**
@@ -60,7 +107,7 @@ Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas
    - Deben existir las hojas `FLUJO` (obligatoria), `BBDD` (plan de cuentas y cuentas de provisión), `PAGOS POR HACER` y `base flujo caja` (opcionales, se usan si están).
 2. **Crear el proyecto Apps Script**
    - En la planilla: *Extensiones → Apps Script*.
-   - Cree los archivos con el mismo nombre y copie su contenido: `Motor.gs`, `Cartola.gs`, `Codigo.gs` (puede reemplazar el `Código.gs` inicial) y un archivo HTML llamado `Dialogo` (con el contenido de `Dialogo.html`).
+   - Cree los archivos con el mismo nombre y copie su contenido: `Motor.gs`, `Cartola.gs`, `Sii.gs`, `Facturas.gs`, `Codigo.gs` (puede reemplazar el `Código.gs` inicial) y un archivo HTML llamado `Dialogo` (con el contenido de `Dialogo.html`).
    - En *Configuración del proyecto* marque "Mostrar el archivo de manifiesto appsscript.json" y reemplácelo por el de esta carpeta (zona horaria `America/Santiago`, la misma que debe tener la planilla en *Archivo → Configuración*).
    - Guarde y recargue la planilla. Aparece el menú **🏦 Conciliación bancaria**.
    - La primera vez Google pedirá autorización. El script solo accede a esta planilla.
@@ -70,7 +117,7 @@ Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas
 
 ## Uso mensual
 
-1. **🏦 → 1. Cargar cartolas (archivos)…** y arrastre las cartolas del período.
+1. **🏦 → 1. Cargar cartolas y facturas SII (archivos)…** y arrastre las cartolas del período y, si quiere cruzar pagos a proveedores, los RCV de compras de cada empresa. La pantalla reconoce sola cada tipo de archivo.
    - El archivo típico es el **CSV consolidado del Banco de Chile** (`Consolidado_cuentas_DD-MM-AAAA-DD-MM-AAAA.csv`): separado por `;`, una línea `Titular (RUT) cta:NNNN` y su fila de encabezados por cada cuenta, y montos con ceros a la izquierda (`0000000000000025473339`). El aplicativo lo separa por cuenta y omite las que no tienen movimientos.
    - Para cada cuenta se sugiere la empresa como aparece en `FLUJO`. La sugerencia sale de la hoja `CUENTAS BANCARIAS`, de la tabla *Cta. Provisión de Fondos* de `BBDD` (p.ej. `886-05140-01 → Octay`) o del nombre del titular. Confírmela la primera vez; queda guardada y el mes siguiente sale con ✔.
    - Si una cuenta queda en "omitir", no se procesa.
@@ -79,15 +126,17 @@ Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas
    - Al elegir o escribir una `CUENTA CONTABLE` (hay lista desplegable), el `NOMBRE CUENTA` se completa solo y la fila pasa a **MANUAL** con `APROBAR` marcado.
    - Para los POR REVISAR que estén bien, basta con marcar `APROBAR`.
    - Si un caso se repite todos los meses, use **Crear regla desde la fila seleccionada**.
-3. **3. Traspasar aprobados a FLUJO**. Agrega las filas aprobadas al final de `FLUJO` con todas sus columnas: `MES`, `CONCEPTO`, `DEBE`, `HABER`, `categoria 1`, `Flujo`, `categoria 4`, `mes año`, `categoria 2`, `categoria 3`. Lo no aprobado queda en `CONCILIACION` para después.
+3. En **FACTURAS COMPRA**, confirme las propuestas POR REVISAR. El menú **4. Cruzar facturas SII con movimientos** vuelve a cruzar cuando quiera, por ejemplo al cargar más cartolas; las facturas SIN PAGO se vuelven a buscar cada vez.
+4. **3. Traspasar aprobados a FLUJO**. Antes de traspasar aplica los cruces confirmados. Agrega las filas aprobadas al final de `FLUJO` con todas sus columnas: `MES`, `CONCEPTO`, `DEBE`, `HABER`, `categoria 1`, `Flujo`, `categoria 4`, `mes año`, `categoria 2`, `categoria 3`. Lo no aprobado queda en `CONCILIACION` para después.
 
 ## Hojas de configuración
 
 | Hoja | Para qué |
 |---|---|
-| `CONFIG` | Umbrales de confianza (`umbralIdentificado` 0,80 y `umbralRevisar` 0,55), uso de `PAGOS POR HACER`, peso de otras empresas y cantidad de vecinos. |
+| `CONFIG` | Umbrales de confianza (`umbralIdentificado` 0,80 y `umbralRevisar` 0,55), uso de `PAGOS POR HACER`, peso de otras empresas y cantidad de vecinos. Para facturas: `umbralFactura` (0,85), `umbralFacturaRevisar` (0,50), `diasAntes` (30), `diasDespues` (180), `buscarOtrasEmpresas` (SI) y `cuentaProveedores` (2102001). Si la hoja ya existía, los parámetros nuevos se agregan solos. |
 | `REGLAS` | Reglas fijas con prioridad sobre el modelo: empresa (opcional), texto o `/regex/` del detalle, tipo CARGO/ABONO, rango de monto y la clasificación a aplicar. |
-| `CUENTAS BANCARIAS` | N° de cuenta → EMPRESA. Se llena sola al confirmar cada cartola. |
+| `CUENTAS BANCARIAS` | N° de cuenta → EMPRESA y RUT del titular. Se llena sola al confirmar cada cartola; el RUT dice en qué cuentas buscar el pago de las facturas de cada empresa. |
+| `FACTURAS COMPRA` | Documentos del SII cargados y el pago encontrado para cada uno (ver *Facturas del SII*). |
 
 ## Archivos
 
@@ -95,10 +144,13 @@ Los pendientes son sobre todo contrapartes que nunca habían aparecido (personas
 |---|---|
 | `Motor.gs` | Motor predictivo, reglas y cruce con pagos (JavaScript puro, probado en Node). |
 | `Cartola.gs` | Lectura de cartolas: varias cuentas por archivo, encabezados Banco de Chile/Santander/genéricos, montos chilenos, fechas dd/mm/aaaa y seriales de Excel, reparación de tildes mal codificadas. |
+| `Sii.gs` | Lectura del RCV del SII y motor de cruce facturas ↔ pagos (JavaScript puro, probado en Node). |
+| `Facturas.gs` | Hoja FACTURAS COMPRA, carga sin duplicados, cruce, confirmación y rechazo, y aplicación a CONCILIACION/FLUJO. |
 | `Codigo.gs` | Menú, hojas, clasificación, edición manual, traspaso a FLUJO y evaluación. |
 | `Dialogo.html` | Pantalla de carga de archivos. Lee xls/xlsx con SheetJS y csv con `;` `,` o tabulador. |
 | `test/backtest.js` | Mide la precisión mes a mes: `node test/backtest.js flujo.json 6` |
 | `test/prueba_cartola.js` | Prueba completa con una cartola: `node test/prueba_cartola.js flujo.json cartola.json [AAAA-MM]` |
-| `test/simulacion.js` | Simula el aplicativo completo con una planilla falsa (cargar → editar → traspasar → recargar): `node test/simulacion.js flujo.json cartola.json bbdd.json [AAAA-MM]` |
+| `test/prueba_facturas.js` | Mide el cruce de facturas contra la historia: `node test/prueba_facturas.js flujo.json RCV_COMPRA_REGISTRO_<RUT>_<AAAAMM>.csv "EMPRESA - BANCO" [AAAA-MM-DD]` |
+| `test/simulacion.js` | Simula el aplicativo completo con una planilla falsa (cargar → editar → traspasar → recargar): `[RCV=rcv.csv] node test/simulacion.js flujo.json cartola.csv bbdd.json [AAAA-MM]` (la cartola también puede ser `.json`) |
 
 Los `.json` de prueba son las hojas exportadas como arreglos de filas. No se incluyen en el repositorio porque contienen datos de la empresa.
