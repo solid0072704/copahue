@@ -1,6 +1,7 @@
 # Datos de los agentes (contienen información de tus leads: no se suben al repositorio)
 data/*.db
 data/*.db-*
+data/lista_precios.csv
 # Credenciales
 .env
 .streamlit/secrets.toml
