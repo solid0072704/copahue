@@ -1,0 +1,82 @@
+# Ejecuta el agente de trading cada día hábil tras el cierre de Wall Street (16:00 ET = 21:00 UTC).
+# Sin que tengas que hacer nada: descarga precios, decide, guarda la cartera y te envía el informe.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Variables: TRADING_ACTIVO = true   (sin esta variable el flujo no corre ni consume minutos)
+#      Opcionales: TRADING_MODO (simulado | alpaca_papel | alpaca_real), CAPITAL_INICIAL, META_USD, UNIVERSO
+#   2. Secrets:   GMAIL_USER, GMAIL_APP_PASSWORD (para recibir el informe diario)
+#                 ALPACA_API_KEY, ALPACA_SECRET_KEY (solo si TRADING_MODO empieza con alpaca)
+#                 CONFIRMO_DINERO_REAL = true (solo para alpaca_real; sin esto se usa la cuenta de práctica)
+name: Agente de trading
+
+on:
+  schedule:
+    - cron: "30 21 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      backtest:
+        description: "Solo ejecutar la prueba histórica (no opera)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: agente-trading
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  trading:
+    if: vars.TRADING_ACTIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # La cartera y la caché de precios se guardan entre ejecuciones en la caché de Actions.
+      - name: Recuperar la cartera
+        uses: actions/cache/restore@v4
+        with:
+          path: data/trading
+          key: agente-trading-${{ github.run_id }}
+          restore-keys: agente-trading-
+
+      - name: Ejecutar el agente
+        env:
+          TRADING_MODO: ${{ vars.TRADING_MODO }}
+          CAPITAL_INICIAL: ${{ vars.CAPITAL_INICIAL }}
+          META_USD: ${{ vars.META_USD }}
+          UNIVERSO: ${{ vars.UNIVERSO }}
+          MAX_POSICIONES: ${{ vars.MAX_POSICIONES }}
+          AVISAR_SOLO_CON_OPERACIONES: ${{ vars.AVISAR_SOLO_CON_OPERACIONES }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          CONFIRMO_DINERO_REAL: ${{ secrets.CONFIRMO_DINERO_REAL }}
+        run: python run_trading.py ${{ inputs.backtest && '--backtest' || '' }}
+
+      - name: Guardar la cartera
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/trading
+          key: agente-trading-${{ github.run_id }}
+
+      - name: Publicar la cartera como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cartera-trading
+          path: data/trading/cartera.json
+          if-no-files-found: ignore
+          retention-days: 90

@@ -5,6 +5,7 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `tablero_trading.py` | **Agente de trading automático** que elige ETFs por momentum, controla el riesgo y opera solo cada día (cartera simulada por defecto; Alpaca opcional) | `streamlit run tablero_trading.py` |
 
 ---
 
@@ -143,3 +144,64 @@ agentes_ebook/
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
 ```
+
+
+---
+
+## 📈 Agente de trading automático
+
+Un agente que **opera solo cada día hábil** sobre una cartera de ETFs y te manda el informe por correo.
+Por defecto trabaja con **dinero ficticio** (cartera simulada): así ves cómo se comporta durante semanas
+antes de decidir si conectarlo a una cuenta real.
+
+> ⚠️ **Ningún agente puede garantizar una ganancia.** Los mercados suben y bajan, y esta estrategia puede
+> perder dinero. La prueba histórica (`--backtest`) te dice cuántas veces en el pasado habría alcanzado tu meta,
+> no lo que pasará mañana. Nunca inviertas dinero que no puedas permitirte perder.
+
+### Qué hace
+
+| Paso | Regla |
+|---|---|
+| 1. Mide | Cada ~mes ordena los ETFs del universo (`SPY, QQQ, IWM, EFA, EEM, GLD, TLT, IEF`) por su rentabilidad de los últimos 6 meses. |
+| 2. Elige | Compra solo los **3 mejores** que además estén **por encima de su media de 200 ruedas** y con rentabilidad positiva. Si ninguno cumple, se queda en efectivo. |
+| 3. Pesa | Da más peso a los activos más tranquilos (peso inverso a la volatilidad) y deja un 2 % de efectivo. |
+| 4. Protege | Cada día revisa un **stop-loss del 8 %** por posición y, si la cartera cae **15 % desde su máximo**, vende todo y espera un mes. |
+| 5. Avisa | Te envía por Gmail el informe diario: patrimonio, ganancia frente a la meta, posiciones, operaciones y ranking. |
+
+Las órdenes se deciden al cierre y se ejecutan en la **apertura siguiente**, tanto en el backtest como en vivo,
+para que lo que ves en la prueba histórica sea lo que hará el agente.
+
+### Puesta en marcha
+
+```bash
+pip install -r requirements.txt
+python run_trading.py --demo        # sin internet: backtest y ciclo con precios ficticios
+python run_trading.py --backtest    # prueba histórica con precios reales (Stooq / Yahoo)
+python run_trading.py               # un ciclo real: decide y guarda data/trading/cartera.json
+streamlit run tablero_trading.py    # tablero con cartera, señal, operaciones y backtest
+```
+
+En `.env` ajusta `CAPITAL_INICIAL`, `META_USD` (la ganancia que quieres lograr, por defecto 1.000 USD),
+`UNIVERSO`, `MAX_POSICIONES`, `STOP_LOSS_PCT` y `MAX_CAIDA_CARTERA_PCT`.
+
+### Para que corra solo (GitHub Actions)
+
+`.github/workflows/agente-trading.yml` ejecuta el agente **cada día hábil a las 21:30 UTC** (tras el cierre de Wall Street).
+En *Settings → Secrets and variables → Actions*:
+
+1. Variable `TRADING_ACTIVO = true` (sin ella no corre ni consume minutos).
+2. Secrets `GMAIL_USER` y `GMAIL_APP_PASSWORD` para recibir el informe (los mismos del tablero del ebook).
+3. Opcional: variables `TRADING_MODO`, `CAPITAL_INICIAL`, `META_USD`, `UNIVERSO`, `AVISAR_SOLO_CON_OPERACIONES`.
+
+La cartera se guarda entre ejecuciones en la caché de Actions y, además, se publica como artefacto `cartera-trading`.
+
+### Modos de operación
+
+| `TRADING_MODO` | Qué pasa |
+|---|---|
+| `simulado` (defecto) | Cartera ficticia en `data/trading/cartera.json`. Sin broker, sin riesgo. |
+| `alpaca_papel` | Cuenta de práctica de [Alpaca](https://alpaca.markets) (dinero ficticio, mercado real). Necesita `ALPACA_API_KEY` y `ALPACA_SECRET_KEY`. |
+| `alpaca_real` | Cuenta real de Alpaca. **Solo opera si además `CONFIRMO_DINERO_REAL=true`**; si falta, usa la cuenta de práctica. |
+
+Recomendación: deja el modo `simulado` o `alpaca_papel` al menos 2-3 meses, compara el informe con el backtest
+y recién entonces decide si pasar a dinero real, empezando con un capital pequeño.

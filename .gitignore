@@ -1,6 +1,8 @@
 # Datos de los agentes (contienen información de tus leads: no se suben al repositorio)
 data/*.db
 data/*.db-*
+# Cartera y precios del agente de trading
+data/trading/
 # Credenciales
 .env
 .streamlit/secrets.toml
