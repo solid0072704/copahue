@@ -5,6 +5,7 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `agente_cfo_sudamerica.md` | **Agente de alertas de empleo**: busca a diario ofertas de CFO en inmobiliarias y constructoras de Sudamérica y te las envía por correo | Tarea programada en la nube de Claude Code (ver el archivo) |
 
 ---
 
