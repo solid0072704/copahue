@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass, field
 
 from .cartera import Cartera
-from .datos import cargar_universo, precios_sinteticos, tabla
+from .datos import cargar_universo, precios_sinteticos, tabla, tipo_cambio_usdclp
 from .informe import asunto_informe, construir_informe, enviar_informe
 from .motor import decidir, paso
 
@@ -18,12 +18,16 @@ class ResultadoCiclo:
     ganancia: float = 0.0
     operaciones: list = field(default_factory=list)
     pendiente: dict = field(default_factory=dict)
+    aporte: dict = field(default_factory=dict)
+    usdclp: float = 0.0
     informe: str = ""
     aviso: str = ""
     errores: list = field(default_factory=list)
 
     def texto(self):
         partes = [f"datos al {self.fecha or '-'}", f"patrimonio {self.patrimonio:,.2f} USD", f"ganancia {self.ganancia:+,.2f} USD", f"{len(self.operaciones)} operaciones"]
+        if self.aporte:
+            partes.append(f"aporte de {self.aporte['importe']:,.2f} USD")
         if self.pendiente:
             partes.append("órdenes pendientes para la apertura")
         if self.aviso:
@@ -41,9 +45,13 @@ def _broker(cfg):
     return BrokerAlpaca(cfg)
 
 
-def ejecutar_ciclo(cfg, precios=None, notificar=True, hoy=None):
+def ejecutar_ciclo(cfg, precios=None, notificar=True, hoy=None, usdclp=None):
     """Procesa todas las ruedas nuevas desde la última ejecución y guarda la cartera."""
     resultado = ResultadoCiclo()
+    if usdclp is None:
+        usdclp, _ = tipo_cambio_usdclp(cfg.ruta_tipo_cambio, cfg.usdclp, hoy) if cfg.aporte_mensual_clp or cfg.meta_mensual_clp else (cfg.usdclp, "")
+    resultado.usdclp = usdclp
+    aporte_usd = cfg.aporte_mensual_clp / usdclp if cfg.aporte_mensual_clp and usdclp else 0.0
     for problema in cfg.validar():
         resultado.errores.append(problema)
     cartera = Cartera.abrir(cfg)
@@ -71,9 +79,12 @@ def ejecutar_ciclo(cfg, precios=None, notificar=True, hoy=None):
     nuevas = cierres.index[cierres.index > cartera.ultima_fecha] if cartera.ultima_fecha else cierres.index[-1:]
     try:
         if broker is None:
+            aportes_antes = len(cartera.aportes)
             for fecha in nuevas:
-                hechas, _ = paso(cartera, aperturas, cierres, fecha, cfg)
+                hechas, _ = paso(cartera, aperturas, cierres, fecha, cfg, aporte_usd=aporte_usd, clp=cfg.aporte_mensual_clp, usdclp=usdclp)
                 operaciones_hoy.extend(hechas)
+            if len(cartera.aportes) > aportes_antes:
+                resultado.aporte = cartera.aportes[-1]
         else:
             broker.sincronizar(cartera)
             if len(nuevas):
@@ -92,17 +103,17 @@ def ejecutar_ciclo(cfg, precios=None, notificar=True, hoy=None):
     precios_hoy = {t: float(v) for t, v in cierres.loc[ultimo].dropna().items()}
     resultado.fecha = cartera.ultima_fecha
     resultado.patrimonio = cartera.patrimonio(precios_hoy)
-    resultado.ganancia = resultado.patrimonio - cartera.capital_inicial
+    resultado.ganancia = resultado.patrimonio - cartera.capital_aportado
     resultado.operaciones = operaciones_hoy
     resultado.pendiente = cartera.pendiente
     nombre = broker.nombre if broker else "cartera simulada (dinero ficticio)"
-    resultado.informe = construir_informe(cartera, precios_hoy, cfg, operaciones_hoy, cartera.pendiente, fallidos, nombre)
+    resultado.informe = construir_informe(cartera, precios_hoy, cfg, operaciones_hoy, cartera.pendiente, fallidos, nombre, usdclp=usdclp, aporte=resultado.aporte)
     if resultado.errores:
         resultado.informe += "\n\nErrores:\n" + "\n".join(f"  · {e}" for e in resultado.errores)
 
     if notificar and cfg.gmail_configurado and (operaciones_hoy or cartera.pendiente or resultado.errores or not cfg.avisar_solo_con_operaciones):
         try:
-            resultado.aviso = enviar_informe(cfg, asunto_informe(cartera, precios_hoy, operaciones_hoy), resultado.informe)
+            resultado.aviso = enviar_informe(cfg, asunto_informe(cartera, precios_hoy, operaciones_hoy, usdclp if (cfg.aporte_mensual_clp or cfg.meta_mensual_clp) else None), resultado.informe)
         except Exception as e:
             resultado.errores.append(f"No se pudo enviar el informe: {e}")
     return resultado
@@ -111,4 +122,4 @@ def ejecutar_ciclo(cfg, precios=None, notificar=True, hoy=None):
 def preparar_demo(cfg, dias=900):
     """Corre el agente sobre precios ficticios (sin internet ni broker) para ver cómo funciona."""
     precios = precios_sinteticos(cfg.universo, dias=dias)
-    return ejecutar_ciclo(cfg, precios=precios, notificar=False)
+    return ejecutar_ciclo(cfg, precios=precios, notificar=False, usdclp=cfg.usdclp)

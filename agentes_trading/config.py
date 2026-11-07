@@ -32,6 +32,12 @@ class ConfigTrading:
     # --- Capital y objetivo ---
     capital_inicial: float = 10_000.0
     meta_usd: float = 1_000.0
+    # Plan de aportes en pesos chilenos: cada mes el agente suma este importe a la cartera simulada
+    # (en Alpaca los aportes son tus depósitos reales). La meta es la renta mensual que quieres lograr.
+    aporte_mensual_clp: float = 0.0
+    meta_mensual_clp: float = 0.0
+    tasa_retiro: float = 0.04        # renta anual "segura" que se puede retirar del capital (regla del 4%)
+    usdclp: float = 950.0            # tipo de cambio de respaldo si no se puede consultar mindicador.cl
 
     # --- Estrategia (momentum con filtro de tendencia) ---
     universo: list = field(default_factory=lambda: UNIVERSO_DEFECTO.split(","))
@@ -73,6 +79,10 @@ class ConfigTrading:
             alpaca_secret=_env("ALPACA_SECRET_KEY"),
             capital_inicial=_env_float("CAPITAL_INICIAL", 10_000.0),
             meta_usd=_env_float("META_USD", 1_000.0),
+            aporte_mensual_clp=_env_float("APORTE_MENSUAL_CLP", 0.0),
+            meta_mensual_clp=_env_float("META_MENSUAL_CLP", 0.0),
+            tasa_retiro=_env_float("TASA_RETIRO", 0.04),
+            usdclp=_env_float("USDCLP", 950.0),
             universo=_env_lista("UNIVERSO", UNIVERSO_DEFECTO),
             referencia=_env("REFERENCIA", "SPY"),
             max_posiciones=_env_int("MAX_POSICIONES", 3),
@@ -108,6 +118,10 @@ class ConfigTrading:
     @property
     def alpaca_configurado(self):
         return bool(self.alpaca_key and self.alpaca_secret)
+
+    @property
+    def ruta_tipo_cambio(self):
+        return os.path.join(self.ruta_datos, "usdclp.json")
 
     @property
     def ruta_cartera(self):

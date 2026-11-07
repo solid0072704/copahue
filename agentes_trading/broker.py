@@ -112,14 +112,14 @@ class BrokerAlpaca:
                 if objetivo.get(t, 0.0) == 0:
                     self.cerrar_posicion(t)
                     enviadas.append(self._anotar(cartera, fecha, t, "venta", pos["cantidad"], precios.get(t, 0), "rebalanceo: sale de la cartera"))
-                elif exceso > max(25.0, 0.01 * patrimonio):
+                elif exceso > max(5.0, 0.01 * patrimonio):
                     cantidad = exceso / precios[t]
                     self.vender(t, cantidad)
                     enviadas.append(self._anotar(cartera, fecha, t, "venta", cantidad, precios[t], "rebalanceo: reduce peso"))
             for t, peso in objetivo.items():
                 valor = cartera.posiciones.get(t, {"cantidad": 0})["cantidad"] * precios.get(t, 0)
                 falta = peso * patrimonio - valor
-                if falta > max(25.0, 0.01 * patrimonio):
+                if falta > max(5.0, 0.01 * patrimonio):
                     self.comprar(t, falta)
                     enviadas.append(self._anotar(cartera, fecha, t, "compra", falta / precios[t] if precios.get(t) else 0, precios.get(t, 0), "rebalanceo: entra o sube peso"))
         return enviadas

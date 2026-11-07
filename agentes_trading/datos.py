@@ -1,6 +1,7 @@
 """Precios diarios: descarga (Stooq, con respaldo en Yahoo), caché local y datos sintéticos."""
 
 import io
+import json
 import logging
 import os
 from datetime import date, timedelta
@@ -150,3 +151,36 @@ def precios_sinteticos(tickers, dias=1500, semilla=7, inicio="2019-01-01"):
             pd.DataFrame({"Open": open_, "High": high, "Low": low, "Close": close, "Volume": volumen}, index=fechas)
         )
     return precios
+
+
+def descargar_usdclp(timeout=20):
+    """Dólar observado del Banco Central de Chile vía mindicador.cl (sin clave)."""
+    r = requests.get("https://mindicador.cl/api/dolar", timeout=timeout, headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    serie = r.json()["serie"]
+    return float(serie[0]["valor"]), serie[0]["fecha"][:10]
+
+
+def tipo_cambio_usdclp(ruta_archivo, defecto=950.0, hoy=None):
+    """Devuelve (USD/CLP, fecha). Usa la caché del día; si no hay red, la última guardada o el valor por defecto."""
+    hoy = str(hoy or date.today())[:10]
+    cache = None
+    if os.path.exists(ruta_archivo):
+        try:
+            with open(ruta_archivo, encoding="utf-8") as f:
+                cache = json.load(f)
+            if cache.get("consultado") == hoy:
+                return float(cache["valor"]), cache["fecha"]
+        except Exception:
+            cache = None
+    try:
+        valor, fecha = descargar_usdclp()
+        os.makedirs(os.path.dirname(ruta_archivo) or ".", exist_ok=True)
+        with open(ruta_archivo, "w", encoding="utf-8") as f:
+            json.dump({"valor": valor, "fecha": fecha, "consultado": hoy}, f)
+        return valor, fecha
+    except Exception as e:
+        log.warning("Sin tipo de cambio en línea (%s)", e)
+        if cache:
+            return float(cache["valor"]), cache["fecha"]
+        return float(defecto), "valor por defecto"

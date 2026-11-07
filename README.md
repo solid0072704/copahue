@@ -176,6 +176,7 @@ para que lo que ves en la prueba histórica sea lo que hará el agente.
 ```bash
 pip install -r requirements.txt
 python run_trading.py --demo        # sin internet: backtest y ciclo con precios ficticios
+python run_trading.py --proyeccion  # escenarios de tu plan de aportes mensuales (sin internet)
 python run_trading.py --backtest    # prueba histórica con precios reales (Stooq / Yahoo)
 python run_trading.py               # un ciclo real: decide y guarda data/trading/cartera.json
 streamlit run tablero_trading.py    # tablero con cartera, señal, operaciones y backtest
@@ -184,6 +185,28 @@ streamlit run tablero_trading.py    # tablero con cartera, señal, operaciones y
 En `.env` ajusta `CAPITAL_INICIAL`, `META_USD` (la ganancia que quieres lograr, por defecto 1.000 USD),
 `UNIVERSO`, `MAX_POSICIONES`, `STOP_LOSS_PCT` y `MAX_CAIDA_CARTERA_PCT`.
 
+### Plan de aportes mensuales en pesos
+
+Si vas a aportar una cantidad fija cada mes, dilo en `.env`:
+
+```
+CAPITAL_INICIAL=0
+APORTE_MENSUAL_CLP=15000      # el agente lo suma a la cartera el primer día hábil de cada mes
+META_MENSUAL_CLP=500000       # la renta mensual que quieres llegar a tener
+```
+
+El agente convierte el aporte a dólares con el dólar observado del Banco Central (mindicador.cl), lo invierte con
+la misma estrategia y en cada informe separa **lo aportado** de **lo ganado**. `python run_trading.py --proyeccion`
+muestra la tabla de escenarios: cuánto capital exige esa renta (regla del 4 %), cuántos años tomaría a distintas
+rentabilidades y qué aporte haría falta para lograrlo en 5, 10 o 20 años.
+
+Para que no haya sorpresas: una renta de 500.000 CLP al mes requiere unos **150 millones de CLP** de capital.
+Con 15.000 CLP al mes y un 10 % anual (más que el promedio histórico de la bolsa) se tarda **~46 años**. El agente
+no cambia esa aritmética; lo que hace es invertir con disciplina y mostrarte el avance real.
+
+En modo `simulado` el aporte es ficticio; en `alpaca_papel`/`alpaca_real` los aportes son tus depósitos reales en
+el broker (Alpaca opera en dólares: revisa costos de transferencia antes de enviar montos pequeños).
+
 ### Para que corra solo (GitHub Actions)
 
 `.github/workflows/agente-trading.yml` ejecuta el agente **cada día hábil a las 21:30 UTC** (tras el cierre de Wall Street).
@@ -191,7 +214,7 @@ En *Settings → Secrets and variables → Actions*:
 
 1. Variable `TRADING_ACTIVO = true` (sin ella no corre ni consume minutos).
 2. Secrets `GMAIL_USER` y `GMAIL_APP_PASSWORD` para recibir el informe (los mismos del tablero del ebook).
-3. Opcional: variables `TRADING_MODO`, `CAPITAL_INICIAL`, `META_USD`, `UNIVERSO`, `AVISAR_SOLO_CON_OPERACIONES`.
+3. Opcional: variables `TRADING_MODO`, `CAPITAL_INICIAL`, `META_USD`, `APORTE_MENSUAL_CLP`, `META_MENSUAL_CLP`, `UNIVERSO`, `AVISAR_SOLO_CON_OPERACIONES`.
 
 La cartera se guarda entre ejecuciones en la caché de Actions y, además, se publica como artefacto `cartera-trading`.
 

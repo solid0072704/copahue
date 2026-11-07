@@ -14,6 +14,8 @@ from agentes_trading.datos import cache_actualizada, obtener_precios, precios_si
 from agentes_trading.estrategia import caida_excesiva, revisar_stops, señal_objetivo
 from agentes_trading.informe import AVISO, construir_informe
 from agentes_trading.motor import decidir, ejecutar_pendiente, paso
+from agentes_trading.proyeccion import aporte_necesario, capital_para_renta, escenarios, meses_hasta, patrimonio_futuro, texto_escenarios
+from agentes_trading.datos import tipo_cambio_usdclp
 
 TICKERS = ["AAA", "BBB", "CCC", "DDD"]
 
@@ -305,3 +307,83 @@ def test_ciclo_alpaca_decide_y_envia(cfg, precios, monkeypatch):
     assert c.modo == "alpaca_papel" and c.efectivo == 5000
     if c.ultima_señal.get("objetivo"):
         assert any(m == "POST" for m, _, _ in sesion.llamadas) and r.operaciones
+
+
+# ---------------------------------------------------------------- aportes mensuales en pesos
+def test_cartera_aporta_y_distingue_ganancia():
+    c = Cartera(capital_inicial=0, efectivo=0, maximo=0)
+    assert c.capital_aportado == 0
+    a = c.aportar(15.79, "2026-01-02", clp=15000, usdclp=950, detalle="aporte mensual")
+    assert a["clp"] == 15000 and c.efectivo == pytest.approx(15.79) and c.capital_aportado == pytest.approx(15.79)
+    assert c.ganancia({}) == pytest.approx(0)
+    assert not c.aporte_del_mes_pendiente("2026-01-20") and c.aporte_del_mes_pendiente("2026-02-02")
+    assert c.aportar(0, "2026-02-02") is None
+    c.anotar_curva("2026-01-02", {})
+    assert c.curva[-1]["aporte"] == pytest.approx(15.79)
+
+
+def test_cartera_antigua_sin_campo_aportado_sigue_funcionando(tmp_path):
+    ruta = tmp_path / "vieja.json"
+    ruta.write_text(json.dumps({"capital_inicial": 500, "efectivo": 500, "maximo": 500}))
+    c = Cartera.cargar(str(ruta))
+    assert c.capital_aportado == 500 and c.ganancia({}) == 0
+
+
+def test_paso_suma_aporte_el_primer_dia_habil_del_mes(cfg):
+    aperturas, cierres = _mercado()
+    c = Cartera(capital_inicial=0, efectivo=0, maximo=0)
+    fechas = cierres.index
+    paso(c, aperturas, cierres, fechas[0], cfg, aporte_usd=10, clp=9500, usdclp=950)
+    paso(c, aperturas, cierres, fechas[1], cfg, aporte_usd=10, clp=9500, usdclp=950)
+    assert len(c.aportes) == 1 and c.capital_aportado == 10
+    primera_del_mes_siguiente = next(f for f in fechas if f.month != fechas[0].month)
+    paso(c, aperturas, cierres, primera_del_mes_siguiente, cfg, aporte_usd=10, clp=9500, usdclp=950)
+    assert len(c.aportes) == 2 and c.aportes[-1]["fecha"] == str(primera_del_mes_siguiente.date())
+
+
+def test_backtest_con_aportes_mide_solo_la_estrategia(cfg, precios):
+    cfg0 = dataclasses.replace(cfg, capital_inicial=0.0)
+    r = ejecutar_backtest(precios, cfg0, aporte_usd=20)
+    assert r.aportado_total > 0 and r.patrimonio_final > 0 and r.aportado_total == pytest.approx(20 * len({p["fecha"][:7] for p in r.cartera.curva}))
+    assert r.curva.iloc[0] == pytest.approx(100) and r.referencia.iloc[0] == pytest.approx(100)
+    assert -1 < r.metricas["caida_maxima"] <= 0
+    # sin aportes ni capital no pasa nada y no falla
+    r0 = ejecutar_backtest(precios, cfg0)
+    assert r0.metricas["operaciones"] == 0
+
+
+def test_ciclo_con_aporte_en_pesos(cfg, precios):
+    cfg = dataclasses.replace(cfg, capital_inicial=0.0, aporte_mensual_clp=15000, meta_mensual_clp=500000)
+    r = ejecutar_ciclo(cfg, precios=precios, notificar=False, usdclp=950)
+    assert not r.errores and r.aporte and r.aporte["clp"] == 15000 and r.aporte["importe"] == pytest.approx(15000 / 950, abs=0.01)
+    assert "150.000.000 CLP" in r.informe and "15.000 CLP" in r.informe and "Tipo de cambio: 950" in r.informe
+    assert r.texto().startswith("datos al")
+    r2 = ejecutar_ciclo(cfg, precios=precios, notificar=False, usdclp=950)
+    assert not r2.aporte  # mismo mes: no se repite el aporte
+
+
+def test_tipo_de_cambio_usa_cache_o_defecto(tmp_path, monkeypatch):
+    import requests
+
+    def sin_red(*a, **k):
+        raise requests.ConnectionError("sin red")
+
+    monkeypatch.setattr(requests, "get", sin_red)
+    ruta = str(tmp_path / "usdclp.json")
+    assert tipo_cambio_usdclp(ruta, 950.0) == (950.0, "valor por defecto")
+    (tmp_path / "usdclp.json").write_text(json.dumps({"valor": 930.5, "fecha": "2026-11-05", "consultado": "2026-11-05"}))
+    assert tipo_cambio_usdclp(ruta, 950.0, hoy="2026-11-06") == (930.5, "2026-11-05")
+    assert tipo_cambio_usdclp(ruta, 950.0, hoy="2026-11-05") == (930.5, "2026-11-05")
+
+
+def test_proyeccion_aritmetica():
+    assert patrimonio_futuro(100, 0.0, 12) == pytest.approx(1200)
+    assert patrimonio_futuro(0, 0.10, 12, capital_inicial=1000) == pytest.approx(1100)
+    assert patrimonio_futuro(15000, 0.10, 240) == pytest.approx(10_773_888, rel=1e-3)
+    assert capital_para_renta(500_000, 0.04) == 150_000_000
+    assert meses_hasta(1000, 100, 0.0) == 10 and meses_hasta(10**12, 1, 0.0) is None and meses_hasta(5, 1, 0.0, capital_inicial=10) == 0
+    assert aporte_necesario(500_000, 0.10, 20) == pytest.approx(208_838, rel=1e-3)
+    e = escenarios(15000, 500_000)
+    assert e["capital_meta"] == 150_000_000 and e["filas"][2]["años_para_meta"] == pytest.approx(46, abs=1)
+    texto = texto_escenarios(15000, 500_000, cagr_historico=0.07)
+    assert "150.000.000 CLP" in texto and "(hist.)" in texto and "Aporte mensual que haría falta" in texto

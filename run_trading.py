@@ -17,11 +17,17 @@ from agentes_trading.backtest import ejecutar_backtest
 from agentes_trading.cartera import Cartera
 from agentes_trading.datos import cargar_universo, precios_sinteticos, tabla
 from agentes_trading.informe import AVISO, construir_informe
+from agentes_trading.proyeccion import texto_escenarios
+
+
+def aporte_usd(cfg):
+    return cfg.aporte_mensual_clp / cfg.usdclp if cfg.aporte_mensual_clp else 0.0
 
 
 def imprimir_backtest(r, cfg):
     m, ref = r.metricas, r.metricas_referencia
-    print(f"Periodo: {r.curva.index[0].date()} → {r.curva.index[-1].date()} ({m['años']:.1f} años) · capital {cfg.capital_inicial:,.0f} USD")
+    print(f"Periodo: {r.curva.index[0].date()} → {r.curva.index[-1].date()} ({m['años']:.1f} años) · capital inicial {cfg.capital_inicial:,.0f} USD"
+          + (f" · aporte {cfg.aporte_mensual_clp:,.0f} CLP/mes (~{aporte_usd(cfg):,.2f} USD a {cfg.usdclp:,.0f} CLP/USD)" if cfg.aporte_mensual_clp else ""))
     print(f"{'':22}{'Estrategia':>12}{cfg.referencia + ' (comprar y mantener)':>28}")
     for clave, nombre, fmt in (
         ("rentabilidad_total", "Rentabilidad total", "{:+.1%}"),
@@ -34,12 +40,20 @@ def imprimir_backtest(r, cfg):
     ):
         print(f"{nombre:22}{fmt.format(m[clave]):>12}{fmt.format(ref[clave]):>28}")
     print()
-    print(f"Meta de {cfg.meta_usd:,.0f} USD con {cfg.capital_inicial:,.0f} USD:")
-    print(f"  · En {r.probabilidad_meta:.0%} de los periodos históricos de 12 meses se habría alcanzado.")
-    if r.meses_para_meta:
-        print(f"  · Si se repitiera la rentabilidad anual histórica, tardaría ~{r.meses_para_meta:.0f} meses.")
+    if cfg.aporte_mensual_clp:
+        clp = lambda v: f"{v * cfg.usdclp:,.0f} CLP".replace(",", ".")
+        print(f"Con tus aportes: aportado {clp(r.aportado_total)} → patrimonio final {clp(r.patrimonio_final)} "
+              f"({r.patrimonio_final - r.aportado_total:+,.2f} USD de ganancia).")
+        if cfg.meta_mensual_clp:
+            print()
+            print(texto_escenarios(cfg.aporte_mensual_clp, cfg.meta_mensual_clp, cfg.tasa_retiro, cagr_historico=m["cagr"], capital_inicial=cfg.capital_inicial * cfg.usdclp))
     else:
-        print("  · Con la rentabilidad histórica no se alcanzaría.")
+        print(f"Meta de {cfg.meta_usd:,.0f} USD con {cfg.capital_inicial:,.0f} USD:")
+        print(f"  · En {r.probabilidad_meta:.0%} de los periodos históricos de 12 meses se habría alcanzado.")
+        if r.meses_para_meta:
+            print(f"  · Si se repitiera la rentabilidad anual histórica, tardaría ~{r.meses_para_meta:.0f} meses.")
+        else:
+            print("  · Con la rentabilidad histórica no se alcanzaría.")
     print()
     print(AVISO)
 
@@ -49,6 +63,7 @@ def main():
     parser.add_argument("--backtest", action="store_true", help="prueba histórica con precios reales")
     parser.add_argument("--demo", action="store_true", help="ciclo con precios ficticios, sin internet")
     parser.add_argument("--informe", action="store_true", help="muestra la cartera actual sin operar")
+    parser.add_argument("--proyeccion", action="store_true", help="tabla de escenarios del plan de aportes (sin internet)")
     parser.add_argument("--sin-avisar", action="store_true", help="no enviar el informe por correo")
     parser.add_argument("--desde", help="fecha inicial del backtest (AAAA-MM-DD)")
     parser.add_argument("--capital", type=float, help="capital inicial para el backtest")
@@ -61,10 +76,19 @@ def main():
     for problema in cfg.validar():
         print("Aviso:", problema)
 
+    if args.proyeccion:
+        if not cfg.aporte_mensual_clp or not cfg.meta_mensual_clp:
+            print("Define APORTE_MENSUAL_CLP y META_MENSUAL_CLP en .env para ver la proyección.")
+            return 1
+        print(texto_escenarios(cfg.aporte_mensual_clp, cfg.meta_mensual_clp, cfg.tasa_retiro, capital_inicial=cfg.capital_inicial * cfg.usdclp))
+        print()
+        print(AVISO)
+        return 0
+
     if args.demo:
         cfg = dataclasses.replace(cfg, modo="simulado", ruta_datos=cfg.ruta_datos + "/demo")
         print("Backtest con precios ficticios:")
-        imprimir_backtest(ejecutar_backtest(precios_sinteticos(cfg.universo), cfg), cfg)
+        imprimir_backtest(ejecutar_backtest(precios_sinteticos(cfg.universo), cfg, aporte_usd=aporte_usd(cfg)), cfg)
         print("\nCiclo del agente sobre los mismos precios ficticios:")
         resultado = preparar_demo(cfg)
         print(resultado.informe)
@@ -76,7 +100,7 @@ def main():
             print("Sin precios para:", ", ".join(fallidos))
         if not precios:
             return 1
-        imprimir_backtest(ejecutar_backtest(precios, cfg, desde=args.desde), cfg)
+        imprimir_backtest(ejecutar_backtest(precios, cfg, desde=args.desde, aporte_usd=aporte_usd(cfg)), cfg)
         return 0
 
     if args.informe:

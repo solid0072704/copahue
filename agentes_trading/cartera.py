@@ -17,6 +17,9 @@ class Cartera:
     modo: str = "simulado"
     capital_inicial: float = 10_000.0
     efectivo: float = 10_000.0
+    capital_aportado: float = 0.0                    # capital inicial + todos los aportes
+    aportes: list = field(default_factory=list)      # [{fecha, importe, clp, usdclp}]
+    ultimo_aporte: str = ""                          # mes (AAAA-MM) del último aporte automático
     posiciones: dict = field(default_factory=dict)   # {ticker: {cantidad, precio_promedio, fecha}}
     operaciones: list = field(default_factory=list)  # historial de compras/ventas
     curva: list = field(default_factory=list)        # [{fecha, patrimonio, efectivo}]
@@ -27,6 +30,26 @@ class Cartera:
     ultima_fecha: str = ""                           # última rueda procesada
     ultima_señal: dict = field(default_factory=dict)
     creada: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+
+    def __post_init__(self):
+        if not self.capital_aportado and not self.aportes:
+            self.capital_aportado = self.capital_inicial
+
+    # ---- aportes ----
+    def aportar(self, importe, fecha, clp=None, usdclp=None, detalle=""):
+        """Suma dinero nuevo a la cartera (no es ganancia). Devuelve el aporte registrado."""
+        importe = float(importe)
+        if importe <= 0:
+            return None
+        self.efectivo += importe
+        self.capital_aportado += importe
+        self.ultimo_aporte = hoy_iso(fecha)[:7]
+        aporte = {"fecha": hoy_iso(fecha), "importe": round(importe, 2), "clp": clp, "usdclp": usdclp, "detalle": detalle}
+        self.aportes.append(aporte)
+        return aporte
+
+    def aporte_del_mes_pendiente(self, fecha):
+        return hoy_iso(fecha)[:7] != self.ultimo_aporte
 
     # ---- valoración ----
     def valor_posiciones(self, precios):
@@ -42,7 +65,7 @@ class Cartera:
         return self.efectivo + self.valor_posiciones(precios)
 
     def ganancia(self, precios):
-        return self.patrimonio(precios) - self.capital_inicial
+        return self.patrimonio(precios) - self.capital_aportado
 
     def pesos(self, precios):
         patrimonio = self.patrimonio(precios)
@@ -54,7 +77,7 @@ class Cartera:
     def comprar(self, ticker, importe, precio, fecha, comision_pct=0.0, motivo=""):
         """Compra por un importe en USD (acepta fracciones de acción). Devuelve la operación o None."""
         importe = min(float(importe), self.efectivo)
-        if importe < 1 or precio <= 0:
+        if importe < 1 or precio <= 0:  # mínimo de 1 USD por orden (igual que Alpaca)
             return None
         comision = importe * comision_pct
         cantidad = (importe - comision) / precio
@@ -106,7 +129,8 @@ class Cartera:
     def anotar_curva(self, fecha, precios):
         patrimonio = self.patrimonio(precios)
         self.maximo = max(self.maximo, patrimonio)
-        punto = {"fecha": hoy_iso(fecha), "patrimonio": round(patrimonio, 2), "efectivo": round(self.efectivo, 2)}
+        aportado_hoy = sum(a["importe"] for a in self.aportes if a["fecha"] == hoy_iso(fecha))
+        punto = {"fecha": hoy_iso(fecha), "patrimonio": round(patrimonio, 2), "efectivo": round(self.efectivo, 2), "aporte": round(aportado_hoy, 2)}
         if self.curva and self.curva[-1]["fecha"] == punto["fecha"]:
             self.curva[-1] = punto
         else:

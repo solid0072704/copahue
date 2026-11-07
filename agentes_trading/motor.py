@@ -41,7 +41,7 @@ def ejecutar_pendiente(cartera, aperturas, fecha, cfg):
             exceso = valor - peso_obj * patrimonio
             if peso_obj == 0:
                 op = cartera.vender_todo(t, precios[t], fecha, cfg.comision_pct, "rebalanceo: sale de la cartera")
-            elif exceso > max(25.0, 0.01 * patrimonio):
+            elif exceso > max(5.0, 0.01 * patrimonio):
                 op = cartera.vender(t, exceso / precios[t], precios[t], fecha, cfg.comision_pct, "rebalanceo: reduce peso")
             else:
                 op = None
@@ -52,7 +52,7 @@ def ejecutar_pendiente(cartera, aperturas, fecha, cfg):
                 continue
             valor = cartera.posiciones.get(t, {"cantidad": 0})["cantidad"] * precios[t]
             falta = peso_obj * patrimonio - valor
-            if falta > max(25.0, 0.01 * patrimonio):
+            if falta > max(5.0, 0.01 * patrimonio):
                 op = cartera.comprar(t, falta, precios[t], fecha, cfg.comision_pct, "rebalanceo: entra o sube peso")
                 if op:
                     hechas.append(op)
@@ -123,8 +123,16 @@ def _fecha_futura(cierres, fecha, ruedas):
     return str(fecha + pd.Timedelta(days=int(ruedas * 1.5)))[:10]
 
 
-def paso(cartera, aperturas, cierres, fecha, cfg):
-    """Una rueda completa: ejecuta lo pendiente en la apertura y decide al cierre."""
+def aportar_si_corresponde(cartera, fecha, aporte_usd, clp=None, usdclp=None):
+    """El primer día hábil de cada mes suma el aporte mensual a la cartera (solo cartera simulada)."""
+    if aporte_usd and aporte_usd > 0 and cartera.aporte_del_mes_pendiente(fecha):
+        return cartera.aportar(aporte_usd, fecha, clp=clp, usdclp=usdclp, detalle="aporte mensual")
+    return None
+
+
+def paso(cartera, aperturas, cierres, fecha, cfg, aporte_usd=0.0, clp=None, usdclp=None):
+    """Una rueda completa: aporte del mes (si toca), ejecuta lo pendiente en la apertura y decide al cierre."""
+    aportar_si_corresponde(cartera, fecha, aporte_usd, clp, usdclp)
     hechas = ejecutar_pendiente(cartera, aperturas, fecha, cfg)
     pendiente = decidir(cartera, cierres, fecha, cfg)
     return hechas, pendiente

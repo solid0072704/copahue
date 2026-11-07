@@ -3,7 +3,8 @@
 #
 # Para activarlo (Settings → Secrets and variables → Actions):
 #   1. Variables: TRADING_ACTIVO = true   (sin esta variable el flujo no corre ni consume minutos)
-#      Opcionales: TRADING_MODO (simulado | alpaca_papel | alpaca_real), CAPITAL_INICIAL, META_USD, UNIVERSO
+#      Opcionales: TRADING_MODO (simulado | alpaca_papel | alpaca_real), CAPITAL_INICIAL, META_USD, UNIVERSO,
+#                  APORTE_MENSUAL_CLP y META_MENSUAL_CLP (plan de aportes en pesos chilenos)
 #   2. Secrets:   GMAIL_USER, GMAIL_APP_PASSWORD (para recibir el informe diario)
 #                 ALPACA_API_KEY, ALPACA_SECRET_KEY (solo si TRADING_MODO empieza con alpaca)
 #                 CONFIRMO_DINERO_REAL = true (solo para alpaca_real; sin esto se usa la cuenta de práctica)
@@ -54,6 +55,8 @@ jobs:
           TRADING_MODO: ${{ vars.TRADING_MODO }}
           CAPITAL_INICIAL: ${{ vars.CAPITAL_INICIAL }}
           META_USD: ${{ vars.META_USD }}
+          APORTE_MENSUAL_CLP: ${{ vars.APORTE_MENSUAL_CLP }}
+          META_MENSUAL_CLP: ${{ vars.META_MENSUAL_CLP }}
           UNIVERSO: ${{ vars.UNIVERSO }}
           MAX_POSICIONES: ${{ vars.MAX_POSICIONES }}
           AVISAR_SOLO_CON_OPERACIONES: ${{ vars.AVISAR_SOLO_CON_OPERACIONES }}

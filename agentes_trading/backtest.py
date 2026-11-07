@@ -21,6 +21,8 @@ class ResultadoBacktest:
     metricas_referencia: dict
     probabilidad_meta: float
     meses_para_meta: float | None
+    aportado_total: float = 0.0
+    patrimonio_final: float = 0.0
     cartera: Cartera = field(repr=False, default=None)
 
     def resumen(self):
@@ -72,8 +74,26 @@ def meses_estimados(cagr, capital, meta):
     return float(años * 12)
 
 
-def ejecutar_backtest(precios, cfg, desde=None, hasta=None):
-    """Simula la estrategia rueda a rueda con el mismo motor que usa el agente en vivo."""
+def curva_sin_aportes(puntos, capital_inicial):
+    """Curva ponderada por tiempo: quita el efecto de los depósitos para medir solo la estrategia."""
+    indice, valores = [], []
+    anterior, nivel = None, float(capital_inicial) if capital_inicial > 0 else 100.0
+    for p in puntos:
+        patrimonio, aporte = float(p["patrimonio"]), float(p.get("aporte", 0.0))
+        if anterior is not None and anterior > 0:
+            nivel *= (patrimonio - aporte) / anterior
+        indice.append(pd.Timestamp(p["fecha"]))
+        valores.append(nivel)
+        anterior = patrimonio
+    return pd.Series(valores, index=indice, name="estrategia")
+
+
+def ejecutar_backtest(precios, cfg, desde=None, hasta=None, aporte_usd=0.0):
+    """Simula la estrategia rueda a rueda con el mismo motor que usa el agente en vivo.
+
+    `aporte_usd` suma ese importe el primer día hábil de cada mes, como hará el agente.
+    Las métricas se calculan sobre la curva sin aportes (rentabilidad ponderada por tiempo).
+    """
     cierres, aperturas = tabla(precios, "Close"), tabla(precios, "Open")
     if desde:
         cierres, aperturas = cierres.loc[desde:], aperturas.loc[desde:]
@@ -83,10 +103,10 @@ def ejecutar_backtest(precios, cfg, desde=None, hasta=None):
     inicio = max(cfg.ventana_momentum, cfg.ventana_tendencia) + 1
     fechas = cierres.index[inicio:]
     for fecha in fechas:
-        paso(cartera, aperturas, cierres, fecha, cfg)
-    curva = pd.Series({pd.Timestamp(p["fecha"]): p["patrimonio"] for p in cartera.curva}, name="estrategia").sort_index()
+        paso(cartera, aperturas, cierres, fecha, cfg, aporte_usd=aporte_usd)
+    curva = curva_sin_aportes(cartera.curva, cfg.capital_inicial)
     ref = cierres[cfg.referencia].loc[fechas[0]:] if cfg.referencia in cierres else cierres.iloc[:, 0].loc[fechas[0]:]
-    referencia = (ref / ref.iloc[0] * cfg.capital_inicial).rename("referencia")
+    referencia = (ref / ref.iloc[0] * float(curva.iloc[0])).rename("referencia")
     m = metricas(curva)
     m["operaciones"] = len(cartera.operaciones)
     r = metricas(referencia)
@@ -99,5 +119,7 @@ def ejecutar_backtest(precios, cfg, desde=None, hasta=None):
         metricas_referencia=r,
         probabilidad_meta=probabilidad_de_meta(curva, cfg.capital_inicial, cfg.meta_usd),
         meses_para_meta=meses_estimados(m["cagr"], cfg.capital_inicial, cfg.meta_usd),
+        aportado_total=cartera.capital_aportado,
+        patrimonio_final=cartera.curva[-1]["patrimonio"] if cartera.curva else cfg.capital_inicial,
         cartera=cartera,
     )
