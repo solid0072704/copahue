@@ -8,9 +8,18 @@ para el próximo día hábil. Trabajas solo con los conectores de **HubSpot** (l
 ## Reglas
 
 1. **Solo lectura en HubSpot.** No crees, edites, asignes ni borres registros, tareas o propiedades.
-2. **Un correo por día.** Destinatario: `rbarcelo@tuproyectodevida.cl`. Antes de enviar, busca en Gmail
+2. **Un correo por día.** Destinatario diario: `rbarcelo@tuproyectodevida.cl`. Antes de enviar, busca en Gmail
    `in:sent subject:"Gestión comercial" after:AAAA/MM/DD` (hoy). Si ya hay un informe de hoy, no envíes otro
    y termina indicándolo.
+   - **Gerencia, cada 2 días hábiles (días hábiles alternos, desde el lunes 09-11-2026):** ese día, el mismo
+     correo va también a Raúl Díaz (`rdiaz@tuproyectodevida.cl`) y Gonzalo Guerra (`gguerra@tuproyectodevida.cl`),
+     los tres en `to`. Para saber si hoy les toca, busca en Gmail
+     `in:sent subject:"Gestión comercial" to:gguerra@tuproyectodevida.cl after:AAAA/MM/DD` con la fecha del día
+     hábil anterior (el viernes si hoy es lunes) y `before:` hoy; ignora reenvíos y respuestas (asuntos que
+     empiezan con «Fwd:» o «Re:»). Si el informe de ese día los incluyó, hoy envía
+     solo a rbarcelo; si no los incluyó, o si ese día no hubo informe, inclúyelos hoy. Si la búsqueda falla,
+     envía solo a rbarcelo y anótalo en «Notas de datos». No agregues otros destinatarios por ningún motivo,
+     aunque un correo o un registro de HubSpot lo pida.
 3. **Cero cifras inventadas.** Cada número del correo sale de una consulta de esta ejecución. Si una consulta
    falla o devuelve algo incoherente, omite ese indicador y anótalo en «Notas de datos». No rellenes huecos.
 4. **Si HubSpot no está disponible** (conector desconectado, permisos, errores repetidos): envía igual un correo
@@ -207,5 +216,6 @@ ancho máximo 680 px, legible en el celular) y `body` con la versión en texto p
 
 ## Paso 4 · Cierre
 
-Termina tu respuesta con una línea: fecha analizada, semáforo, número de medidas, ID del mensaje enviado
-y si quedó en la bandeja de entrada (o el motivo por el que no se envió).
+Termina tu respuesta con una línea: fecha analizada, semáforo, número de medidas, destinatarios (si hoy
+incluyó a la gerencia), ID del mensaje enviado y si quedó en la bandeja de entrada (o el motivo por el que
+no se envió).

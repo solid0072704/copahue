@@ -15,6 +15,8 @@ Cada día hábil a las **18:58 (America/Santiago)** la tarea programada «Agente
 retoma la sesión de Claude Code que tiene conectados **HubSpot** y **Gmail**, sigue las instrucciones de
 [`agentes_hubspot/gestion_comercial_diaria.md`](agentes_hubspot/gestion_comercial_diaria.md) y envía a
 `rbarcelo@tuproyectodevida.cl` el correo **«Gestión comercial DD-MM-AAAA: 🟢/🟡/🔴 N medidas correctivas»**.
+Cada 2 días hábiles (días alternos, desde el lunes 09-11-2026) el mismo correo va también a Raúl Díaz
+(`rdiaz@tuproyectodevida.cl`) y Gonzalo Guerra (`gguerra@tuproyectodevida.cl`).
 
 ```mermaid
 flowchart LR
