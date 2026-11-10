@@ -85,6 +85,13 @@ class Config:
     umbral_caliente: int = 70
     umbral_tibio: int = 40
 
+    # --- LinkedIn ---
+    linkedin_activo: bool = True
+    linkedin_segmentos: list = field(default_factory=lambda: ["Caliente", "Tibio"])
+    linkedin_max_dia: int = 10
+    linkedin_dias_seguimiento: int = 5
+    link_ebook: str = ""
+
     # --- IA (opcional) ---
     anthropic_api_key: str = ""
     llm_modelo: str = "claude-opus-5-5"
@@ -132,6 +139,11 @@ class Config:
             mercado_objetivo=_env_lista("MERCADO_OBJETIVO", "Chile"),
             umbral_caliente=_env_int("UMBRAL_CALIENTE", 70),
             umbral_tibio=_env_int("UMBRAL_TIBIO", 40),
+            linkedin_activo=_env_bool("LINKEDIN_ACTIVO", True),
+            linkedin_segmentos=_env_lista("LINKEDIN_SEGMENTOS", "Caliente,Tibio"),
+            linkedin_max_dia=_env_int("LINKEDIN_MAX_DIA", 10),
+            linkedin_dias_seguimiento=_env_int("LINKEDIN_DIAS_SEGUIMIENTO", 5),
+            link_ebook=_env("LINK_EBOOK"),
             anthropic_api_key=_env("ANTHROPIC_API_KEY"),
             llm_modelo=_env("LLM_MODELO", "claude-opus-5-5"),
             llm_max_leads_por_ciclo=_env_int("LLM_MAX_LEADS_POR_CICLO", 15),
@@ -146,6 +158,11 @@ class Config:
     @property
     def ia_configurada(self):
         return bool(self.anthropic_api_key)
+
+    @property
+    def link_descarga(self):
+        """Dónde se descarga el ebook (para las publicaciones de LinkedIn)."""
+        return self.link_ebook or self.sitio_web
 
     @property
     def tz(self):

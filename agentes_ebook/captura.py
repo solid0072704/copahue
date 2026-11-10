@@ -46,6 +46,7 @@ COLUMNAS_CSV = {
     "cargo": ("cargo", "puesto", "job title"),
     "empresa": ("empresa", "company", "compañía"),
     "motivo": ("motivo", "motivo_de_descarga", "motivo de descarga"),
+    "linkedin_url": ("linkedin", "perfil linkedin", "perfil de linkedin", "linkedin url", "linkedin_url"),
     "fecha": ("fecha", "date", "submitted at", "fecha de descarga"),
 }
 

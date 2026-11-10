@@ -76,6 +76,20 @@ CREATE TABLE IF NOT EXISTS reuniones (
     creado_en TEXT,
     actualizado_en TEXT
 );
+CREATE TABLE IF NOT EXISTS linkedin (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id INTEGER NOT NULL REFERENCES leads(id),
+    paso INTEGER NOT NULL,
+    tipo TEXT NOT NULL,
+    nombre_paso TEXT DEFAULT '',
+    programado_para TEXT,
+    estado TEXT DEFAULT 'pendiente',
+    texto TEXT DEFAULT '',
+    personalizado_ia INTEGER DEFAULT 0,
+    creado_en TEXT,
+    actualizado_en TEXT,
+    UNIQUE(lead_id, paso)
+);
 CREATE TABLE IF NOT EXISTS bitacora (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fecha TEXT NOT NULL,
@@ -90,7 +104,16 @@ CREATE TABLE IF NOT EXISTS meta (
 );
 CREATE INDEX IF NOT EXISTS idx_seg_estado ON seguimientos(estado);
 CREATE INDEX IF NOT EXISTS idx_bitacora_fecha ON bitacora(fecha);
+CREATE INDEX IF NOT EXISTS idx_linkedin_estado ON linkedin(estado);
 """
+
+# Columnas agregadas después de la primera versión: se crean si la base ya existía.
+COLUMNAS_NUEVAS = {
+    "leads": [
+        ("linkedin_url", "TEXT DEFAULT ''"),
+        ("linkedin_estado", "TEXT DEFAULT ''"),
+    ],
+}
 
 
 def ahora_utc():
@@ -122,7 +145,15 @@ class BaseDatos:
         if ruta != ":memory:":
             self.con.execute("PRAGMA journal_mode=WAL")
         self.con.executescript(ESQUEMA)
+        self._migrar()
         self.con.commit()
+
+    def _migrar(self):
+        for tabla, columnas in COLUMNAS_NUEVAS.items():
+            existentes = {f["name"] for f in self.con.execute(f"PRAGMA table_info({tabla})")}
+            for nombre, definicion in columnas:
+                if nombre not in existentes:
+                    self.con.execute(f"ALTER TABLE {tabla} ADD COLUMN {nombre} {definicion}")
 
     # ---------------- utilidades ----------------
     def _filas(self, sql, params=()):
@@ -181,9 +212,9 @@ class BaseDatos:
         nuevo = lead is None
         if nuevo:
             cur = self.con.execute(
-                """INSERT INTO leads(email, nombre, telefono, cargo, empresa, motivo, fuente,
+                """INSERT INTO leads(email, nombre, telefono, cargo, empresa, motivo, linkedin_url, fuente,
                        primera_descarga, ultima_descarga, num_descargas, creado_en, actualizado_en)
-                   VALUES(?,?,?,?,?,?,?,?,?,1,?,?)""",
+                   VALUES(?,?,?,?,?,?,?,?,?,?,1,?,?)""",
                 (
                     email,
                     registro.get("nombre", ""),
@@ -191,6 +222,7 @@ class BaseDatos:
                     registro.get("cargo", ""),
                     registro.get("empresa", ""),
                     registro.get("motivo", ""),
+                    registro.get("linkedin_url", ""),
                     registro.get("fuente", ""),
                     fecha,
                     fecha,
@@ -203,7 +235,7 @@ class BaseDatos:
             lead_id = lead["id"]
             # Completa datos vacíos y conserva los más recientes cuando vienen informados.
             campos = {}
-            for c in ("nombre", "telefono", "cargo", "empresa", "motivo"):
+            for c in ("nombre", "telefono", "cargo", "empresa", "motivo", "linkedin_url"):
                 valor = (registro.get(c) or "").strip()
                 if valor:
                     campos[c] = valor
@@ -245,7 +277,7 @@ class BaseDatos:
 
     def borrar_fuente(self, fuente):
         ids = [f["id"] for f in self._filas("SELECT id FROM leads WHERE fuente=?", (fuente,))]
-        for tabla in ("descargas", "seguimientos", "reuniones", "bitacora"):
+        for tabla in ("descargas", "seguimientos", "reuniones", "linkedin", "bitacora"):
             self.con.executemany(f"DELETE FROM {tabla} WHERE lead_id=?", [(i,) for i in ids])
         self.con.executemany("DELETE FROM leads WHERE id=?", [(i,) for i in ids])
         self.con.commit()
@@ -297,6 +329,47 @@ class BaseDatos:
             (desde_iso_utc,),
         )
         return f["n"] if f else 0
+
+    # ---------------- LinkedIn ----------------
+    def acciones_linkedin(self, lead_id=None, estados=None):
+        sql = (
+            "SELECT a.*, l.nombre, l.email, l.empresa, l.cargo, l.score, l.segmento, l.etapa, l.fuente, "
+            "l.linkedin_url, l.linkedin_estado "
+            "FROM linkedin a JOIN leads l ON l.id=a.lead_id WHERE 1=1"
+        )
+        params = []
+        if lead_id is not None:
+            sql += " AND a.lead_id=?"
+            params.append(lead_id)
+        if estados:
+            sql += f" AND a.estado IN ({','.join('?' * len(estados))})"
+            params.extend(estados)
+        sql += " ORDER BY l.score DESC, a.paso"
+        return self._filas(sql, params)
+
+    def accion_linkedin(self, accion_id):
+        return self._fila(
+            "SELECT a.*, l.nombre, l.email, l.empresa, l.cargo, l.fuente, l.linkedin_url, l.linkedin_estado "
+            "FROM linkedin a JOIN leads l ON l.id=a.lead_id WHERE a.id=?",
+            (accion_id,),
+        )
+
+    def crear_accion_linkedin(self, lead_id, paso, tipo, nombre_paso, programado_para, texto, ia=False):
+        ahora = iso(ahora_utc())
+        cur = self.con.execute(
+            """INSERT OR IGNORE INTO linkedin(lead_id, paso, tipo, nombre_paso, programado_para, estado,
+                   texto, personalizado_ia, creado_en, actualizado_en)
+               VALUES(?,?,?,?,?,'pendiente',?,?,?,?)""",
+            (lead_id, paso, tipo, nombre_paso, programado_para, texto, int(ia), ahora, ahora),
+        )
+        self.con.commit()
+        return cur.lastrowid if cur.rowcount else None
+
+    def actualizar_accion_linkedin(self, accion_id, **campos):
+        campos["actualizado_en"] = iso(ahora_utc())
+        sets = ", ".join(f"{c}=?" for c in campos)
+        self.con.execute(f"UPDATE linkedin SET {sets} WHERE id=?", (*campos.values(), accion_id))
+        self.con.commit()
 
     # ---------------- reuniones ----------------
     def reuniones(self):

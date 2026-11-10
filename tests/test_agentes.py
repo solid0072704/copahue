@@ -417,3 +417,152 @@ def test_asistente_ia_con_cliente_simulado(cfg):
     assert ia.personalizar_correo(lead, "invitacion", "Asunto", "Agenda aquí: https://agenda.example/30") is None
     ia.cliente.beta.messages.create = lambda **k: _Respuesta("", stop_reason="refusal")
     assert ia.analizar_lead(lead, []) is None
+
+
+# ----------------------------------------------------------------------------- LinkedIn
+from agentes_ebook import linkedin  # noqa: E402
+
+
+def test_linkedin_enlaces():
+    lead = {"nombre": "Ana Pérez", "empresa": "Constructora Ejemplo", "linkedin_url": ""}
+    assert linkedin.link_busqueda(lead) == "https://www.linkedin.com/search/results/people/?keywords=Ana%20P%C3%A9rez%20Constructora%20Ejemplo"
+    assert linkedin.link_lead(lead) == linkedin.link_busqueda(lead)
+    assert linkedin.link_lead({**lead, "linkedin_url": "cl.linkedin.com/in/ana-perez-123/"}) == "https://www.linkedin.com/in/ana-perez-123"
+    assert linkedin.normalizar_url_perfil("ana-perez-123") == "https://www.linkedin.com/in/ana-perez-123"
+    assert linkedin.normalizar_url_perfil("https://www.linkedin.com/in/ana-perez-123?trk=x") == "https://www.linkedin.com/in/ana-perez-123"
+    assert linkedin.normalizar_url_perfil("https://evil.example/linkedin.com/in/ana") == ""
+    assert linkedin.normalizar_url_perfil("no es una url") == ""
+    assert linkedin.link_busqueda({"nombre": "", "empresa": ""}) is None
+    assert linkedin.link_publicar("Hola mundo").startswith("https://www.linkedin.com/feed/?shareActive=true&text=Hola%20mundo")
+
+
+def test_linkedin_textos_respetan_limites(cfg):
+    largo = dataclasses.replace(
+        cfg,
+        ebook_nombre="la Guía definitiva para el análisis financiero de empresas medianas y pymes en crecimiento",
+        firma="Rodrigo Díaz · Socio fundador · Hyperion Advisory Chile",
+    )
+    for motivo in ("Mejorar el análisis financiero de mi empresa", "Soy consultor", "Quiero aprender", "Otro"):
+        lead = {"nombre": "ana pérez", "empresa": "Constructora", "motivo": motivo, "segmento": "Tibio"}
+        nota = linkedin.redactar("invitacion", lead, largo)
+        assert len(nota) <= linkedin.LIMITE_NOTA and nota.startswith("Hola Ana")
+        horarios = reuniones.proximos_horarios(cfg, desde=datetime(2026, 10, 9, 15, tzinfo=timezone.utc))
+        mensaje = linkedin.redactar("mensaje", lead, cfg, horarios)
+        assert len(mensaje) <= linkedin.LIMITE_MENSAJE and "lunes 12 de octubre" in mensaje and cfg.firma in mensaje
+        assert len(linkedin.redactar("seguimiento", lead, cfg)) <= linkedin.LIMITE_MENSAJE
+    con_link = dataclasses.replace(cfg, link_agenda="https://calendly.com/mi-agenda/30min")
+    assert "https://calendly.com/mi-agenda/30min" in linkedin.redactar("mensaje", lead, con_link)
+    assert linkedin.redactar("invitacion", {"nombre": "", "motivo": ""}, cfg).startswith("Hola, vi que")
+    with pytest.raises(ValueError):
+        linkedin.redactar("inmail", lead, cfg)
+
+
+def test_linkedin_cadencia(cfg):
+    ahora = datetime(2026, 10, 11, 18, tzinfo=timezone.utc)
+    lead = {"id": 1, "email": "a@b.example", "segmento": "Caliente", "etapa": "Nuevo", "respondio_en": None, "linkedin_estado": ""}
+    assert linkedin.siguiente_paso(lead, [], cfg, ahora)[:2] == (1, "invitacion")
+    # Los fríos no entran por defecto.
+    assert linkedin.siguiente_paso({**lead, "segmento": "Frío"}, [], cfg, ahora) is None
+    # Con la invitación pendiente no se acumula nada; enviada pero sin aceptar, tampoco.
+    inv = {"paso": 1, "estado": "pendiente", "actualizado_en": iso(ahora)}
+    assert linkedin.siguiente_paso(lead, [inv], cfg, ahora) is None
+    inv["estado"] = "enviado"
+    assert linkedin.siguiente_paso({**lead, "linkedin_estado": "invitado"}, [inv], cfg, ahora) is None
+    # Aceptó: toca el mensaje. Ya eran contactos: se salta la invitación.
+    assert linkedin.siguiente_paso({**lead, "linkedin_estado": "conectado"}, [inv], cfg, ahora)[:2] == (2, "mensaje")
+    assert linkedin.siguiente_paso({**lead, "linkedin_estado": "conectado"}, [], cfg, ahora)[:2] == (2, "mensaje")
+    # Seguimiento solo pasados los días configurados desde que se envió el mensaje.
+    msg = {"paso": 2, "estado": "enviado", "actualizado_en": iso(ahora - timedelta(days=2))}
+    conectado = {**lead, "linkedin_estado": "conectado"}
+    assert linkedin.siguiente_paso(conectado, [inv, msg], cfg, ahora) is None
+    msg["actualizado_en"] = iso(ahora - timedelta(days=6))
+    assert linkedin.siguiente_paso(conectado, [inv, msg], cfg, ahora)[:2] == (3, "seguimiento")
+    # Se detiene si respondió (por correo o por LinkedIn), si no tiene perfil o si ya está agendado.
+    assert linkedin.siguiente_paso({**lead, "respondio_en": iso(ahora)}, [], cfg, ahora) is None
+    assert linkedin.siguiente_paso({**lead, "linkedin_estado": "respondió"}, [], cfg, ahora) is None
+    assert linkedin.siguiente_paso({**lead, "linkedin_estado": "sin perfil"}, [], cfg, ahora) is None
+    assert linkedin.siguiente_paso({**lead, "etapa": "Reunión agendada"}, [], cfg, ahora) is None
+
+
+def test_linkedin_flujo_completo_en_tablero(db, cfg):
+    reg = registro_desde_mensaje(correo_notificacion(), cfg)
+    reg["linkedin_url"] = "linkedin.com/in/ana-perez-soto"
+    lead_id, _ = db.registrar_descarga(reg)
+    analista.analizar(db, cfg)
+    assert db.lead(lead_id)["linkedin_url"] == "linkedin.com/in/ana-perez-soto"
+
+    creados = linkedin.ejecutar(db, cfg)
+    assert len(creados) == 1
+    accion = db.accion_linkedin(creados[0])
+    assert accion["paso"] == 1 and accion["estado"] == "pendiente" and len(accion["texto"]) <= 300
+    assert linkedin.ejecutar(db, cfg) == []  # no se duplica mientras está pendiente
+
+    linkedin.marcar(db, accion["id"], "enviado")
+    lead = db.lead(lead_id)
+    assert lead["linkedin_estado"] == "invitado" and lead["etapa"] == "En seguimiento"
+    assert linkedin.ejecutar(db, cfg) == []  # espera a que acepte
+
+    nuevos = linkedin.marcar_conectado(db, cfg, lead_id)
+    assert len(nuevos) == 1 and db.accion_linkedin(nuevos[0])["paso"] == 2
+    assert "gracias por conectar" in db.accion_linkedin(nuevos[0])["texto"]
+
+    linkedin.marcar_respondio(db, lead_id)
+    lead = db.lead(lead_id)
+    assert lead["etapa"] == "Respondió" and lead["respondio_en"] and lead["linkedin_estado"] == "respondió"
+    assert all(a["estado"] != "pendiente" for a in db.acciones_linkedin(lead_id=lead_id))
+    # Al responder por LinkedIn también se detiene el correo.
+    assert seguimiento.siguiente_paso(lead, [], datetime.now(timezone.utc)) is None
+
+    assert linkedin.guardar_perfil(db, lead_id, "https://www.linkedin.com/in/ana-perez-soto/") == "https://www.linkedin.com/in/ana-perez-soto"
+    assert linkedin.guardar_perfil(db, lead_id, "basura con espacios") == ""
+    assert db.lead(lead_id)["linkedin_url"] == "https://www.linkedin.com/in/ana-perez-soto"
+    assert "LinkedIn URL" in reuniones.exportar_crm(db.leads()).columns
+
+
+def test_linkedin_cupo_diario_y_desactivado(db, cfg):
+    preparar_demo(db, cfg)
+    pendientes = db.acciones_linkedin(estados=("pendiente",))
+    assert 0 < len(pendientes) <= cfg.linkedin_max_dia
+    assert all(a["segmento"] in cfg.linkedin_segmentos for a in pendientes)
+    apagado = dataclasses.replace(cfg, linkedin_activo=False)
+    assert linkedin.ejecutar(db, apagado) == []
+    # El cupo limita solo las invitaciones: el mensaje tras conectar se prepara igual.
+    sin_cupo = dataclasses.replace(cfg, linkedin_max_dia=1)
+    linkedin.marcar(db, pendientes[0]["id"], "enviado")
+    nuevos = linkedin.marcar_conectado(db, sin_cupo, pendientes[0]["lead_id"])
+    assert len(nuevos) == 1 and db.accion_linkedin(nuevos[0])["paso"] == 2
+    salida = []
+    assert linkedin.imprimir(db, cfg, publicacion=True, escribir=salida.append)
+    assert any("Publicación sugerida" in s for s in salida) and any("paso 2" in s for s in salida)
+
+
+def test_linkedin_publicacion(db, cfg):
+    titulos = set()
+    for semana in range(4):
+        titulo, texto = linkedin.redactar_publicacion(cfg, [], semana)
+        titulos.add(titulo)
+        assert cfg.link_descarga in texto and len(texto) <= linkedin.LIMITE_PUBLICACION
+    assert len(titulos) == 4
+    con_link = dataclasses.replace(cfg, link_ebook="https://www.hyperionadvisory.cl/ebook")
+    assert "https://www.hyperionadvisory.cl/ebook" in linkedin.redactar_publicacion(con_link, [], 0)[1]
+    preparar_demo(db, cfg)
+    hallazgo = linkedin.hallazgo_para_publicar(db.leads())
+    assert "%" in hallazgo and "@" not in hallazgo  # agregado, sin datos personales
+
+
+def test_asistente_ia_linkedin(cfg):
+    pytest.importorskip("anthropic")
+    from agentes_ebook.llm import AsistenteIA
+
+    cfg = dataclasses.replace(cfg, anthropic_api_key="sk-prueba", link_agenda="https://agenda.example/30")
+    ia = AsistenteIA(cfg)
+    lead = {"nombre": "Ana", "cargo": "CFO", "empresa": "Constructora", "motivo": "Otro", "segmento": "Caliente"}
+    ia.cliente.beta.messages.create = lambda **k: _Respuesta('{"texto": "Hola Ana, conectemos. Saludos"}')
+    assert ia.personalizar_linkedin(lead, "invitacion", "base", 300) == "Hola Ana, conectemos. Saludos"
+    # Demasiado largo o sin el link de agenda: se conserva la plantilla.
+    ia.cliente.beta.messages.create = lambda **k: _Respuesta('{"texto": "' + "x" * 301 + '"}')
+    assert ia.personalizar_linkedin(lead, "invitacion", "base", 300) is None
+    ia.cliente.beta.messages.create = lambda **k: _Respuesta('{"texto": "Hola Ana, conversemos."}')
+    assert ia.personalizar_linkedin(lead, "mensaje", "Agenda: https://agenda.example/30", 1900) is None
+    ia.cliente.beta.messages.create = lambda **k: _Respuesta('{"texto": "Mejor post sin link"}')
+    assert ia.mejorar_publicacion("Post " + cfg.link_descarga, 3000) is None

@@ -3,7 +3,7 @@
 import logging
 from dataclasses import dataclass, field
 
-from . import analista, captura, notificador, reuniones, seguimiento
+from . import analista, captura, linkedin, notificador, reuniones, seguimiento
 from .db import BaseDatos, ahora_utc, iso
 from .gmail import ClienteGmail
 from .llm import crear_asistente
@@ -19,6 +19,7 @@ class ResultadoCiclo:
     calientes: list = field(default_factory=list)
     reuniones: list = field(default_factory=list)
     seguimientos: list = field(default_factory=list)
+    linkedin: list = field(default_factory=list)
     alerta: str = None
     resumen: str = None
     errores: list = field(default_factory=list)
@@ -30,6 +31,7 @@ class ResultadoCiclo:
             f"{len(self.respondieron)} respuestas detectadas",
             f"{len(self.reuniones)} reuniones propuestas",
             f"{len(self.seguimientos)} correos de seguimiento preparados",
+            f"{len(self.linkedin)} textos de LinkedIn preparados",
         ]
         if self.alerta:
             partes.append(f"alerta: {self.alerta}")
@@ -45,7 +47,7 @@ def abrir_db(cfg):
 
 
 def ejecutar_ciclo(db, cfg, leer_gmail=True, notificar=True, forzar_resumen=False, usar_ia=True):
-    """Un ciclo completo: captura → sincroniza → analiza → reuniones → seguimiento → notifica."""
+    """Un ciclo completo: captura → sincroniza → analiza → reuniones → seguimiento → LinkedIn → notifica."""
     r = ResultadoCiclo()
     asistente = crear_asistente(cfg) if usar_ia else None
     cliente = None
@@ -73,6 +75,7 @@ def ejecutar_ciclo(db, cfg, leer_gmail=True, notificar=True, forzar_resumen=Fals
         reuniones.renovar_vencidas(db, cfg)
         r.reuniones = reuniones.proponer(db, cfg)
         r.seguimientos = seguimiento.ejecutar(db, cfg, cliente, asistente)
+        r.linkedin = linkedin.ejecutar(db, cfg, asistente)
     finally:
         if cliente:
             cliente.__exit__(None, None, None)

@@ -4,7 +4,7 @@ from datetime import timedelta
 from html import escape
 from urllib.parse import quote
 
-from . import reuniones
+from . import linkedin, reuniones
 from .analista import insights
 from .db import ahora_utc, desde_iso
 from .gmail import enviar_correo
@@ -54,6 +54,8 @@ def _tarjeta_lead(lead, cfg, db, seguimiento=None):
         asunto, cuerpo = redactar("bienvenida_caliente", lead, cfg, horarios)
     botones = _boton("✉️ Responder con borrador", link_mailto(lead["email"], asunto, cuerpo), principal=True)
     botones += _boton("💬 WhatsApp", link_whatsapp(lead, cfg))
+    if (lead.get("linkedin_estado") or "") != "sin perfil":
+        botones += _boton("🔗 LinkedIn", linkedin.link_lead(lead))
     if lead.get("respondio_en"):
         botones += _boton("📨 Ver su respuesta", f"https://mail.google.com/mail/u/0/#search/from%3A{quote(lead['email'])}")
     for h in (reuniones.horarios_de(db, lead["id"], cfg) if db else [])[:3]:

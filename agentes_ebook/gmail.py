@@ -39,6 +39,10 @@ MAPA_CAMPOS = {
     "company": "empresa",
     "motivo_de_descarga": "motivo",
     "motivo": "motivo",
+    "linkedin": "linkedin_url",
+    "perfil_linkedin": "linkedin_url",
+    "linkedin_url": "linkedin_url",
+    "perfil_de_linkedin": "linkedin_url",
 }
 
 

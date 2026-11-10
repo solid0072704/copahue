@@ -180,6 +180,7 @@ def exportar_crm(leads):
                 "Company Name": l.get("empresa", ""),
                 "Job Title": l.get("cargo", ""),
                 "Country/Region": l.get("pais", ""),
+                "LinkedIn URL": l.get("linkedin_url", ""),
                 "Lead Status": etapa_a_estado.get(l.get("etapa"), "NEW"),
                 "Lifecycle Stage": "customer" if l.get("etapa") == "Cliente" else (
                     "salesqualifiedlead" if l.get("segmento") == "Caliente" else "lead"

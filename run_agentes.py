@@ -5,6 +5,8 @@ Ejemplos:
     python run_agentes.py --loop 15       # un ciclo cada 15 minutos (deja tu PC o servidor trabajando)
     python run_agentes.py --resumen       # fuerza el envío del resumen diario
     python run_agentes.py --demo          # carga datos ficticios para probar (no envía nada)
+    python run_agentes.py --linkedin      # muestra los textos de LinkedIn pendientes para copiarlos
+    python run_agentes.py --linkedin --publicacion --lead ana@empresa.cl
 """
 
 import argparse
@@ -12,7 +14,7 @@ import logging
 import sys
 import time
 
-from agentes_ebook import Config, abrir_db, ejecutar_ciclo, preparar_demo
+from agentes_ebook import Config, abrir_db, ejecutar_ciclo, linkedin, preparar_demo
 
 
 def main():
@@ -22,6 +24,9 @@ def main():
     parser.add_argument("--sin-notificar", action="store_true", help="no enviar alertas ni resumen")
     parser.add_argument("--sin-ia", action="store_true", help="no usar Claude aunque haya API key")
     parser.add_argument("--demo", action="store_true", help="cargar datos de demostración")
+    parser.add_argument("--linkedin", action="store_true", help="mostrar los textos de LinkedIn pendientes y salir")
+    parser.add_argument("--lead", metavar="CORREO", help="con --linkedin: solo los textos de este lead")
+    parser.add_argument("--publicacion", action="store_true", help="con --linkedin: incluir la publicación de la semana")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -31,6 +36,9 @@ def main():
     try:
         if args.demo:
             print("Demo:", preparar_demo(db, cfg).texto())
+            return 0
+        if args.linkedin:
+            linkedin.imprimir(db, cfg, correo=args.lead, publicacion=args.publicacion)
             return 0
         if not cfg.gmail_configurado:
             print(

@@ -26,6 +26,15 @@ ESQUEMA_ANALISIS = {
     "additionalProperties": False,
 }
 
+ESQUEMA_TEXTO = {
+    "type": "object",
+    "properties": {
+        "texto": {"type": "string", "description": "El texto final, listo para pegar en LinkedIn."},
+    },
+    "required": ["texto"],
+    "additionalProperties": False,
+}
+
 ESQUEMA_CORREO = {
     "type": "object",
     "properties": {
@@ -101,6 +110,45 @@ class AsistenteIA:
         if not cuerpo or (self.cfg.link_agenda and self.cfg.link_agenda in cuerpo_base and self.cfg.link_agenda not in cuerpo):
             return None
         return cuerpo
+
+
+    def personalizar_linkedin(self, lead, tipo, texto_base, limite):
+        """Reescribe una nota o mensaje de LinkedIn. Devuelve None si no mejora la plantilla con seguridad."""
+        que = {
+            "invitacion": "nota de invitación a conectar (va junto a la solicitud de contacto)",
+            "mensaje": "primer mensaje directo después de que aceptó la conexión",
+            "seguimiento": "mensaje breve de seguimiento, sin presionar",
+        }.get(tipo, "mensaje de LinkedIn")
+        prompt = (
+            f"Reescribe esta {que} para que suene personal, natural y específica para el lead. "
+            f"Máximo {limite} caracteres (cuenta espacios); si dudas, más corto. Sin asunto, sin "
+            "emojis, sin hashtags. Conserva cualquier enlace u horario tal cual y la despedida. "
+            "No agregues promesas, cifras ni datos nuevos.\n"
+            f"<lead>{_datos_lead(lead)}</lead>\n"
+            f"<enfoque>{lead.get('angulo', '')}</enfoque>\n"
+            f"<texto_base>\n{texto_base}\n</texto_base>"
+        )
+        datos = self._json(prompt, ESQUEMA_TEXTO)
+        texto = (datos or {}).get("texto", "").strip()
+        if not texto or len(texto) > limite:
+            return None
+        if self.cfg.link_agenda and self.cfg.link_agenda in texto_base and self.cfg.link_agenda not in texto:
+            return None
+        return texto
+
+    def mejorar_publicacion(self, texto_base, limite):
+        """Pule una publicación de LinkedIn conservando el enlace de descarga."""
+        prompt = (
+            "Mejora esta publicación de LinkedIn para que enganche desde la primera línea y sea fácil "
+            f"de leer en el celular (frases cortas, espacios entre párrafos). Máximo {limite} caracteres. "
+            "Conserva el enlace de descarga tal cual y los hashtags. No inventes cifras, clientes ni casos.\n"
+            f"<publicacion_base>\n{texto_base}\n</publicacion_base>"
+        )
+        datos = self._json(prompt, ESQUEMA_TEXTO)
+        texto = (datos or {}).get("texto", "").strip()
+        if not texto or len(texto) > limite or self.cfg.link_descarga not in texto:
+            return None
+        return texto
 
 
 def crear_asistente(cfg):

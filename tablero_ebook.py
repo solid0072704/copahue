@@ -17,9 +17,10 @@ from agentes_ebook.config import MODOS_SEGUIMIENTO, Config, aplicar_secrets_stre
 
 aplicar_secrets_streamlit()
 
-from agentes_ebook import analista, captura, notificador, reuniones, seguimiento  # noqa: E402
+from agentes_ebook import analista, captura, linkedin, notificador, reuniones, seguimiento  # noqa: E402
 from agentes_ebook.db import ETAPAS, ahora_utc, desde_iso  # noqa: E402
 from agentes_ebook.gmail import ClienteGmail, enviar_correo, es_destino_simulado  # noqa: E402
+from agentes_ebook.llm import crear_asistente  # noqa: E402
 from agentes_ebook.orquestador import abrir_db, ejecutar_ciclo, preparar_demo  # noqa: E402
 from agentes_ebook.plantillas import fecha_larga, link_mailto, link_whatsapp  # noqa: E402
 
@@ -31,6 +32,7 @@ AZUL = "#3987e5" if OSCURO else "#2a78d6"
 TINTA = "#c3c2b7" if OSCURO else "#52514e"
 ICONO_SEGMENTO = {"Caliente": "🔥", "Tibio": "🌤️", "Frío": "❄️"}
 ICONO_ESTADO = {"pendiente": "🕒 Por aprobar", "borrador": "📝 Borrador en Gmail", "enviado": "✅ Enviado", "omitido": "⏭️ Omitido"}
+ICONO_LINKEDIN = {"pendiente": "📋 Listo para copiar", "enviado": "✅ Enviado", "omitido": "⏭️ Omitido"}
 
 # ---------------------------------------------------------------------------
 # Configuración y datos
@@ -100,6 +102,7 @@ with st.sidebar:
     st.markdown(f"{'✅' if cfg.notificar_a else '⚠️'} **Avisos a**: {cfg.notificar_a or 'sin configurar'}")
     st.markdown(f"{'✅' if cfg.ia_configurada else '➖'} **IA (Claude)**: {'activa' if cfg.ia_configurada else 'opcional, sin API key'}")
     st.markdown(f"{'✅' if cfg.link_agenda else '➖'} **Link de agenda**: {'configurado' if cfg.link_agenda else 'se proponen horarios'}")
+    st.markdown(f"{'✅' if cfg.linkedin_activo else '➖'} **LinkedIn**: {'textos para ' + ', '.join(cfg.linkedin_segmentos) if cfg.linkedin_activo else 'desactivado'}")
 
     st.selectbox(
         "Modo de seguimiento",
@@ -162,8 +165,8 @@ if not leads:
 if any(l["fuente"] == "demo" for l in leads):
     st.warning("Estás viendo datos de demostración (ficticios). Bórralos desde la barra lateral cuando conectes tu Gmail.")
 
-tab_resumen, tab_leads, tab_seg, tab_reu, tab_notif, tab_log = st.tabs(
-    ["📊 Resumen", "🧠 Leads", "✉️ Seguimiento", "🤝 Reuniones", "🔔 Notificaciones", "📜 Bitácora"]
+tab_resumen, tab_leads, tab_seg, tab_reu, tab_li, tab_notif, tab_log = st.tabs(
+    ["📊 Resumen", "🧠 Leads", "✉️ Seguimiento", "🤝 Reuniones", "🔗 LinkedIn", "🔔 Notificaciones", "📜 Bitácora"]
 )
 
 
@@ -188,14 +191,16 @@ with tab_resumen:
     prev7 = int(((fechas <= ahora - timedelta(days=7)) & (fechas > ahora - timedelta(days=14))).sum())
     abiertos = db.seguimientos(estados=("pendiente", "borrador"))
     reus = db.reuniones()
+    li_pendientes = db.acciones_linkedin(estados=("pendiente",))
 
-    k = st.columns(6)
+    k = st.columns(7)
     k[0].metric("Descargas totales", len(descargas))
     k[1].metric("Últimos 7 días", ult7, delta=ult7 - prev7 if prev7 else None, help="Variación vs. los 7 días anteriores")
     k[2].metric("🔥 Leads calientes", int((df_leads["segmento"] == "Caliente").sum()))
     k[3].metric("✉️ Correos por aprobar", len(abiertos))
-    k[4].metric("📅 Reuniones propuestas", sum(1 for r in reus if r["estado"] == "propuesta"))
-    k[5].metric("🤝 Reuniones agendadas", sum(1 for r in reus if r["estado"] == "agendada"))
+    k[4].metric("🔗 LinkedIn por enviar", len(li_pendientes))
+    k[5].metric("📅 Reuniones propuestas", sum(1 for r in reus if r["estado"] == "propuesta"))
+    k[6].metric("🤝 Reuniones agendadas", sum(1 for r in reus if r["estado"] == "agendada"))
 
     izq, der = st.columns([3, 2])
     with izq:
@@ -297,9 +302,15 @@ with tab_leads:
             wa = link_whatsapp(lead, cfg)
             if wa:
                 st.link_button("💬 Escribir por WhatsApp", wa, width="stretch")
+            url_li = linkedin.link_lead(lead)
+            if url_li:
+                st.link_button("🔗 Ver perfil en LinkedIn" if lead["linkedin_url"] else "🔍 Buscar en LinkedIn", url_li, width="stretch")
+            st.caption(f"LinkedIn: {linkedin.ESTADOS_LEAD.get(lead['linkedin_estado'] or '', lead['linkedin_estado'])}")
             st.markdown("**Historial de seguimiento**")
             for s in db.seguimientos(lead_id=lead["id"]):
                 st.markdown(f"- Paso {s['paso']} · {s['nombre_paso']} · {ICONO_ESTADO.get(s['estado'], s['estado'])} · {local(s['actualizado_en'], '%d/%m')}")
+            for a in db.acciones_linkedin(lead_id=lead["id"]):
+                st.markdown(f"- 🔗 LinkedIn {a['paso']} · {a['nombre_paso']} · {ICONO_LINKEDIN.get(a['estado'], a['estado'])} · {local(a['actualizado_en'], '%d/%m')}")
 
 # ---------------------------------------------------------------------------
 # Seguimiento
@@ -430,6 +441,116 @@ with tab_reu:
     st.download_button("⬇️ Descargar contactos (CSV)", crm.to_csv(index=False).encode("utf-8-sig"), "contactos_ebook.csv", "text/csv")
 
 # ---------------------------------------------------------------------------
+# LinkedIn
+# ---------------------------------------------------------------------------
+with tab_li:
+    pendientes_li = db.acciones_linkedin(estados=("pendiente",))
+    st.subheader(f"🔗 Textos listos para pegar en LinkedIn ({len(pendientes_li)})")
+    st.caption(
+        "LinkedIn no permite enviar invitaciones ni mensajes de forma automática, así que el agente deja todo "
+        "listo: abre el perfil, copia el texto y cuéntale qué pasó. "
+        f"Secuencia: invitación a conectar (máx. {linkedin.LIMITE_NOTA} caracteres) → mensaje cuando acepta → "
+        f"seguimiento a los {cfg.linkedin_dias_seguimiento} días. Se detiene apenas el lead responde."
+    )
+    if not cfg.linkedin_activo:
+        st.info("El agente de LinkedIn está desactivado (`LINKEDIN_ACTIVO=false`).")
+    elif not pendientes_li:
+        st.success("No hay textos pendientes. El agente prepara los siguientes cuando corresponde (o cuando marcas que alguien aceptó tu invitación).")
+    for a in pendientes_li:
+        lead_li = db.lead(a["lead_id"])
+        limite = linkedin.LIMITES.get(a["tipo"], linkedin.LIMITE_MENSAJE)
+        titulo = f"{ICONO_SEGMENTO.get(a['segmento'], '')} {a['nombre'] or a['email']} · Paso {a['paso']}: {a['nombre_paso']}"
+        with st.expander(titulo, expanded=a is pendientes_li[0]):
+            st.caption(
+                f"{a['cargo']} · {a['empresa']} · {linkedin.ESTADOS_LEAD.get(a['linkedin_estado'] or '', '')}"
+                + (" · ✨ personalizado con IA" if a["personalizado_ia"] else "")
+            )
+            texto = st.text_area("Texto", a["texto"], height=180 if a["tipo"] == "invitacion" else 260, key=f"li-texto-{a['id']}")
+            if texto != a["texto"]:
+                db.actualizar_accion_linkedin(a["id"], texto=texto)
+            largo = len(texto)
+            if largo > limite:
+                st.error(f"{largo}/{limite} caracteres: LinkedIn lo cortará. Acórtalo antes de pegarlo.")
+            else:
+                st.caption(f"{largo}/{limite} caracteres")
+            st.code(texto, language=None)  # el bloque trae su propio botón de copiar
+
+            p1, p2 = st.columns([3, 1])
+            perfil = p1.text_input(
+                "Perfil del lead en LinkedIn (URL o usuario)", lead_li["linkedin_url"] or "",
+                key=f"li-perfil-{a['id']}", placeholder="https://www.linkedin.com/in/…",
+            )
+            if p2.button("Guardar perfil", key=f"li-guardar-{a['id']}"):
+                if linkedin.guardar_perfil(db, a["lead_id"], perfil) or not perfil.strip():
+                    st.rerun()
+                st.error("No parece una URL de LinkedIn (debe ser linkedin.com/in/usuario).")
+            url_li = linkedin.link_lead(lead_li)
+            b1, b2, b3, b4, b5 = st.columns(5)
+            if url_li:
+                b1.link_button("👤 Abrir perfil" if lead_li["linkedin_url"] else "🔍 Buscar perfil", url_li, width="stretch")
+            if b2.button("✅ Ya lo envié", key=f"li-enviado-{a['id']}", type="primary", width="stretch"):
+                linkedin.marcar(db, a["id"], "enviado")
+                st.rerun()
+            if a["paso"] == 1 and b3.button("🤝 Aceptó la conexión", key=f"li-conecto-{a['id']}", width="stretch"):
+                linkedin.marcar_conectado(db, cfg, a["lead_id"], crear_asistente(cfg))
+                st.rerun()
+            if b4.button("💬 Me respondió", key=f"li-respondio-{a['id']}", width="stretch"):
+                linkedin.marcar_respondio(db, a["lead_id"])
+                st.rerun()
+            if b5.button("🚫 Sin perfil", key=f"li-sinperfil-{a['id']}", width="stretch", help="No tiene LinkedIn o no se encuentra: se detiene esta secuencia"):
+                linkedin.marcar_sin_perfil(db, a["lead_id"])
+                st.rerun()
+            if st.button("⏭️ Omitir este paso", key=f"li-omitir-{a['id']}"):
+                linkedin.marcar(db, a["id"], "omitido")
+                st.rerun()
+
+    st.subheader("🤝 Esperando que acepten la invitación")
+    invitados = [l for l in leads if l["linkedin_estado"] == "invitado"]
+    if invitados:
+        for l in invitados:
+            c1, c2, c3 = st.columns([4, 1, 1])
+            c1.markdown(f"{ICONO_SEGMENTO.get(l['segmento'], '')} **{l['nombre'] or l['email']}** · {l['cargo']} · {l['empresa']}")
+            if c2.button("🤝 Aceptó", key=f"li-acepto-{l['id']}", width="stretch"):
+                linkedin.marcar_conectado(db, cfg, l["id"], crear_asistente(cfg))
+                st.rerun()
+            if c3.button("💬 Respondió", key=f"li-resp-{l['id']}", width="stretch"):
+                linkedin.marcar_respondio(db, l["id"])
+                st.rerun()
+    else:
+        st.caption("Nadie pendiente. Cuando marques una invitación como enviada aparecerá aquí.")
+
+    st.subheader("📣 Publicación sugerida para tu LinkedIn esta semana")
+    st.caption("Una publicación por semana que lleva a descargar el ebook (rota entre 4 enfoques). Cópiala, ajústala y publícala.")
+    titulo_pub, texto_pub = linkedin.redactar_publicacion(cfg, leads)
+    clave_pub = f"pub-{ahora.isocalendar()[1]}"
+    if clave_pub not in st.session_state:
+        st.session_state[clave_pub] = texto_pub
+    st.markdown(f"**{titulo_pub}**")
+    texto_pub = st.text_area("Publicación", st.session_state[clave_pub], height=320, key=f"{clave_pub}-texto")
+    st.caption(f"{len(texto_pub)}/{linkedin.LIMITE_PUBLICACION} caracteres")
+    q1, q2 = st.columns(2)
+    q1.link_button("📣 Publicar en LinkedIn (se abre con el texto)", linkedin.link_publicar(texto_pub), width="stretch")
+    if q2.button("✨ Mejorar con IA", disabled=not cfg.ia_configurada, width="stretch", help="Requiere ANTHROPIC_API_KEY"):
+        asistente = crear_asistente(cfg)
+        mejorado = asistente.mejorar_publicacion(texto_pub, linkedin.LIMITE_PUBLICACION) if asistente else None
+        if mejorado:
+            st.session_state[clave_pub] = mejorado
+            st.rerun()
+        st.warning("La IA no devolvió una versión válida; se conserva el texto actual.")
+
+    st.subheader("Historial")
+    hist_li = pd.DataFrame(db.acciones_linkedin(estados=("enviado", "omitido")))
+    if not hist_li.empty:
+        hist_li["Estado"] = hist_li["estado"].map(ICONO_LINKEDIN)
+        hist_li["Fecha"] = hist_li["actualizado_en"].map(local)
+        st.dataframe(
+            hist_li.sort_values("actualizado_en", ascending=False)[["Fecha", "nombre", "email", "paso", "nombre_paso", "Estado"]],
+            hide_index=True,
+            width="stretch",
+            column_config={"nombre": "Nombre", "email": "Correo", "paso": "Paso", "nombre_paso": "Tipo"},
+        )
+
+# ---------------------------------------------------------------------------
 # Notificaciones
 # ---------------------------------------------------------------------------
 with tab_notif:
@@ -464,7 +585,7 @@ with tab_notif:
 # Bitácora
 # ---------------------------------------------------------------------------
 with tab_log:
-    agentes = ["Todos", "Captura", "Analista", "Seguimiento", "Reuniones", "Notificador", "Orquestador", "Tablero"]
+    agentes = ["Todos", "Captura", "Analista", "Seguimiento", "Reuniones", "LinkedIn", "Notificador", "Orquestador", "Tablero"]
     agente = st.selectbox("Agente", agentes)
     log = pd.DataFrame(db.bitacora(1000, None if agente == "Todos" else agente))
     if not log.empty:

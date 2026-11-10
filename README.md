@@ -2,7 +2,7 @@
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
-| `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
+| `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento (correo y LinkedIn) y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
 
@@ -24,6 +24,8 @@ flowchart LR
     R --> S
     S -->|borradores o envío| G
     G -->|¿respondió? ¿lo enviaste?| S
+    A --> L[🔗 LinkedIn<br/>invitaciones, mensajes y publicaciones]
+    L -->|copiar y pegar| LI[(Tu LinkedIn)]
     A --> N[🔔 Notificador]
     S --> N
     N -->|alerta + resumen diario| Y[Tu correo]
@@ -35,6 +37,7 @@ flowchart LR
 | **Analista** | Puntúa cada lead (correo corporativo, cargo, empresa, motivo, país, teléfono, descargas repetidas, si respondió) y lo clasifica en 🔥 Caliente, 🌤️ Tibio o ❄️ Frío. Escribe una lectura comercial y cómo abordarlo. Resume tendencias. |
 | **Seguimiento** | Arma una secuencia de 4 correos según el segmento (bienvenida → contenido de valor → invitación → último contacto). Los deja como **borradores en tu Gmail**, los envía solo o espera tu aprobación. Se detiene apenas el lead responde. |
 | **Reuniones** | A los calientes y a quienes respondieron les propone 3 horarios hábiles. Genera el evento de Google Calendar con el lead como invitado, el archivo `.ics`, el link de WhatsApp y exporta los contactos a tu CRM (CSV compatible con HubSpot). |
+| **LinkedIn** | Ubica el perfil de cada lead caliente o tibio, redacta la **nota de invitación** (máx. 300 caracteres), el **mensaje tras conectar** (con la oferta de reunión y horarios o tu link de agenda) y un **seguimiento**; los deja listos para copiar en el tablero y se detiene apenas el lead responde. Cada semana te propone una **publicación** para tu LinkedIn que lleva a descargar el ebook. |
 | **Notificador** | Te envía una **alerta inmediata** cuando aparece un lead caliente o alguien te responde (con botones para responder, escribir por WhatsApp o agendar) y un **resumen diario** con las cifras del día. |
 
 ### Puesta en marcha (10 minutos)
@@ -66,6 +69,29 @@ Puedes cambiar el modo en la barra lateral del tablero. Los leads que descargaro
 nunca contactaste reciben un correo de **reactivación** (en vez de la bienvenida); los de más de 60 días quedan
 para gestión manual, para no escribir en masa a una base antigua.
 
+### Agente de LinkedIn
+
+LinkedIn no permite automatizar invitaciones ni mensajes (ni con su API ni con bots: arriesgas tu cuenta),
+así que el agente hace todo lo demás y tú solo pegas y envías desde la pestaña **🔗 LinkedIn**:
+
+1. **Invitación a conectar**: para cada lead de los segmentos en `LINKEDIN_SEGMENTOS` (por defecto Caliente y Tibio)
+   prepara una nota de máximo 300 caracteres según su motivo de descarga. Botón **🔍 Buscar perfil** (nombre + empresa)
+   o **👤 Abrir perfil** si guardaste su URL (también se lee del formulario o CSV si traen una columna `linkedin`).
+   Cuando la envíes, marca **✅ Ya lo envié**. Máximo `LINKEDIN_MAX_DIA` invitaciones al día (10).
+2. **Mensaje tras conectar**: cuando marques **🤝 Aceptó la conexión**, el agente redacta al instante el mensaje
+   con la oferta de reunión (usa tus horarios propuestos o `LINK_AGENDA`).
+3. **Seguimiento**: `LINKEDIN_DIAS_SEGUIMIENTO` días después (5) si no respondió.
+
+Si marcas **💬 Me respondió**, el lead pasa a *Respondió* y se detienen también los correos. **🚫 Sin perfil** cierra la
+secuencia. Con `ANTHROPIC_API_KEY`, cada texto se personaliza con Claude respetando el límite de caracteres y los enlaces.
+Pon `LINKEDIN_ACTIVO=false` para desactivar el agente.
+
+Además, la pestaña propone cada semana una **publicación** para tu propio LinkedIn (rota entre 4 enfoques, con el link
+de descarga `LINK_EBOOK`): el botón **📣 Publicar** abre LinkedIn con el texto ya escrito.
+
+Por terminal: `python run_agentes.py --linkedin [--lead correo] [--publicacion]`. Si usas Claude Code en este
+repositorio, la skill `/linkedin` (`.claude/skills/linkedin/SKILL.md`) redacta y revisa estos textos con las mismas reglas.
+
 ### Que trabajen solos las 24 horas
 
 Elige una opción (no las dos con el mismo Gmail, para no duplicar borradores):
@@ -77,6 +103,7 @@ Elige una opción (no las dos con el mismo Gmail, para no duplicar borradores):
   (y opcionalmente `NOTIFY_EMAIL`, `ANTHROPIC_API_KEY`) y la variable `AGENTES_ACTIVOS=true`.
   Recibirás las alertas y el resumen por correo, y los borradores aparecerán en tu Gmail. En este modo
   el tablero es para consultar: usa allí el modo `manual` y gestiona los correos desde Gmail.
+  Los textos de LinkedIn quedan preparados en la base y los copias desde el tablero.
 
 Comandos útiles:
 
@@ -85,12 +112,14 @@ python run_agentes.py              # un ciclo
 python run_agentes.py --resumen    # fuerza el resumen diario
 python run_agentes.py --sin-notificar
 python run_agentes.py --demo       # carga datos ficticios
+python run_agentes.py --linkedin --publicacion   # textos de LinkedIn pendientes + publicación de la semana
 ```
 
 ### IA opcional (Claude)
 
 Con `ANTHROPIC_API_KEY`, el analista escribe una lectura más fina de los leads calientes y tibios, y
-el agente de seguimiento personaliza cada correo (sin inventar datos y conservando horarios y links).
+los agentes de seguimiento y LinkedIn personalizan cada correo, nota y mensaje (sin inventar datos,
+conservando horarios y links, y dentro del límite de caracteres de LinkedIn).
 Usa el modelo `claude-opus-5-5` con esfuerzo bajo y respaldo automático del servidor (`fallbacks: "default"`)
 si una solicitud es rechazada. Sin API key todo funciona igual con reglas y plantillas.
 
@@ -117,6 +146,8 @@ Las reglas están en `agentes_ebook/analista.py` y las plantillas de correo en `
 - Las credenciales van en `.env` o en los Secrets de Streamlit/GitHub, nunca en el código.
 - Los agentes leen Gmail en modo solo lectura (no marcan correos como leídos) y solo escriben borradores o
   envían correos según el modo que elijas.
+- En LinkedIn nunca se envía nada automáticamente ni se usan bots: el agente prepara los textos y los enlaces,
+  y tú los pegas desde tu cuenta.
 
 ### Pruebas
 
@@ -137,9 +168,11 @@ agentes_ebook/
   plantillas.py    correos, cadencias, links de WhatsApp y mailto
   seguimiento.py   agente de seguimiento
   reuniones.py     agente de reuniones (horarios, Google Calendar, .ics, CRM)
+  linkedin.py      agente de LinkedIn (perfil, invitación, mensajes, publicaciones)
   notificador.py   alertas y resumen diario por correo
   llm.py           IA opcional con Claude
   orquestador.py   ciclo completo de los agentes
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
+.claude/skills/linkedin/SKILL.md   skill de Claude Code para redactar y revisar textos de LinkedIn
 ```
