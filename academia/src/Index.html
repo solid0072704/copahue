@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="<?!= escaparHtml_(marca.urlFuentes) ?>">
+  <style>
+    /* Kit de marca (valores validados en el servidor: ver marca_() en 03_Contenido.gs) */
+    :root {
+      --primario: <?!= marca.primario ?>;
+      --secundario: <?!= marca.secundario ?>;
+      --acento: <?!= marca.acento ?>;
+      --exito: <?!= marca.exito ?>;
+      --fondo: <?!= marca.fondo ?>;
+      --texto: <?!= marca.texto ?>;
+      --fuente-titulos: '<?!= marca.fuenteTitulos ?>', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+      --fuente-texto: '<?!= marca.fuenteTexto ?>', 'Lato', 'Segoe UI', Arial, sans-serif;
+    }
+  </style>
+  <?!= incluir_('Estilos'); ?>
+</head>
+<body>
+  <a class="saltar" href="#app">Ir al contenido</a>
+  <header class="cabecera">
+    <div class="cabecera__interior">
+      <button class="cabecera__marca" type="button" data-ir="inicio" aria-label="Ir a mi ruta">
+        <? if (marca.logo) { ?>
+          <img class="cabecera__logo" src="<?!= escaparHtml_(marca.logo) ?>" alt="Tu Proyecto de Vida">
+        <? } else { ?>
+          <span class="cabecera__logotipo">Tu Proyecto de Vida</span>
+        <? } ?>
+        <span class="cabecera__separador" aria-hidden="true"></span>
+        <span class="cabecera__academia"><?= marca.nombre ?></span>
+      </button>
+      <nav class="cabecera__nav" id="nav" aria-label="Navegación principal"></nav>
+    </div>
+  </header>
+
+  <main id="app" class="contenedor" tabindex="-1">
+    <div class="cargando" role="status"><span class="spinner" aria-hidden="true"></span> Cargando tu ruta…</div>
+  </main>
+
+  <footer class="pie">
+    <span><?= marca.nombre ?> · Tu Proyecto de Vida</span>
+    <span id="pie-contacto"></span>
+  </footer>
+
+  <div id="modal" class="modal" hidden></div>
+  <div id="avisos" class="avisos" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    window.MARCA = <?!= marcaJson ?>;
+    window.DATOS_INICIALES = <?!= datosJson ?>;
+  </script>
+  <?!= incluir_('App'); ?>
+</body>
+</html>

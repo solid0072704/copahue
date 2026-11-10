@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="<?!= escaparHtml_(marca.urlFuentes) ?>">
+  <style>
+    :root {
+      --primario: <?!= marca.primario ?>;
+      --acento: <?!= marca.acento ?>;
+      --fondo: <?!= marca.fondo ?>;
+      --texto: <?!= marca.texto ?>;
+      --fuente-titulos: '<?!= marca.fuenteTitulos ?>', 'Montserrat', Arial, sans-serif;
+      --fuente-texto: '<?!= marca.fuenteTexto ?>', 'Lato', Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; background: var(--fondo); color: var(--texto); font-family: var(--fuente-texto); line-height: 1.55; }
+    .caja { background: #fff; border-radius: 20px; max-width: 520px; width: 100%; padding: 36px 32px; text-align: center; box-shadow: 0 10px 40px rgba(0, 40, 60, .14); border-top: 8px solid var(--primario); }
+    .logo { height: 54px; margin-bottom: 18px; }
+    .logotipo { font-family: var(--fuente-titulos); font-weight: 700; font-size: 1.4rem; color: var(--primario); margin-bottom: 18px; }
+    h1 { font-family: var(--fuente-titulos); font-size: 1.45rem; margin: 0 0 10px; }
+    .correo { display: inline-block; background: #F1F4F6; border-radius: 999px; padding: 4px 14px; font-weight: 700; margin: 6px 0 14px; word-break: break-all; }
+    .boton { display: inline-block; background: var(--primario); color: #fff; text-decoration: none; padding: 12px 22px; border-radius: 10px; font-weight: 700; margin-top: 10px; }
+    .boton:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+    .nota { color: #5B6873; font-size: .9rem; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <main class="caja">
+    <? if (marca.logoColor) { ?>
+      <img class="logo" src="<?!= escaparHtml_(marca.logoColor) ?>" alt="Tu Proyecto de Vida">
+    <? } else { ?>
+      <div class="logotipo">Tu Proyecto de Vida</div>
+    <? } ?>
+    <h1><?= marca.nombre ?> es exclusiva para el equipo</h1>
+    <p>Solo pueden ingresar cuentas <strong>@<?= dominio ?></strong>.</p>
+    <? if (email) { ?>
+      <div>Ingresaste como</div>
+      <div class="correo"><?= email ?></div>
+    <? } else { ?>
+      <p>No pudimos identificar tu cuenta de Google.</p>
+    <? } ?>
+    <div><a class="boton" href="<?!= escaparHtml_(urlCambiarCuenta) ?>">Ingresar con mi cuenta @<?= dominio ?></a></div>
+    <p class="nota">Si eres parte de Tu Proyecto de Vida y no puedes entrar, escribe a tu jefatura o al equipo de la academia.</p>
+  </main>
+</body>
+</html>

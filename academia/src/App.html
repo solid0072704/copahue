@@ -1,0 +1,876 @@
+<script>
+/* TPDV Academy · aplicación del navegador (sin dependencias externas). */
+(function () {
+  'use strict';
+
+  var D = window.DATOS_INICIALES;
+  var MARCA = window.MARCA || {};
+  var vista = { tipo: 'inicio' };
+  var evaluacion = null;   // { moduloId, preguntas, respuestas, puntajeAprobacion }
+  var panel = null;        // datos del panel de administración
+  var permisos = null;     // resultado de la verificación de permisos
+  var ocupado = false;
+
+  var app = document.getElementById('app');
+  var nav = document.getElementById('nav');
+  var modal = document.getElementById('modal');
+
+  /* ---------------------------------------------------------------- utilidades */
+
+  var ICONOS = {
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    candado: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    play: '<circle cx="12" cy="12" r="9"/><path d="M10 8.8v6.4l5.2-3.2z"/>',
+    doc: '<path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A1.5 1.5 0 0 1 6 19V5a1.5 1.5 0 0 1 1-1.5z"/><path d="M14 3.5V8h4M9 12.5h6M9 16h6"/>',
+    presentacion: '<rect x="3.5" y="4.5" width="17" height="11" rx="2"/><path d="M12 15.5v4M8.5 19.5h7"/>',
+    planilla: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9.5h16M4 14.5h16M10 4v16"/>',
+    enlace: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    externo: '<path d="M14 4.5h5.5V10M19.5 4.5L11 13"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
+    flechaDer: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    flechaIzq: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    premio: '<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5L7 21l5-2.5 5 2.5-1.5-7.5"/>',
+    usuarios: '<circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 19.5a6.5 6.5 0 0 1 13 0M16 5.2a3.5 3.5 0 0 1 0 6.6M18 14a6.5 6.5 0 0 1 3.5 5.5"/>',
+    sincronizar: '<path d="M4.5 12a7.5 7.5 0 0 1 13-5.1L19.5 9M19.5 4.5V9H15M19.5 12a7.5 7.5 0 0 1-13 5.1L4.5 15M4.5 19.5V15H9"/>',
+    escudo: '<path d="M12 3.5l7 2.8V11c0 4.6-3 8-7 9.5-4-1.5-7-4.9-7-9.5V6.3z"/><path d="M9 12l2 2 4-4"/>',
+    carpeta: '<path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/>',
+    reloj: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    lapiz: '<path d="M4.5 19.5l1-4L16 5a2.1 2.1 0 0 1 3 3L8.5 18.5z"/><path d="M14 7l3 3"/>',
+    imprimir: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+    ruta: '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>',
+    panel: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="4.5" rx="1.5"/><rect x="13.5" y="11" width="7" height="9.5" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/>',
+    pregunta: '<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.5a2.4 2.4 0 1 1 3.3 2.2c-.6.3-1 .8-1 1.5v.6M12 16.8v.2"/>',
+    alerta: '<path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.5v.2"/>'
+  };
+
+  function icono(nombre, clase) {
+    return '<svg class="icono ' + (clase || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONOS[nombre] || '') + '</svg>';
+  }
+
+  function esc(texto) {
+    return String(texto === undefined || texto === null ? '' : texto)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function parrafos(texto) {
+    return String(texto || '').split(/\n{2,}|\r\n\r\n/).map(function (p) {
+      return p.trim() ? '<p>' + esc(p.trim()).replace(/\n/g, '<br>') + '</p>' : '';
+    }).join('');
+  }
+
+  function fecha(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function fechaCorta(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
+  }
+
+  function primerNombre() {
+    var n = (D.usuario.nombre || '').trim();
+    return n ? n.split(/\s+/)[0] : '';
+  }
+
+  function iniciales() {
+    var base = (D.usuario.nombre || D.usuario.email || '?').trim();
+    var partes = base.split(/[\s@.]+/).filter(Boolean);
+    return ((partes[0] || '?').charAt(0) + (partes[1] ? partes[1].charAt(0) : '')).toUpperCase();
+  }
+
+  function moduloPorId(id) {
+    return D.programa.modulos.filter(function (m) { return m.id === id; })[0] || null;
+  }
+
+  function leccionPorId(m, id) {
+    return m ? m.lecciones.filter(function (l) { return l.id === id; })[0] || null : null;
+  }
+
+  function llamar(funcion) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (resolver, rechazar) {
+      var runner = google.script.run.withSuccessHandler(resolver).withFailureHandler(rechazar);
+      runner[funcion].apply(runner, args);
+    });
+  }
+
+  function aviso(texto, tipo) {
+    var cont = document.getElementById('avisos');
+    var el = document.createElement('div');
+    el.className = 'aviso' + (tipo ? ' aviso--' + tipo : '');
+    el.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+    el.innerHTML = icono(tipo === 'error' ? 'alerta' : 'check') + '<span>' + esc(texto) + '</span>';
+    cont.appendChild(el);
+    setTimeout(function () { el.remove(); }, tipo === 'error' ? 7000 : 3800);
+  }
+
+  function errorServidor(e) {
+    ocupado = false;
+    aviso((e && e.message) ? e.message.replace(/^Error:\s*/, '') : 'Ocurrió un problema. Intenta nuevamente.', 'error');
+    render();
+  }
+
+  function etiquetaTipo(tipo) {
+    var mapa = { 'Video': 'play', 'YouTube': 'play', 'Presentación': 'presentacion', 'PowerPoint': 'presentacion',
+      'Planilla': 'planilla', 'Excel': 'planilla', 'Enlace': 'enlace', 'Carpeta': 'carpeta' };
+    return icono(mapa[tipo] || 'doc', 'icono--chico') + esc(tipo === 'Texto' ? 'Lectura' : tipo);
+  }
+
+  function minutos(n) {
+    if (!n) return '';
+    return n >= 60 ? Math.floor(n / 60) + ' h ' + (n % 60 ? (n % 60) + ' min' : '') : n + ' min';
+  }
+
+  function pilarDe(m) {
+    var p = (m.pilar || '').toLowerCase();
+    if (p.indexOf('venta') !== -1) return 'Ventas';
+    if (p.indexOf('market') !== -1) return 'Marketing';
+    if (p.indexOf('legal') !== -1 || p.indexOf('escritur') !== -1) return 'Legal';
+    if (p.indexOf('evalua') !== -1) return 'Evaluación';
+    return 'Inducción';
+  }
+
+  function estadoModulo(m) {
+    if (m.completo) return { clase: 'ok', texto: 'Completado', icono: 'check' };
+    if (m.bloqueado) return { clase: 'bloqueado', texto: 'Bloqueado', icono: 'candado' };
+    if (m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) return { clase: 'pendiente', texto: 'Evaluación pendiente', icono: 'pregunta' };
+    if (m.leccionesCompletas && m.practica && !m.practica.aprobada) return { clase: 'pendiente', texto: 'Evaluación práctica pendiente', icono: 'reloj' };
+    if (m.progreso > 0) return { clase: 'curso', texto: 'En curso', icono: 'ruta' };
+    return { clase: 'curso', texto: 'Por comenzar', icono: 'ruta' };
+  }
+
+  /** Orden de recorrido dentro de un módulo: lecciones, evaluación y evaluación práctica. */
+  function pasosModulo(m) {
+    var pasos = m.lecciones.map(function (l) { return { tipo: 'leccion', moduloId: m.id, leccionId: l.id }; });
+    if (m.evaluacion) pasos.push({ tipo: 'evaluacion', moduloId: m.id });
+    if (m.practica) pasos.push({ tipo: 'practica', moduloId: m.id });
+    return pasos;
+  }
+
+  function moduloSiguiente(m) {
+    var lista = D.programa.modulos;
+    var i = lista.indexOf(m);
+    return i >= 0 && i < lista.length - 1 ? lista[i + 1] : null;
+  }
+
+  /* ---------------------------------------------------------------- navegación */
+
+  function ir(nueva, sinHistorial) {
+    if (nueva.tipo === 'evaluacion' && (!evaluacion || evaluacion.moduloId !== nueva.moduloId)) evaluacion = null;
+    vista = nueva;
+    render();
+    window.scrollTo(0, 0);
+    var h1 = app.querySelector('h1');
+    if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
+    if (!sinHistorial) {
+      try { google.script.history.push(vista, { v: vista.tipo }); } catch (e) { /* vista previa local */ }
+    }
+  }
+
+  try {
+    google.script.history.setChangeHandler(function (e) { ir(e.state && e.state.tipo ? e.state : { tipo: 'inicio' }, true); });
+  } catch (e) { /* vista previa local */ }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-ir]');
+    if (!el || el.getAttribute('aria-disabled') === 'true' || el.disabled) return;
+    e.preventDefault();
+    var destino = { tipo: el.getAttribute('data-ir') };
+    if (el.getAttribute('data-modulo')) destino.moduloId = el.getAttribute('data-modulo');
+    if (el.getAttribute('data-leccion')) destino.leccionId = el.getAttribute('data-leccion');
+    if (destino.tipo === 'continuar') {
+      var s = D.programa.siguiente;
+      if (!s) destino = { tipo: D.certificado.disponible ? 'certificado' : 'inicio' };
+      else if (s.leccionId) destino = { tipo: 'leccion', moduloId: s.moduloId, leccionId: s.leccionId };
+      else if (s.evaluacion) destino = { tipo: 'evaluacion', moduloId: s.moduloId };
+      else destino = { tipo: 'modulo', moduloId: s.moduloId };
+    }
+    ir(destino);
+  });
+
+  /* ---------------------------------------------------------------- render */
+
+  function render() {
+    renderNav();
+    var html;
+    switch (vista.tipo) {
+      case 'modulo':
+      case 'leccion':
+      case 'practica':
+        html = vistaModulo();
+        break;
+      case 'evaluacion': html = vistaEvaluacion(); break;
+      case 'resultado': html = vistaResultado(); break;
+      case 'certificado': html = vistaCertificado(); break;
+      case 'panel': html = vistaPanel(); break;
+      default: html = vistaInicio();
+    }
+    app.innerHTML = html;
+    despuesDeRender();
+  }
+
+  function renderNav() {
+    var actual = vista.tipo;
+    var boton = function (destino, ico, texto) {
+      return '<button class="nav-boton" type="button" data-ir="' + destino + '" aria-label="' + texto + '"' + (actual === destino ? ' aria-current="page"' : '') + '>' +
+        icono(ico, 'icono--chico') + '<span class="nav-boton__texto">' + texto + '</span></button>';
+    };
+    var botones = boton('inicio', 'ruta', 'Mi ruta');
+    if (D.certificado.disponible) botones += boton('certificado', 'premio', 'Certificado');
+    if (D.usuario.admin) botones += boton('panel', 'panel', 'Panel');
+    botones += '<button class="nav-boton usuario-chip" type="button" id="btn-perfil" aria-label="Mi perfil" title="' + esc(D.usuario.email) + '"><span class="avatar">' + esc(iniciales()) + '</span><span class="usuario-chip__nombre">' + esc(primerNombre() || 'Mi perfil') + '</span></button>';
+    nav.innerHTML = botones;
+    var contacto = document.getElementById('pie-contacto');
+    if (contacto) {
+      contacto.innerHTML = D.academia.contacto ? '¿Dudas? Escribe a <a href="mailto:' + esc(D.academia.contacto) + '">' + esc(D.academia.contacto) + '</a>' : '';
+    }
+  }
+
+  /* ---------- Inicio: la ruta completa */
+
+  function vistaInicio() {
+    var p = D.programa;
+    var totalLecciones = 0;
+    var evaluaciones = 0;
+    var evaluacionesOk = 0;
+    p.modulos.forEach(function (m) {
+      totalLecciones += m.lecciones.length;
+      if (m.evaluacion) { evaluaciones++; if (m.evaluacion.aprobada) evaluacionesOk++; }
+      if (m.practica) { evaluaciones++; if (m.practica.aprobada) evaluacionesOk++; }
+    });
+    var circ = 2 * Math.PI * 52;
+    var saludo = primerNombre() ? 'Hola, ' + primerNombre() : 'Hola';
+    var textoBoton = p.avance > 0 ? 'Continuar donde quedé' : 'Comenzar la academia';
+
+    var html = '<section class="hero">' +
+      '<div style="position:relative;z-index:1">' +
+        '<div class="hero__saludo">' + esc(saludo) + '</div>' +
+        '<h1>' + esc(p.terminado ? '¡Completaste ' + D.academia.nombre + '!' : 'Tu ruta en ' + D.academia.nombre) + '</h1>' +
+        '<p class="muted">' + esc((D.academia.bajada ? D.academia.bajada.replace(/\.?\s*$/, '. ') : '') +
+          (p.terminado ? 'Ya puedes descargar tu certificado.' :
+            'Avanza módulo a módulo: cada evaluación se aprueba con ' + D.academia.puntajeAprobacion + '% o más.')) + '</p>' +
+        '<div class="hero__acciones">' +
+          (p.terminado
+            ? '<button class="boton boton--acento" type="button" data-ir="certificado">' + icono('premio') + 'Ver mi certificado</button>'
+            : '<button class="boton" type="button" data-ir="continuar">' + esc(textoBoton) + icono('flechaDer') + '</button>') +
+        '</div>' +
+      '</div>' +
+      '<div class="anillo" role="img" aria-label="Avance total ' + p.avance + '%">' +
+        '<svg viewBox="0 0 120 120"><circle class="anillo__fondo" cx="60" cy="60" r="52" fill="none" stroke-width="12"/>' +
+        '<circle class="anillo__valor" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + (circ * (1 - p.avance / 100)).toFixed(1) + '"/></svg>' +
+        '<div class="anillo__texto"><div><strong>' + p.avance + '%</strong><span>de avance</span></div></div>' +
+      '</div>' +
+    '</section>';
+
+    html += '<div class="metricas">' +
+      '<div class="metrica"><strong>' + p.modulosCompletos + ' / ' + p.totalModulos + '</strong><span>módulos completados</span></div>' +
+      '<div class="metrica"><strong>' + p.leccionesCompletadas + ' / ' + totalLecciones + '</strong><span>lecciones vistas</span></div>' +
+      '<div class="metrica"><strong>' + evaluacionesOk + ' / ' + evaluaciones + '</strong><span>evaluaciones aprobadas</span></div>' +
+    '</div>';
+
+    var semanas = [];
+    var porSemana = {};
+    p.modulos.forEach(function (m) {
+      var s = m.semana || 'Programa';
+      if (!porSemana[s]) { porSemana[s] = []; semanas.push(s); }
+      porSemana[s].push(m);
+    });
+    semanas.forEach(function (s) {
+      html += '<section class="semana"><div class="semana__titulo"><h2>' + esc(s) + '</h2><span class="muted chico">' +
+        porSemana[s].map(function (m) { return esc(m.pilar); }).filter(function (v, i, a) { return v && a.indexOf(v) === i; }).join(' · ') +
+        '</span></div><div class="grilla-modulos">' + porSemana[s].map(tarjetaModulo).join('') + '</div></section>';
+    });
+    if (!p.modulos.length) {
+      html += '<div class="tarjeta">Todavía no hay módulos publicados. Un administrador debe cargar el programa en la planilla de la academia.</div>';
+    }
+    return html;
+  }
+
+  function tarjetaModulo(m) {
+    var est = estadoModulo(m);
+    var duracion = m.lecciones.reduce(function (s, l) { return s + (l.duracion || 0); }, 0);
+    return '<button type="button" class="tarjeta modulo" data-ir="modulo" data-modulo="' + esc(m.id) + '"' +
+      (m.bloqueado ? ' aria-disabled="true" title="Se desbloquea al completar el módulo anterior"' : '') + '>' +
+      '<div class="fila"><span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.pilar || 'Módulo') + '</span><span class="espaciador"></span>' +
+      '<span class="insignia insignia--' + est.clase + '">' + icono(est.icono, 'icono--chico') + esc(est.texto) + '</span></div>' +
+      '<h3>' + esc(m.titulo) + '</h3>' +
+      '<p class="modulo__desc">' + esc(m.descripcion) + '</p>' +
+      '<div class="modulo__pie"><span>' + m.lecciones.length + ' lecciones' + (m.evaluacion ? ' · evaluación' : '') +
+        (m.practica ? ' · práctica' : '') + (duracion ? ' · ' + minutos(duracion) : '') + '</span></div>' +
+      '<div class="modulo__pie"><div class="barra"><div class="barra__relleno" style="width:' + m.progreso + '%"></div></div><strong>' + m.progreso + '%</strong></div>' +
+    '</button>';
+  }
+
+  /* ---------- Módulo, lección y evaluación práctica */
+
+  function vistaModulo() {
+    var m = moduloPorId(vista.moduloId);
+    if (!m) return vistaNoEncontrada();
+    var migas = '<nav class="migas" aria-label="Ruta"><button type="button" data-ir="inicio">Mi ruta</button><span>›</span><span>' +
+      esc(m.semana) + (m.semana ? ' · ' : '') + esc(m.titulo) + '</span></nav>';
+    if (m.bloqueado) {
+      var anterior = D.programa.modulos[D.programa.modulos.indexOf(m) - 1];
+      return migas + '<div class="tarjeta sin-visor">' + icono('candado') + '<h1>Módulo bloqueado</h1><p>Se desbloquea al completar «' +
+        esc(anterior ? anterior.titulo : 'el módulo anterior') + '».</p>' +
+        (anterior ? '<button class="boton" type="button" data-ir="modulo" data-modulo="' + esc(anterior.id) + '">Ir a ' + esc(anterior.titulo) + '</button>' : '') + '</div>';
+    }
+    var contenido;
+    if (vista.tipo === 'leccion') contenido = contenidoLeccion(m, leccionPorId(m, vista.leccionId));
+    else if (vista.tipo === 'practica') contenido = contenidoPractica(m);
+    else contenido = contenidoResumenModulo(m);
+    return migas + '<div class="vista-modulo">' + temario(m) + '<div>' + contenido + '</div></div>';
+  }
+
+  function temario(m) {
+    var html = '<aside class="tarjeta temario" aria-label="Contenido del módulo"><div class="temario__cabeza">' +
+      '<span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.pilar || 'Módulo') + '</span>' +
+      '<h2><button type="button" class="boton--fantasma" style="border:0;background:none;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit" data-ir="modulo" data-modulo="' + esc(m.id) + '">' + esc(m.titulo) + '</button></h2>' +
+      '<div class="barra"><div class="barra__relleno" style="width:' + m.progreso + '%"></div></div>' +
+      '<div class="muted chico" style="margin-top:6px">' + m.completadas + ' de ' + m.obligatorias + ' lecciones · ' + m.progreso + '%</div></div>';
+    var seccion = null;
+    m.lecciones.forEach(function (l) {
+      if (l.seccion && l.seccion !== seccion) {
+        seccion = l.seccion;
+        html += '<div class="temario__seccion">' + esc(seccion) + '</div>';
+      }
+      var actual = vista.tipo === 'leccion' && vista.leccionId === l.id;
+      html += '<button type="button" class="temario__item" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(l.id) + '"' + (actual ? ' aria-current="true"' : '') + '>' +
+        '<span class="temario__check' + (l.completada ? ' temario__check--ok' : '') + '">' + (l.completada ? icono('check') : '') + '</span>' +
+        '<span>' + esc(l.titulo) + '<span class="temario__meta">' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.duracion ? ' · ' + minutos(l.duracion) : '') + (l.obligatoria ? '' : ' · opcional') + '</span></span></button>';
+    });
+    if (m.evaluacion) {
+      var ev = m.evaluacion;
+      var metaEv = ev.aprobada ? 'Aprobada · mejor puntaje ' + ev.mejorPuntaje + '%' :
+        (m.evaluacionDisponible ? ev.preguntas + ' preguntas · aprobación ' + D.academia.puntajeAprobacion + '%' : 'Completa las lecciones para rendirla');
+      html += '<div class="temario__seccion">Evaluación</div><button type="button" class="temario__item" data-ir="evaluacion" data-modulo="' + esc(m.id) + '"' +
+        (m.evaluacionDisponible ? '' : ' disabled') + (vista.tipo === 'evaluacion' ? ' aria-current="true"' : '') + '>' +
+        '<span class="temario__check' + (ev.aprobada ? ' temario__check--ok' : '') + '">' + (ev.aprobada ? icono('check') : icono('pregunta')) + '</span>' +
+        '<span>Evaluación del módulo<span class="temario__meta">' + esc(metaEv) + '</span></span></button>';
+    }
+    if (m.practica) {
+      var pr = m.practica;
+      html += (m.evaluacion ? '' : '<div class="temario__seccion">Evaluación</div>') +
+        '<button type="button" class="temario__item" data-ir="practica" data-modulo="' + esc(m.id) + '"' + (vista.tipo === 'practica' ? ' aria-current="true"' : '') + '>' +
+        '<span class="temario__check' + (pr.aprobada ? ' temario__check--ok' : '') + '">' + (pr.aprobada ? icono('check') : icono('usuarios')) + '</span>' +
+        '<span>Evaluación práctica<span class="temario__meta">' + esc(pr.aprobada ? 'Aprobada · ' + pr.puntaje + '%' : (pr.registrada ? 'Por reforzar · ' + pr.puntaje + '%' : 'La registra tu tutora o supervisor')) + '</span></span></button>';
+    }
+    return html + '</aside>';
+  }
+
+  function contenidoResumenModulo(m) {
+    var primera = m.lecciones.filter(function (l) { return !l.completada; })[0] || m.lecciones[0];
+    var objetivos = m.objetivos.length ? '<h2>Al terminar este módulo podrás</h2><ul class="objetivos">' + m.objetivos.map(function (o) {
+      return '<li>' + icono('check') + '<span>' + esc(o) + '</span></li>';
+    }).join('') + '</ul>' : '';
+    var est = estadoModulo(m);
+    var accion = '';
+    if (primera && !m.leccionesCompletas) {
+      accion = '<button class="boton" type="button" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(primera.id) + '">' +
+        (m.completadas ? 'Continuar con «' + esc(primera.titulo) + '»' : 'Comenzar el módulo') + icono('flechaDer') + '</button>';
+    } else if (m.evaluacionDisponible && !m.evaluacion.aprobada) {
+      accion = '<button class="boton boton--acento" type="button" data-ir="evaluacion" data-modulo="' + esc(m.id) + '">' + icono('pregunta') + 'Rendir la evaluación</button>';
+    } else if (m.completo && moduloSiguiente(m)) {
+      accion = '<button class="boton" type="button" data-ir="modulo" data-modulo="' + esc(moduloSiguiente(m).id) + '">Ir al siguiente módulo' + icono('flechaDer') + '</button>';
+    } else if (m.practica && !m.practica.aprobada) {
+      accion = '<button class="boton boton--secundario" type="button" data-ir="practica" data-modulo="' + esc(m.id) + '">Ver la evaluación práctica</button>';
+    }
+    return '<section class="tarjeta">' +
+      '<div class="fila"><span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.semana || m.pilar) + '</span><span class="insignia insignia--' + est.clase + '">' + icono(est.icono, 'icono--chico') + esc(est.texto) + '</span></div>' +
+      '<h1 style="margin-top:12px">' + esc(m.titulo) + '</h1>' +
+      '<p class="muted">' + esc(m.descripcion) + '</p>' + objetivos +
+      '<p class="chico muted">' + m.lecciones.length + ' lecciones' + (m.evaluacion ? ' · evaluación de ' + m.evaluacion.preguntas + ' preguntas (aprobación ' + D.academia.puntajeAprobacion + '%)' : '') +
+        (m.practica ? ' · evaluación práctica con tu tutora o supervisor' : '') + '</p>' +
+      '<div class="acciones-leccion">' + accion + '</div>' +
+    '</section>';
+  }
+
+  function contenidoLeccion(m, l) {
+    if (!l) return vistaNoEncontrada();
+    var cuerpo;
+    if (l.tipo === 'Texto') {
+      cuerpo = '<article class="tarjeta contenido-texto">' + (D.contenidos[l.id] || parrafos(l.descripcion)) + '</article>';
+    } else if (l.embed) {
+      var esVideo = l.tipo === 'Video' || l.tipo === 'YouTube';
+      cuerpo = '<div class="visor ' + (esVideo ? 'visor--video' : 'visor--documento') + '">' +
+        '<div class="visor__carga"><span class="spinner" aria-hidden="true"></span></div>' +
+        '<iframe src="' + esc(l.embed) + '" title="' + esc(l.titulo) + '" allow="autoplay; fullscreen; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>' +
+        '<p class="ayuda-visor">¿No se ve el material? Revisa que tu navegador tenga abierta la sesión de tu cuenta @' + esc(dominio()) +
+        ' o ábrelo en una pestaña nueva.</p>';
+    } else if (l.abrir) {
+      cuerpo = '<div class="sin-visor">' + icono('externo') + '<h2>Este material se abre en Drive</h2><p class="muted">El formato no se puede previsualizar dentro de la academia.</p>' +
+        '<a class="boton" href="' + esc(l.abrir) + '" target="_blank" rel="noopener">Abrir material' + icono('externo') + '</a></div>';
+    } else {
+      cuerpo = '<div class="sin-visor"><p>Esta lección todavía no tiene material asociado.</p></div>';
+    }
+
+    var pasos = pasosModulo(m);
+    var i = -1;
+    pasos.forEach(function (p, j) { if (p.leccionId === l.id) i = j; });
+    var anterior = i > 0 ? pasos[i - 1] : null;
+    var siguiente = i < pasos.length - 1 ? pasos[i + 1] : null;
+    var sigModulo = moduloSiguiente(m);
+
+    var botonSiguiente = '';
+    if (siguiente) {
+      var deshabilitado = siguiente.tipo === 'evaluacion' && !(m.evaluacionDisponible || (l.obligatoria && !l.completada && m.obligatorias - m.completadas === 1));
+      botonSiguiente = '<button class="boton boton--secundario" type="button" id="btn-siguiente" data-paso="' + esc(JSON.stringify(siguiente)) + '"' + (deshabilitado ? ' disabled title="Completa las lecciones para rendir la evaluación"' : '') + '>' +
+        (siguiente.tipo === 'evaluacion' ? 'Ir a la evaluación' : siguiente.tipo === 'practica' ? 'Evaluación práctica' : 'Siguiente') + icono('flechaDer') + '</button>';
+    } else if (sigModulo) {
+      botonSiguiente = '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(sigModulo.id) + '">Siguiente módulo' + icono('flechaDer') + '</button>';
+    }
+
+    return '<div class="leccion__cabeza"><div>' +
+        '<div class="fila chico muted"><span class="chip" data-pilar="' + pilarDe(m) + '">' + etiquetaTipo(l.tipo) + '</span>' +
+        (l.duracion ? '<span>' + icono('reloj', 'icono--chico') + ' ' + minutos(l.duracion) + '</span>' : '') +
+        (l.seccion ? '<span>' + esc(l.seccion) + '</span>' : '') + '</div>' +
+        '<h1 style="margin-top:10px">' + esc(l.titulo) + '</h1>' +
+        (l.descripcion && l.tipo !== 'Texto' ? '<p class="muted" style="max-width:760px">' + esc(l.descripcion) + '</p>' : '') +
+      '</div></div>' +
+      cuerpo +
+      '<div class="acciones-leccion">' +
+        (l.completada
+          ? '<button class="boton boton--exito" type="button" id="btn-completar" data-leccion="' + esc(l.id) + '" data-valor="false" title="Haz clic para desmarcar">' + icono('check') + 'Completada</button>'
+          : '<button class="boton" type="button" id="btn-completar" data-leccion="' + esc(l.id) + '" data-valor="true">' + icono('check') + 'Marcar como completada</button>') +
+        (l.abrir && l.tipo !== 'Texto' ? '<a class="boton boton--fantasma" href="' + esc(l.abrir) + '" target="_blank" rel="noopener">' + icono('externo') + 'Abrir en pestaña nueva</a>' : '') +
+        '<span class="espaciador"></span>' +
+        (anterior ? '<button class="boton boton--fantasma" type="button" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(anterior.leccionId) + '">' + icono('flechaIzq') + 'Anterior</button>' : '') +
+        botonSiguiente +
+      '</div>';
+  }
+
+  function contenidoPractica(m) {
+    var pr = m.practica;
+    if (!pr) return vistaNoEncontrada();
+    var estado;
+    if (pr.aprobada) {
+      estado = '<div class="resultado resultado--ok"><div class="insignia insignia--ok">' + icono('check', 'icono--chico') + 'Aprobada</div>' +
+        '<div class="resultado__puntaje">' + pr.puntaje + '%</div><p class="muted">Registrada el ' + esc(fecha(pr.fecha)) + (pr.evaluador ? ' por ' + esc(pr.evaluador) : '') + '</p></div>';
+    } else if (pr.registrada) {
+      estado = '<div class="resultado resultado--no"><div class="insignia insignia--pendiente">' + icono('reloj', 'icono--chico') + 'Por reforzar</div>' +
+        '<div class="resultado__puntaje">' + pr.puntaje + '%</div><p class="muted">Tu tutora o supervisor coordinará contigo una nueva instancia.</p></div>';
+    } else {
+      estado = '<div class="destacado"><strong>Pendiente.</strong> ' + (m.leccionesCompletas
+        ? 'Ya completaste el material: coordina con tu tutora o supervisor la fecha de tu evaluación práctica.'
+        : 'Primero completa las lecciones de este módulo; luego coordina la evaluación con tu tutora o supervisor.') + '</div>';
+    }
+    return '<section class="tarjeta contenido-texto">' +
+      '<span class="chip" data-pilar="Evaluación">Evaluación práctica</span>' +
+      '<h1 style="margin-top:12px">Evaluación práctica · ' + esc(m.titulo) + '</h1>' +
+      '<p>Esta evaluación no se rinde en la plataforma: la realiza tu tutora o supervisor y queda registrada aquí. ' +
+      'Se aprueba con ' + D.academia.puntajeAprobacion + '% o más.</p>' + estado +
+      (pr.comentario ? '<h2>Retroalimentación</h2>' + parrafos(pr.comentario) : '') +
+    '</section>';
+  }
+
+  /* ---------- Evaluación (cuestionario) */
+
+  function vistaEvaluacion() {
+    var m = moduloPorId(vista.moduloId);
+    if (!m || !m.evaluacion) return vistaNoEncontrada();
+    var migas = '<nav class="migas" aria-label="Ruta"><button type="button" data-ir="inicio">Mi ruta</button><span>›</span>' +
+      '<button type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">' + esc(m.titulo) + '</button><span>›</span><span>Evaluación</span></nav>';
+    if (!evaluacion) {
+      cargarEvaluacion(m.id);
+      return migas + '<div class="cargando" role="status"><span class="spinner" aria-hidden="true"></span> Preparando la evaluación…</div>';
+    }
+    var respondidas = Object.keys(evaluacion.respuestas).length;
+    var total = evaluacion.preguntas.length;
+    var html = migas + '<div class="eval-cabeza"><div><span class="chip" data-pilar="' + pilarDe(m) + '">Evaluación</span>' +
+      '<h1 style="margin-top:10px">' + esc(m.titulo) + '</h1>' +
+      '<p class="muted" style="margin:0">' + total + ' preguntas · se aprueba con ' + evaluacion.puntajeAprobacion + '%' +
+      (evaluacion.intentosMaximos ? ' · intento ' + (evaluacion.intentos + 1) + ' de ' + evaluacion.intentosMaximos : (evaluacion.intentos ? ' · intento ' + (evaluacion.intentos + 1) : '')) + '</p></div>' +
+      '<div class="tarjeta" style="padding:12px 16px"><strong id="contador">' + respondidas + '</strong> de ' + total + ' respondidas</div></div>' +
+      '<form id="form-evaluacion" novalidate>';
+    evaluacion.preguntas.forEach(function (p, i) {
+      html += '<div class="tarjeta pregunta"><fieldset><legend><span class="num">' + (i + 1) + '</span><span>' + esc(p.pregunta) + '</span></legend>' +
+        p.opciones.map(function (o) {
+          var marcado = evaluacion.respuestas[p.n] === o.letra;
+          return '<label class="opcion"><input type="radio" name="p' + esc(p.n) + '" value="' + esc(o.letra) + '" data-n="' + esc(p.n) + '"' + (marcado ? ' checked' : '') + '>' +
+            '<span><span class="opcion__letra">' + esc(o.letra) + ')</span> ' + esc(o.texto) + '</span></label>';
+        }).join('') + '</fieldset></div>';
+    });
+    html += '<div class="acciones-leccion"><button class="boton" type="submit" id="btn-enviar"' + (respondidas < total ? ' disabled' : '') + '>Enviar respuestas' + icono('flechaDer') + '</button>' +
+      '<button class="boton boton--fantasma" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Volver al módulo</button></div></form>';
+    return html;
+  }
+
+  function cargarEvaluacion(idModulo) {
+    llamar('obtenerEvaluacion', idModulo).then(function (datos) {
+      evaluacion = Object.assign({ respuestas: {} }, datos);
+      if (vista.tipo === 'evaluacion' && vista.moduloId === idModulo) render();
+    }).catch(function (e) {
+      aviso((e && e.message) || 'No se pudo cargar la evaluación.', 'error');
+      ir({ tipo: 'modulo', moduloId: idModulo });
+    });
+  }
+
+  function vistaResultado() {
+    var m = moduloPorId(vista.moduloId);
+    var r = vista.resultado;
+    if (!m || !r) return vistaNoEncontrada();
+    var siguiente = moduloSiguiente(m);
+    var preguntas = {};
+    (evaluacion ? evaluacion.preguntas : []).forEach(function (p) { preguntas[p.n] = p; });
+    var html = '<section class="tarjeta resultado ' + (r.aprobado ? 'resultado--ok' : 'resultado--no') + '">' +
+      '<span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.titulo) + '</span>' +
+      '<div class="resultado__puntaje">' + r.puntaje + '%</div>' +
+      '<h1>' + (r.aprobado ? '¡Aprobaste la evaluación!' : 'Aún no alcanzas el ' + D.academia.puntajeAprobacion + '%') + '</h1>' +
+      '<p class="muted">' + r.correctas + ' de ' + r.total + ' respuestas correctas. ' +
+        (r.aprobado ? (m.completo ? 'Completaste este módulo.' : (m.practica ? 'Solo te falta la evaluación práctica.' : '')) : 'Repasa el material y vuelve a intentarlo.') + '</p>' +
+      '<div class="fila" style="justify-content:center;margin-top:14px">' +
+        (r.aprobado
+          ? (D.certificado.disponible ? '<button class="boton boton--acento" type="button" data-ir="certificado">' + icono('premio') + 'Ver mi certificado</button>'
+            : (siguiente && !siguiente.bloqueado ? '<button class="boton" type="button" data-ir="modulo" data-modulo="' + esc(siguiente.id) + '">Ir al siguiente módulo' + icono('flechaDer') + '</button>' : '') +
+              '<button class="boton boton--secundario" type="button" data-ir="inicio">Volver a mi ruta</button>')
+          : '<button class="boton" type="button" id="btn-reintentar" data-modulo="' + esc(m.id) + '">Intentar nuevamente</button>' +
+            '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Repasar el módulo</button>') +
+      '</div></section><h2 style="margin-top:28px">Revisión de tus respuestas</h2>';
+    r.detalle.forEach(function (d, i) {
+      var p = preguntas[d.n];
+      var elegida = p ? p.opciones.filter(function (o) { return o.letra === d.elegida; })[0] : null;
+      var correcta = p && d.respuestaCorrecta ? p.opciones.filter(function (o) { return o.letra === d.respuestaCorrecta; })[0] : null;
+      html += '<div class="correccion ' + (d.correcta ? 'correccion--ok' : 'correccion--no') + '">' +
+        '<strong>' + (i + 1) + '. ' + esc(p ? p.pregunta : 'Pregunta ' + d.n) + '</strong>' +
+        '<div class="chico" style="margin-top:4px">' + (d.correcta ? '✓ Correcta' : '✗ Incorrecta') +
+          (elegida ? ' · Tu respuesta: ' + esc(elegida.letra + ') ' + elegida.texto) : '') + '</div>' +
+        (!d.correcta && correcta ? '<div class="chico">Respuesta correcta: ' + esc(correcta.letra + ') ' + correcta.texto) + '</div>' : '') +
+        (d.explicacion && (d.correcta || r.aprobado) ? '<div class="chico muted" style="margin-top:4px">' + esc(d.explicacion) + '</div>' : '') +
+      '</div>';
+    });
+    return html;
+  }
+
+  /* ---------- Certificado */
+
+  function vistaCertificado() {
+    if (!D.certificado.disponible) {
+      return '<div class="tarjeta sin-visor">' + icono('premio') + '<h1>Tu certificado te espera</h1><p class="muted">Completa todos los módulos y evaluaciones para obtenerlo. Llevas un ' +
+        D.programa.avance + '% del programa.</p><button class="boton" type="button" data-ir="continuar">Continuar mi ruta' + icono('flechaDer') + '</button></div>';
+    }
+    var pilares = [];
+    D.programa.modulos.forEach(function (m) { if (m.pilar && pilares.indexOf(m.pilar) === -1) pilares.push(m.pilar); });
+    var logo = MARCA.logoColor ? '<img class="certificado__logo" src="' + esc(MARCA.logoColor) + '" alt="Tu Proyecto de Vida">' :
+      '<div class="certificado__logo" style="font-family:var(--fuente-titulos);font-weight:700;font-size:1.6rem;color:var(--primario);height:auto">Tu Proyecto de Vida</div>';
+    return '<div class="fila no-imprimir" style="margin-bottom:16px"><button class="boton boton--fantasma" type="button" data-ir="inicio">' + icono('flechaIzq') + 'Mi ruta</button><span class="espaciador"></span>' +
+      '<button class="boton boton--secundario" type="button" id="btn-editar-nombre">' + icono('lapiz') + 'Corregir mi nombre</button>' +
+      '<button class="boton" type="button" id="btn-imprimir">' + icono('imprimir') + 'Imprimir o guardar PDF</button></div>' +
+      '<article class="certificado">' + logo +
+        '<div class="certificado__tipo">Certificado de finalización</div>' +
+        '<p class="muted" style="margin-top:22px">Se certifica que</p>' +
+        '<h1 class="certificado__nombre">' + esc(D.usuario.nombre || D.usuario.email) + '</h1>' +
+        '<p class="certificado__texto">completó y aprobó el programa de inducción <strong>' + esc(D.academia.nombre) + '</strong> de Tu Proyecto de Vida, ' +
+          'cumpliendo las evaluaciones de cada pilar con un ' + D.academia.puntajeAprobacion + '% o más.</p>' +
+        '<div class="certificado__pilares">' + pilares.map(function (p) { return '<span class="chip" data-pilar="' + pilarDe({ pilar: p }) + '">' + esc(p) + '</span>'; }).join('') + '</div>' +
+        '<p><strong>' + esc(fecha(D.certificado.fecha)) + '</strong></p>' +
+        '<div class="certificado__firmas"><div class="certificado__firma">Coordinación ' + esc(D.academia.nombre) + '</div><div class="certificado__firma">Tu Proyecto de Vida</div></div>' +
+      '</article>';
+  }
+
+  /* ---------- Panel de administración */
+
+  function vistaPanel() {
+    if (!D.usuario.admin) return vistaNoEncontrada();
+    if (!panel) {
+      llamar('obtenerPanelAdmin').then(function (datos) { panel = datos; if (vista.tipo === 'panel') render(); }).catch(errorServidor);
+      return '<div class="cargando" role="status"><span class="spinner" aria-hidden="true"></span> Cargando el panel…</div>';
+    }
+    var r = panel.resumen;
+    var html = '<div class="eval-cabeza"><div><span class="chip">Administración</span><h1 style="margin-top:10px">Panel de la academia</h1>' +
+      '<p class="muted" style="margin:0">Seguimiento de colaboradores, evaluaciones prácticas y contenido.</p></div>' +
+      '<div class="fila">' +
+        '<button class="boton boton--secundario boton--chico" type="button" id="btn-sincronizar"' + (ocupado ? ' disabled' : '') + '>' + icono('sincronizar', 'icono--chico') + 'Sincronizar con Drive</button>' +
+        '<button class="boton boton--secundario boton--chico" type="button" id="btn-permisos"' + (ocupado ? ' disabled' : '') + '>' + icono('escudo', 'icono--chico') + 'Verificar permisos</button>' +
+        '<a class="boton boton--chico" href="' + esc(panel.urlBaseDatos) + '" target="_blank" rel="noopener">' + icono('planilla', 'icono--chico') + 'Abrir planilla</a>' +
+      '</div></div>';
+
+    html += '<div class="kpis">' +
+      '<div class="kpi"><strong>' + r.colaboradores + '</strong><span>colaboradores</span></div>' +
+      '<div class="kpi"><strong>' + r.avancePromedio + '%</strong><span>avance promedio</span></div>' +
+      '<div class="kpi"><strong>' + r.certificados + '</strong><span>certificados</span></div>' +
+      '<div class="kpi"><strong>' + r.practicasPendientes + '</strong><span>evaluaciones prácticas por registrar</span></div>' +
+      '<div class="kpi"><strong>' + panel.porClasificar + '</strong><span>archivos nuevos por clasificar</span></div>' +
+    '</div>';
+
+    if (permisos) {
+      html += '<section class="tarjeta" style="margin-bottom:18px"><h2>' + icono('escudo') + ' Permisos del contenido</h2>' +
+        '<p class="muted">' + permisos.revisados + ' archivos revisados · ' + permisos.problemas.length + ' con avisos.</p>' +
+        (permisos.problemas.length ? permisos.problemas.map(function (p) {
+          return '<div class="problema"><strong>' + esc(p.leccion) + '</strong> <span class="muted chico">(' + esc(p.modulo) + ')</span><br>' +
+            '<span class="chico">' + esc(p.problema) + '</span> <a class="chico" href="' + esc(p.abrir) + '" target="_blank" rel="noopener">Abrir</a></div>';
+        }).join('') : '<p>Todo el material está compartido con el dominio. ✓</p>') + '</section>';
+    }
+
+    html += '<section class="tarjeta" style="margin-bottom:18px"><div class="fila"><h2 style="margin:0">Colaboradores</h2><span class="espaciador"></span>' +
+      '<button class="boton boton--chico" type="button" id="btn-practica">' + icono('usuarios', 'icono--chico') + 'Registrar evaluación práctica</button></div>';
+    if (!panel.colaboradores.length) {
+      html += '<p class="muted" style="margin-top:12px">Aún no ingresa ningún colaborador. Comparte el enlace de la academia con los nuevos ingresos.</p>';
+    } else {
+      html += '<div class="tabla-envoltura"><table class="tabla"><thead><tr><th>Colaborador</th><th>Avance</th><th>Módulo actual</th><th>Evaluaciones</th><th>Último ingreso</th><th>Certificado</th><th></th></tr></thead><tbody>' +
+        panel.colaboradores.map(function (c) {
+          var aprobadas = c.evaluaciones.filter(function (e) { return e.aprobada; }).length;
+          var evs = '<span class="puntos" aria-label="' + aprobadas + ' de ' + c.evaluaciones.length + ' evaluaciones aprobadas">' + c.evaluaciones.map(function (e) {
+            var estado = e.aprobada ? 'ok' : (e.intentos ? 'intento' : 'pendiente');
+            var detalle = e.modulo + ': ' + (e.aprobada ? 'aprobada' : (e.intentos ? 'no aprobada' : 'sin rendir')) +
+              (e.mejor !== null && e.mejor !== undefined ? ' · mejor puntaje ' + e.mejor + '%' : '');
+            return '<span class="punto punto--' + estado + '" title="' + esc(detalle) + '"></span>';
+          }).join('') + '</span><span class="chico muted" style="white-space:nowrap">' + aprobadas + ' de ' + c.evaluaciones.length + '</span>';
+          return '<tr><td><strong>' + esc(c.nombre || c.email.split('@')[0]) + '</strong><br><span class="muted chico">' + esc(c.email) + (c.area ? ' · ' + esc(c.area) : '') + '</span></td>' +
+            '<td><div class="mini-barra"><div class="barra"><div class="barra__relleno" style="width:' + c.avance + '%"></div></div><strong>' + c.avance + '%</strong></div></td>' +
+            '<td class="chico">' + esc(c.moduloActual) + (c.practicasPendientes.length ? '<br><span class="insignia insignia--pendiente">Práctica por registrar</span>' : '') + '</td>' +
+            '<td><div class="fila" style="gap:8px;flex-wrap:nowrap">' + evs + '</div></td>' +
+            '<td class="chico">' + esc(fechaCorta(c.ultimoIngreso)) + '</td>' +
+            '<td class="chico">' + (c.certificado ? '<span class="insignia insignia--ok">' + icono('premio', 'icono--chico') + esc(c.certificado === 'sí' ? 'Sí' : fechaCorta(c.certificado)) + '</span>' : '—') + '</td>' +
+            '<td><button class="boton boton--fantasma boton--chico btn-practica-fila" type="button" data-email="' + esc(c.email) + '">Práctica</button></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    html += '</section>';
+
+    html += '<section class="tarjeta"><div class="fila"><h2 style="margin:0">Programa publicado</h2><span class="espaciador"></span>' +
+      '<a class="boton boton--fantasma boton--chico" href="' + esc(panel.urlCarpeta) + '" target="_blank" rel="noopener">' + icono('carpeta', 'icono--chico') + 'Carpeta TPDV ACADEMY</a></div>' +
+      '<div class="tabla-envoltura"><table class="tabla"><thead><tr><th>Módulo</th><th>ID</th><th>Lecciones</th><th>Preguntas</th><th>Tipo</th></tr></thead><tbody>' +
+      panel.modulos.map(function (m) {
+        return '<tr><td>' + esc(m.titulo) + '</td><td class="chico muted">' + esc(m.id) + '</td><td>' + m.lecciones + '</td><td>' + m.preguntas + '</td><td class="chico">' + (m.tipo === 'practica' ? 'Con evaluación práctica' : 'Contenido') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<p class="chico muted" style="margin-top:12px">Para cambiar títulos, orden, visibilidad o preguntas edita las hojas «Módulos», «Lecciones» y «Preguntas» de la planilla. ' +
+      'Los archivos nuevos de la carpeta aparecen en «Por clasificar»: asígnales un ID de módulo, escribe SI en «Incluir» y vuelve a sincronizar.</p></section>';
+    return html;
+  }
+
+  function abrirModalPractica(emailInicial) {
+    if (!panel || !panel.modulosPractica.length) {
+      aviso('No hay módulos con evaluación práctica en el programa.', 'error');
+      return;
+    }
+    var opcionesColab = panel.colaboradores.map(function (c) {
+      return '<option value="' + esc(c.email) + '"' + (c.email === emailInicial ? ' selected' : '') + '>' + esc((c.nombre || c.email) + ' · ' + c.email) + '</option>';
+    }).join('');
+    abrirModal('<h2>Registrar evaluación práctica</h2>' +
+      '<p class="muted chico">Role play o casos evaluados por la tutora o supervisor. Se aprueba con ' + D.academia.puntajeAprobacion + '% o más.</p>' +
+      '<form id="form-practica">' +
+        '<div class="campo"><label for="pr-email">Colaborador</label><select id="pr-email" required>' + opcionesColab + '</select></div>' +
+        '<div class="campo"><label for="pr-modulo">Módulo</label><select id="pr-modulo" required>' + panel.modulosPractica.map(function (m) {
+          return '<option value="' + esc(m.id) + '">' + esc(m.titulo) + '</option>';
+        }).join('') + '</select></div>' +
+        '<div class="fila" style="align-items:flex-end">' +
+          '<div class="campo" style="flex:1"><label for="pr-puntos">Puntos de la rúbrica</label><input id="pr-puntos" type="number" min="0" step="1" placeholder="Ej: 26"></div>' +
+          '<div class="campo" style="flex:1"><label for="pr-max">de un máximo de</label><input id="pr-max" type="number" min="1" step="1" value="30"></div>' +
+        '</div>' +
+        '<div class="campo"><label for="pr-puntaje">Puntaje final (%)</label><input id="pr-puntaje" type="number" min="0" max="100" step="1" required placeholder="0 a 100"></div>' +
+        '<div class="campo"><label for="pr-comentario">Retroalimentación (fortalezas y puntos de mejora)</label><textarea id="pr-comentario" rows="4" maxlength="1000"></textarea></div>' +
+        '<div class="fila"><button class="boton" type="submit">Guardar</button><button class="boton boton--fantasma" type="button" data-cerrar>Cancelar</button></div>' +
+      '</form>');
+    var puntos = document.getElementById('pr-puntos');
+    var max = document.getElementById('pr-max');
+    var porcentaje = document.getElementById('pr-puntaje');
+    function convertir() {
+      var p = Number(puntos.value), mx = Number(max.value);
+      if (puntos.value !== '' && mx > 0) porcentaje.value = Math.max(0, Math.min(100, Math.round(p / mx * 100)));
+    }
+    puntos.addEventListener('input', convertir);
+    max.addEventListener('input', convertir);
+    document.getElementById('form-practica').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (porcentaje.value === '') { porcentaje.focus(); return; }
+      var boton = e.target.querySelector('[type=submit]');
+      boton.disabled = true;
+      llamar('registrarEvaluacionPractica', document.getElementById('pr-email').value, document.getElementById('pr-modulo').value,
+        Number(porcentaje.value), document.getElementById('pr-comentario').value).then(function (r) {
+        panel = r.panel;
+        cerrarModal();
+        aviso('Evaluación registrada: ' + r.resultado.puntaje + '% · ' + (r.resultado.aprobado ? 'aprobada' : 'por reforzar'), 'ok');
+        render();
+      }).catch(function (err) { boton.disabled = false; errorServidor(err); });
+    });
+  }
+
+  /* ---------- Perfil */
+
+  function abrirModalPerfil(obligatorio) {
+    abrirModal('<h2>' + (obligatorio ? 'Te damos la bienvenida a ' + esc(D.academia.nombre) : 'Mi perfil') + '</h2>' +
+      '<p class="muted">' + (obligatorio ? 'Antes de comenzar, cuéntanos cómo te llamas. Así aparecerá tu nombre en el certificado.' : esc(D.usuario.email)) + '</p>' +
+      '<form id="form-perfil">' +
+        '<div class="campo"><label for="pf-nombre">Nombre y apellido</label><input id="pf-nombre" autocomplete="name" required maxlength="80" value="' + esc(D.usuario.nombre) + '"></div>' +
+        '<div class="campo"><label for="pf-area">Área</label><input id="pf-area" list="areas" maxlength="60" value="' + esc(D.usuario.area) + '" placeholder="Ej: Ventas zona sur">' +
+          '<datalist id="areas"><option value="Ventas"><option value="Marketing"><option value="Escrituración"><option value="Operaciones"><option value="Administración y finanzas"></datalist></div>' +
+        '<div class="fila"><button class="boton" type="submit">' + (obligatorio ? 'Comenzar' : 'Guardar') + '</button>' +
+          (obligatorio ? '' : '<button class="boton boton--fantasma" type="button" data-cerrar>Cancelar</button>') + '</div>' +
+      '</form>', obligatorio);
+    var campo = document.getElementById('pf-nombre');
+    campo.focus();
+    document.getElementById('form-perfil').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!campo.value.trim()) { campo.focus(); return; }
+      var boton = e.target.querySelector('[type=submit]');
+      boton.disabled = true;
+      llamar('guardarPerfil', { nombre: campo.value, area: document.getElementById('pf-area').value }).then(function (datos) {
+        D = datos;
+        cerrarModal();
+        aviso('¡Listo, ' + primerNombre() + '!', 'ok');
+        render();
+      }).catch(function (err) { boton.disabled = false; errorServidor(err); });
+    });
+  }
+
+  function abrirModal(html, obligatorio) {
+    modal.innerHTML = '<div class="modal__caja" role="dialog" aria-modal="true">' + html + '</div>';
+    modal.hidden = false;
+    modal.dataset.obligatorio = obligatorio ? '1' : '';
+  }
+
+  function cerrarModal() {
+    modal.hidden = true;
+    modal.innerHTML = '';
+  }
+
+  modal.addEventListener('click', function (e) {
+    if (e.target.hasAttribute('data-cerrar') || (e.target === modal && !modal.dataset.obligatorio)) cerrarModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.hidden && !modal.dataset.obligatorio) cerrarModal();
+  });
+
+  function vistaNoEncontrada() {
+    return '<div class="tarjeta sin-visor"><h1>No encontramos esta página</h1><p class="muted">Puede que el contenido haya cambiado.</p>' +
+      '<button class="boton" type="button" data-ir="inicio">Volver a mi ruta</button></div>';
+  }
+
+  function dominio() {
+    return (D.usuario.email.split('@')[1] || '');
+  }
+
+  /* ---------------------------------------------------------------- acciones */
+
+  function despuesDeRender() {
+    app.querySelectorAll('.visor iframe').forEach(function (frame) {
+      frame.addEventListener('load', function () {
+        var carga = frame.parentNode.querySelector('.visor__carga');
+        if (carga) carga.remove();
+      });
+    });
+
+    var perfil = document.getElementById('btn-perfil');
+    if (perfil) perfil.onclick = function () { abrirModalPerfil(false); };
+
+    var completar = document.getElementById('btn-completar');
+    if (completar) {
+      completar.onclick = function () {
+        if (ocupado) return;
+        ocupado = true;
+        completar.disabled = true;
+        var valor = completar.getAttribute('data-valor') === 'true';
+        var moduloAntes = moduloPorId(vista.moduloId);
+        var estabaCompleto = moduloAntes && moduloAntes.completo;
+        llamar('marcarLeccion', completar.getAttribute('data-leccion'), valor).then(function (datos) {
+          D = datos;
+          ocupado = false;
+          var m = moduloPorId(vista.moduloId);
+          if (valor && m && m.completo && !estabaCompleto) aviso('¡Completaste el módulo «' + m.titulo + '»!', 'ok');
+          else if (valor && m && m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) aviso('Ya puedes rendir la evaluación del módulo.', 'ok');
+          else if (valor) aviso('Lección completada', 'ok');
+          render();
+        }).catch(errorServidor);
+      };
+    }
+
+    var siguiente = document.getElementById('btn-siguiente');
+    if (siguiente) {
+      siguiente.onclick = function () {
+        var paso = JSON.parse(siguiente.getAttribute('data-paso'));
+        var l = leccionPorId(moduloPorId(vista.moduloId), vista.leccionId);
+        // Avanzar marca la lección actual como vista.
+        if (l && !l.completada && !ocupado) {
+          ocupado = true;
+          siguiente.disabled = true;
+          llamar('marcarLeccion', l.id, true).then(function (datos) {
+            D = datos;
+            ocupado = false;
+            ir(paso);
+          }).catch(errorServidor);
+        } else {
+          ir(paso);
+        }
+      };
+    }
+
+    var form = document.getElementById('form-evaluacion');
+    if (form) {
+      form.addEventListener('change', function (e) {
+        if (e.target.name && e.target.getAttribute('data-n')) {
+          evaluacion.respuestas[e.target.getAttribute('data-n')] = e.target.value;
+          var n = Object.keys(evaluacion.respuestas).length;
+          document.getElementById('contador').textContent = n;
+          document.getElementById('btn-enviar').disabled = n < evaluacion.preguntas.length;
+        }
+      });
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (ocupado) return;
+        ocupado = true;
+        var boton = document.getElementById('btn-enviar');
+        boton.disabled = true;
+        boton.innerHTML = '<span class="spinner" aria-hidden="true"></span> Corrigiendo…';
+        llamar('enviarEvaluacion', evaluacion.moduloId, evaluacion.respuestas).then(function (r) {
+          D = r.datos;
+          ocupado = false;
+          ir({ tipo: 'resultado', moduloId: evaluacion.moduloId, resultado: r.resultado });
+        }).catch(errorServidor);
+      });
+    }
+
+    var reintentar = document.getElementById('btn-reintentar');
+    if (reintentar) {
+      reintentar.onclick = function () {
+        evaluacion = null;
+        ir({ tipo: 'evaluacion', moduloId: reintentar.getAttribute('data-modulo') });
+      };
+    }
+
+    var imprimir = document.getElementById('btn-imprimir');
+    if (imprimir) imprimir.onclick = function () { window.print(); };
+    var editarNombre = document.getElementById('btn-editar-nombre');
+    if (editarNombre) editarNombre.onclick = function () { abrirModalPerfil(false); };
+
+    var sincronizar = document.getElementById('btn-sincronizar');
+    if (sincronizar) {
+      sincronizar.onclick = function () {
+        ocupado = true;
+        render();
+        aviso('Revisando la carpeta de Drive…');
+        llamar('sincronizarContenido').then(function (r) {
+          panel = r.panel;
+          ocupado = false;
+          aviso(r.resumen.revisados + ' archivos revisados · ' + r.resumen.nuevos + ' nuevos por clasificar · ' + r.resumen.incorporados + ' incorporados', 'ok');
+          return llamar('obtenerDatos').then(function (datos) { D = datos; render(); });
+        }).catch(errorServidor);
+      };
+    }
+    var verificar = document.getElementById('btn-permisos');
+    if (verificar) {
+      verificar.onclick = function () {
+        ocupado = true;
+        render();
+        aviso('Verificando permisos de cada archivo…');
+        llamar('verificarPermisos').then(function (r) {
+          permisos = r;
+          ocupado = false;
+          render();
+        }).catch(errorServidor);
+      };
+    }
+    var practica = document.getElementById('btn-practica');
+    if (practica) practica.onclick = function () { abrirModalPractica(''); };
+    app.querySelectorAll('.btn-practica-fila').forEach(function (b) {
+      b.onclick = function () { abrirModalPractica(b.getAttribute('data-email')); };
+    });
+  }
+
+  /* ---------------------------------------------------------------- inicio */
+
+  render();
+  if (!D.usuario.nombre) abrirModalPerfil(true);
+})();
+</script>

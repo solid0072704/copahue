@@ -2,6 +2,7 @@
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
+| [`academia/`](academia/README.md) | **TPDV Academy**: plataforma de inducción para nuevos ingresos de Tu Proyecto de Vida (Google Apps Script, solo cuentas @tuproyectodevida.cl, kit de marca oficial) | Se publica como aplicación web de Apps Script: ver [academia/README.md](academia/README.md) |
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
