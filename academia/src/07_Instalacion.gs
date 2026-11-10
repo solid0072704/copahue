@@ -18,6 +18,11 @@ function instalar() {
       DOMINIO_PERMITIDO + '.');
   }
 
+  var admins = listaAdministradores_();
+  registro.push(admins.length
+    ? 'Panel de administración habilitado solo para: ' + admins.join(', ') + '.'
+    : '⚠️ Nadie puede ver el panel: completa la lista ADMINISTRADORES_ACADEMIA en 11_Administradores.gs.');
+
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty(PROPIEDAD_DB);
   var libro = null;

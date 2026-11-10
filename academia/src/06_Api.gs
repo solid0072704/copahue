@@ -169,6 +169,91 @@ function registrarEvaluacionPractica(emailColaborador, idModulo, puntaje, coment
   return { resultado: resultado, panel: panelAdmin_() };
 }
 
+/** Avance detallado de una persona: módulos, lecciones con fecha e historial de evaluaciones. */
+function obtenerDetalleColaborador(emailColaborador) {
+  exigirAdmin_();
+  return detalleColaborador_(aTexto_(emailColaborador).toLowerCase());
+}
+
+/** Estado resumido de un módulo para el panel. */
+function estadoModuloCorto_(m) {
+  if (m.completo) return 'completo';
+  if (m.bloqueado) return 'bloqueado';
+  if (m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) return 'evaluacion';
+  if (m.leccionesCompletas && m.practica && !m.practica.aprobada) return 'practica';
+  if (m.progreso > 0) return 'curso';
+  return 'pendiente';
+}
+
+/** «Ventas I: fundamentos…» → «Ventas I»; sin «:» se usa el pilar. */
+function tituloCorto_(m) {
+  return m.titulo.indexOf(':') > 0 ? m.titulo.split(':')[0].trim() : (m.pilar || m.titulo);
+}
+
+function diasDesde_(iso) {
+  if (!iso) return null;
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? null : Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+
+function detalleColaborador_(email) {
+  if (!esCorreoPermitido_(email)) throw new Error('El correo debe ser @' + DOMINIO_PERMITIDO + '.');
+  var perfil = perfilUsuario_(email);
+  if (!perfil) throw new Error('Esta persona aún no ingresa a la academia.');
+
+  var fechas = {};
+  leerTabla_(HOJAS.PROGRESO).forEach(function (p) {
+    if (aTexto_(p['Email']).toLowerCase() === email && esSi_(p['Completada'])) fechas[aTexto_(p['ID lección'])] = aFechaIso_(p['Fecha']);
+  });
+  var estado = estadoUsuario_(email);
+  var titulos = {};
+  estado.modulos.forEach(function (m) { titulos[m.id] = m.titulo; });
+
+  var historial = leerTabla_(HOJAS.RESULTADOS)
+    .filter(function (r) { return aTexto_(r['Email']).toLowerCase() === email; })
+    .map(function (r) {
+      var practica = aTexto_(r['Tipo']).toLowerCase().indexOf('pr') === 0;
+      return {
+        fecha: aFechaIso_(r['Fecha']),
+        modulo: titulos[aTexto_(r['ID módulo'])] || aTexto_(r['ID módulo']),
+        tipo: practica ? 'Práctica' : 'Cuestionario',
+        puntaje: Number(r['Puntaje %']) || 0,
+        aprobado: esSi_(r['Aprobado']),
+        intento: aTexto_(r['Intento']),
+        evaluador: practica ? aTexto_(r['Evaluador']) : '',
+        comentario: practica ? aTexto_(r['Comentario']) : ''
+      };
+    })
+    .sort(function (a, b) { return b.fecha.localeCompare(a.fecha); });
+
+  var actividad = [perfil.ultimoIngreso].concat(Object.keys(fechas).map(function (k) { return fechas[k]; }))
+    .concat(historial.map(function (h) { return h.fecha; })).filter(String).sort().pop() || '';
+
+  return {
+    perfil: {
+      email: email, nombre: perfil.nombre, area: perfil.area, primerIngreso: perfil.primerIngreso,
+      ultimoIngreso: perfil.ultimoIngreso, ultimaActividad: actividad, certificado: perfil.certificado, admin: esAdmin_(email)
+    },
+    avance: estado.avance,
+    terminado: estado.terminado,
+    modulosCompletos: estado.modulosCompletos,
+    totalModulos: estado.totalModulos,
+    leccionesCompletadas: estado.leccionesCompletadas,
+    totalLecciones: estado.modulos.reduce(function (s, m) { return s + m.lecciones.length; }, 0),
+    modulos: estado.modulos.map(function (m) {
+      return {
+        id: m.id, titulo: m.titulo, corto: tituloCorto_(m), semana: m.semana, pilar: m.pilar, progreso: m.progreso,
+        estado: estadoModuloCorto_(m), completadas: m.completadas, obligatorias: m.obligatorias,
+        evaluacion: m.evaluacion, practica: m.practica,
+        lecciones: m.lecciones.map(function (l) {
+          return { id: l.id, titulo: l.titulo, tipo: l.tipo, obligatoria: l.obligatoria, completada: l.completada, fecha: fechas[l.id] || '' };
+        })
+      };
+    }),
+    historial: historial
+  };
+}
+
 function panelAdmin_() {
   var estructura = leerEstructura_();
   var filasProgreso = leerTabla_(HOJAS.PROGRESO);
@@ -190,13 +275,19 @@ function panelAdmin_() {
         (!m.evaluacion || m.evaluacion.aprobada);
     }).map(function (m) { return { id: m.id, titulo: m.titulo }; });
     var actual = estado.modulos.filter(function (m) { return !m.completo; })[0];
+    var ultimoIngreso = aFechaIso_(u['Último ingreso']);
     return {
       email: email,
       nombre: aTexto_(u['Nombre']),
       area: aTexto_(u['Área']),
+      esAdmin: esAdmin_(email),
       primerIngreso: aFechaIso_(u['Primer ingreso']),
-      ultimoIngreso: aFechaIso_(u['Último ingreso']),
+      ultimoIngreso: ultimoIngreso,
+      diasSinIngreso: diasDesde_(ultimoIngreso),
       avance: estado.avance,
+      terminado: estado.terminado,
+      leccionesCompletadas: estado.leccionesCompletadas,
+      modulos: estado.modulos.map(function (m) { return { id: m.id, progreso: m.progreso, estado: estadoModuloCorto_(m) }; }),
       modulosCompletos: estado.modulosCompletos,
       totalModulos: estado.totalModulos,
       moduloActual: actual ? actual.titulo : 'Programa completo',
@@ -214,17 +305,20 @@ function panelAdmin_() {
   }).filter(function (c) { return esCorreoPermitido_(c.email); });
 
   colaboradores.sort(function (a, b) { return (b.ultimoIngreso || '').localeCompare(a.ultimoIngreso || ''); });
-  var total = colaboradores.length;
+  // Los indicadores consideran solo a quienes toman la academia (no a los administradores).
+  var alumnos = colaboradores.filter(function (c) { return !c.esAdmin; });
+  var total = alumnos.length;
   return {
     resumen: {
       colaboradores: total,
-      avancePromedio: total ? Math.round(colaboradores.reduce(function (s, c) { return s + c.avance; }, 0) / total) : 0,
-      certificados: colaboradores.filter(function (c) { return c.certificado; }).length,
-      practicasPendientes: colaboradores.reduce(function (s, c) { return s + c.practicasPendientes.length; }, 0)
+      avancePromedio: total ? Math.round(alumnos.reduce(function (s, c) { return s + c.avance; }, 0) / total) : 0,
+      certificados: alumnos.filter(function (c) { return c.certificado; }).length,
+      practicasPendientes: alumnos.reduce(function (s, c) { return s + c.practicasPendientes.length; }, 0),
+      inactivos: alumnos.filter(function (c) { return !c.terminado && c.diasSinIngreso !== null && c.diasSinIngreso >= 7; }).length
     },
     colaboradores: colaboradores,
     modulos: estructura.modulos.map(function (m) {
-      return { id: m.id, titulo: m.titulo, lecciones: m.lecciones.length, preguntas: m.preguntas, tipo: m.tipo };
+      return { id: m.id, titulo: m.titulo, corto: tituloCorto_(m), semana: m.semana, lecciones: m.lecciones.length, preguntas: m.preguntas, tipo: m.tipo };
     }),
     modulosPractica: modulosPractica,
     porClasificar: contarPendientesClasificar_(),

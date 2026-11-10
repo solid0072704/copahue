@@ -8,7 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { crearEntorno } = require('./gas_mock');
 
-const { ALUMNA, ADMIN, entornoInstalado, respuestasCorrectas, completarModulo } = require('./fixtures');
+const { ALUMNA, ADMIN, COORDINACION, entornoInstalado, respuestasCorrectas, completarModulo } = require('./fixtures');
 
 /* ------------------------------------------------------------------ Acceso */
 
@@ -44,7 +44,8 @@ test('todas las funciones públicas rechazan cuentas externas', () => {
   const llamadas = [
     ['obtenerDatos'], ['marcarLeccion', 'IND-01', true], ['guardarPerfil', { nombre: 'X' }],
     ['obtenerEvaluacion', 'INDUCCION'], ['enviarEvaluacion', 'INDUCCION', {}], ['obtenerPanelAdmin'],
-    ['sincronizarContenido'], ['verificarPermisos'], ['registrarEvaluacionPractica', ALUMNA, 'FINAL', 90, '']
+    ['sincronizarContenido'], ['verificarPermisos'], ['registrarEvaluacionPractica', ALUMNA, 'FINAL', 90, ''],
+    ['obtenerDetalleColaborador', ALUMNA]
   ];
   llamadas.forEach(([fn, ...args]) => assert.throws(() => env.ejecutar(fn, ...args), /tuproyectodevida\.cl|administradores/, fn));
   // Funciones de mantenimiento llamadas desde el navegador por alguien externo.
@@ -61,14 +62,78 @@ test('un colaborador del dominio que no es administrador no accede al panel', ()
   assert.throws(() => env.ejecutar('instalar'), /administradores/);
 });
 
-test('la clave ADMINISTRADORES solo acepta correos del dominio', () => {
+test('solo las cuentas de la lista de administradores ven el panel', () => {
   const env = entornoInstalado();
-  const config = env.hoja('Config');
-  const fila = config.datos.findIndex(f => f[0] === 'ADMINISTRADORES') + 1;
-  config.poner(fila, 2, 'jefa.ventas@tuproyectodevida.cl, intruso@gmail.com');
+  env.comoUsuario(COORDINACION.toUpperCase());
+  assert.equal(env.ejecutar('obtenerDatos').usuario.admin, true, 'sin importar mayúsculas');
+  assert.ok(env.ejecutar('obtenerPanelAdmin').resumen);
+
+  // La planilla no puede agregar administradores.
+  env.hoja('Config').datos.push(['ADMINISTRADORES', 'jefa.ventas@tuproyectodevida.cl', '']);
   env.comoUsuario('jefa.ventas@tuproyectodevida.cl');
-  assert.equal(env.ejecutar('obtenerDatos').usuario.admin, true);
-  assert.equal(env.contexto.esAdmin_('intruso@gmail.com'), false);
+  assert.equal(env.ejecutar('obtenerDatos').usuario.admin, false);
+  assert.throws(() => env.ejecutar('obtenerPanelAdmin'), /administradores/);
+  assert.ok(!env.contexto.CONFIG_DEFECTO.some(f => f[0] === 'ADMINISTRADORES'), 'no existe la clave en la planilla');
+
+  // El dueño del script no es administrador si no está en la lista, y los correos externos se ignoran.
+  const soloUno = crearEntorno({ dueno: 'dueno.script@tuproyectodevida.cl', usuario: 'dueno.script@tuproyectodevida.cl',
+    administradores: [COORDINACION, 'intruso@gmail.com'] });
+  soloUno.ejecutar('instalar');
+  assert.equal(soloUno.ejecutar('obtenerDatos').usuario.admin, false);
+  assert.deepEqual(Array.from(soloUno.contexto.listaAdministradores_()), [COORDINACION]);
+  assert.equal(soloUno.contexto.esAdmin_('intruso@gmail.com'), false);
+});
+
+test('sin lista de administradores nadie ve el panel', () => {
+  const env = crearEntorno({ dueno: ADMIN, usuario: ADMIN, administradores: [] });
+  const texto = env.ejecutar('instalar');
+  assert.match(texto, /Nadie puede ver el panel/);
+  assert.equal(env.ejecutar('obtenerDatos').usuario.admin, false);
+  assert.throws(() => env.ejecutar('obtenerPanelAdmin'), /administradores/);
+});
+
+test('el panel muestra el avance de cada colaborador por módulo y el detalle individual', () => {
+  const env = entornoInstalado();
+  env.comoUsuario(COORDINACION);
+  env.ejecutar('doGet'); // el administrador también queda registrado, pero no cuenta en los indicadores
+  env.comoUsuario(ALUMNA);
+  env.ejecutar('doGet');
+  env.ejecutar('guardarPerfil', { nombre: 'Camila Rojas', area: 'Ventas' });
+  completarModulo(env, 'INDUCCION');
+  env.ejecutar('marcarLeccion', 'V1-01', true);
+  env.ejecutar('marcarLeccion', 'V1-02', true);
+  env.comoUsuario('otro.asesor@tuproyectodevida.cl');
+  env.ejecutar('doGet');
+
+  env.comoUsuario(COORDINACION);
+  const panel = env.ejecutar('obtenerPanelAdmin');
+  assert.equal(panel.resumen.colaboradores, 2, 'los administradores no cuentan');
+  const camila = panel.colaboradores.find(c => c.email === ALUMNA);
+  assert.deepEqual(camila.modulos.map(m => m.estado), ['completo', 'curso', 'bloqueado', 'bloqueado', 'bloqueado', 'bloqueado', 'bloqueado', 'bloqueado']);
+  assert.equal(camila.modulos[0].progreso, 100);
+  assert.equal(camila.modulos[1].progreso, 14);
+  assert.equal(camila.diasSinIngreso, 0);
+  assert.equal(panel.colaboradores.find(c => c.email === COORDINACION).esAdmin, true);
+  assert.equal(panel.colaboradores.find(c => c.email === 'otro.asesor@tuproyectodevida.cl').modulos[0].estado, 'pendiente');
+  assert.deepEqual(panel.modulos.map(m => m.corto), ['Inducción', 'Ventas I', 'Ventas II', 'Marketing I', 'Marketing II', 'Legal I', 'Legal II', 'Evaluación final']);
+
+  const d = env.ejecutar('obtenerDetalleColaborador', ALUMNA.toUpperCase());
+  assert.equal(d.perfil.nombre, 'Camila Rojas');
+  assert.equal(d.leccionesCompletadas, 5);
+  assert.equal(d.totalLecciones, env.catalogo.lecciones.length);
+  const v1 = d.modulos.find(m => m.id === 'VENTAS-1');
+  assert.equal(v1.estado, 'curso');
+  assert.ok(v1.lecciones.find(l => l.id === 'V1-01').fecha, 'fecha de la lección completada');
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-03').fecha, '');
+  assert.equal(d.historial.length, 1);
+  assert.equal(d.historial[0].tipo, 'Cuestionario');
+  assert.equal(d.historial[0].aprobado, true);
+  assert.ok(d.perfil.ultimaActividad);
+
+  assert.throws(() => env.ejecutar('obtenerDetalleColaborador', 'nadie@tuproyectodevida.cl'), /aún no ingresa/);
+  assert.throws(() => env.ejecutar('obtenerDetalleColaborador', 'alguien@gmail.com'), /debe ser @/);
+  env.comoUsuario(ALUMNA);
+  assert.throws(() => env.ejecutar('obtenerDetalleColaborador', ALUMNA), /administradores/);
 });
 
 /* ------------------------------------------------------------------ Instalación */

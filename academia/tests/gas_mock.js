@@ -261,8 +261,10 @@ function crearEntorno(opciones = {}) {
     }
   };
 
+  // La lista real de administradores (11_Administradores.gs) no se carga: cada prueba define la suya.
+  ctx.ADMINISTRADORES_ACADEMIA = opciones.administradores || [];
   const contexto = vm.createContext(ctx);
-  const archivos = fs.readdirSync(SRC).filter(f => f.endsWith('.gs')).sort();
+  const archivos = fs.readdirSync(SRC).filter(f => f.endsWith('.gs') && !f.startsWith('11_Administradores')).sort();
   archivos.forEach(f => vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), contexto, { filename: f }));
 
   /** Ejecuta una función del proyecto como lo haría una nueva ejecución de Apps Script (cachés en memoria limpios). */

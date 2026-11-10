@@ -175,6 +175,7 @@ function perfilUsuario_(email) {
     nombre: aTexto_(fila['Nombre']),
     area: aTexto_(fila['Área']),
     primerIngreso: aFechaIso_(fila['Primer ingreso']),
+    ultimoIngreso: aFechaIso_(fila['Último ingreso']),
     certificado: aFechaIso_(fila['Certificado'])
   };
 }

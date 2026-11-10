@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium, devices } = require('playwright');
-const { ADMIN, entornoInstalado, respuestasCorrectas } = require('./fixtures');
+const { entornoInstalado, respuestasCorrectas } = require('./fixtures');
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, v, i, arr) => {
   if (v.startsWith('--')) acc.push([v.slice(2), arr[i + 1]]);
@@ -62,10 +62,18 @@ avanzar(VALENTINA, 'Valentina Muñoz', 'Ventas zona sur', () => {
   ['INDUCCION', 'VENTAS-1', 'VENTAS-2', 'MARKETING-1', 'MARKETING-2', 'LEGAL-1', 'LEGAL-2'].forEach(aprobar);
   completarLecciones('FINAL');
 });
-env.comoUsuario(ADMIN);
+const PAULA = 'paula.herrera@tuproyectodevida.cl';
+avanzar(PAULA, 'Paula Herrera', 'Ventas zona centro', () => { completarLecciones('INDUCCION', 2); });
+// Paula no ingresa hace 12 días (para ver la alerta de inactividad en el panel).
+const usuarios = env.hoja('Usuarios');
+const colUltimo = usuarios.datos[0].indexOf('Último ingreso') + 1;
+usuarios.poner(usuarios.datos.findIndex(f => f[0] === PAULA) + 1, colUltimo, new Date(Date.now() - 12 * 86400000));
+
+const SEBASTIAN = 'coordinacion.academia@tuproyectodevida.cl'; // administradora ficticia de la lista de prueba
+env.comoUsuario(SEBASTIAN);
 env.ejecutar('registrarEvaluacionPractica', VALENTINA, 'FINAL', 90, 'Excelente presentación del proyecto y manejo de objeciones. Reforzar plazos legales.');
 env.ejecutar('doGet');
-env.ejecutar('guardarPerfil', { nombre: 'Coordinación Academia', area: 'Gerencia comercial' });
+env.ejecutar('guardarPerfil', { nombre: 'Coordinación Academia', area: 'TPDV Academy' });
 
 /* ------------------------------------------------------------ navegador */
 
@@ -184,15 +192,23 @@ async function captura(pagina, nombre, completa = true) {
     await s.contexto.close();
 
     // 4. Panel de administración.
-    s = await prepararPagina(navegador, ADMIN);
+    s = await prepararPagina(navegador, SEBASTIAN);
     await s.pagina.click('.cabecera__nav [data-ir="panel"]');
-    await s.pagina.waitForSelector('.kpis');
-    await s.pagina.click('#btn-permisos');
-    await s.pagina.waitForSelector('.problema, .kpis + section');
+    await s.pagina.waitForSelector('#cuerpo-colaboradores tr');
     await captura(s.pagina, '09_panel_admin.png');
-    await s.pagina.click('.btn-practica-fila[data-email="' + DIEGO + '"]');
+    await s.pagina.selectOption('#filtro-estado', 'inactivos');
+    await captura(s.pagina, '09b_panel_filtro_inactivos.png', false);
+    await s.pagina.selectOption('#filtro-estado', 'todos');
+    await s.pagina.click('#cuerpo-colaboradores tr[data-email="' + DIEGO + '"]');
+    await s.pagina.waitForSelector('.modulo-detalle');
+    await captura(s.pagina, '10_detalle_colaborador.png');
+    await s.pagina.click('#btn-practica-detalle');
     await s.pagina.fill('#pr-puntos', '25');
-    await captura(s.pagina, '10_registrar_practica.png', false);
+    await captura(s.pagina, '10b_registrar_practica.png', false);
+    await s.pagina.click('[data-cerrar]');
+    await s.pagina.click('.migas [data-ir="panel"]');
+    await s.pagina.click('#btn-permisos');
+    await s.pagina.waitForSelector('.problema');
     todosLosErrores.push(...s.errores);
     await s.contexto.close();
 

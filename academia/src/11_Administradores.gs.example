@@ -1,0 +1,11 @@
+/**
+ * TPDV Academy · Administradores.
+ *
+ * Copia este archivo como «11_Administradores» en Apps Script y escribe los correos que pueden ver el panel
+ * de administración (avance de cada colaborador, evaluaciones prácticas, permisos y contenido).
+ * Solo se aceptan cuentas @tuproyectodevida.cl. Nadie más, ni siquiera el dueño del script, ve el panel.
+ */
+var ADMINISTRADORES_ACADEMIA = [
+  'correo.administrador.1@tuproyectodevida.cl',
+  'correo.administrador.2@tuproyectodevida.cl'
+];

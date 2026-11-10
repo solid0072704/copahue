@@ -10,6 +10,8 @@ const { crearEntorno } = require('./gas_mock');
 const RAIZ = '1hCDqvmusCl0nnC8TvKChiH_9ibKsR_b1';
 const ALUMNA = 'nueva.asesora@tuproyectodevida.cl';
 const ADMIN = 'admin.academia@tuproyectodevida.cl';
+const COORDINACION = 'coordinacion.academia@tuproyectodevida.cl';
+const ADMINISTRADORES = [ADMIN, COORDINACION];
 
 /** Árbol de Drive con todos los archivos del catálogo + casos especiales. */
 function arbolDePrueba(catalogo) {
@@ -54,11 +56,11 @@ function arbolDePrueba(catalogo) {
 }
 
 function entornoInstalado(ajustarArbol) {
-  const base = crearEntorno({ dueno: ADMIN, usuario: ADMIN });
+  const base = crearEntorno({ dueno: ADMIN, usuario: ADMIN, administradores: ADMINISTRADORES });
   const catalogo = base.contexto.catalogo_();
   const arbol = arbolDePrueba(catalogo);
   if (ajustarArbol) ajustarArbol(arbol);
-  const env = crearEntorno({ dueno: ADMIN, usuario: ADMIN, arbol });
+  const env = crearEntorno({ dueno: ADMIN, usuario: ADMIN, arbol, administradores: ADMINISTRADORES });
   env.ejecutar('instalar');
   env.catalogo = catalogo;
   return env;
@@ -79,4 +81,4 @@ function completarModulo(env, idModulo) {
   }
 }
 
-module.exports = { RAIZ, ALUMNA, ADMIN, arbolDePrueba, entornoInstalado, respuestasCorrectas, completarModulo };
+module.exports = { RAIZ, ALUMNA, ADMIN, COORDINACION, ADMINISTRADORES, arbolDePrueba, entornoInstalado, respuestasCorrectas, completarModulo };

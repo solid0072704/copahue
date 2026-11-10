@@ -10,3 +10,6 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+
+# TPDV Academy: correos de los administradores (no se publican en el repositorio)
+academia/src/11_Administradores.gs

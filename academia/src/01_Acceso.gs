@@ -39,14 +39,13 @@ function correoDuenoScript_() {
   }
 }
 
-/** Administradores: el dueño del script y los correos de la clave ADMINISTRADORES (solo del dominio). */
+/** Administradores: solo los correos de ADMINISTRADORES_ACADEMIA (11_Administradores.gs) que sean del dominio. */
 function listaAdministradores_() {
-  var lista = String(config_()['ADMINISTRADORES'] || '')
-    .split(/[,;\s]+/)
-    .map(function (c) { return c.trim().toLowerCase(); })
-    .filter(esCorreoPermitido_);
-  var dueno = correoDuenoScript_();
-  if (esCorreoPermitido_(dueno) && lista.indexOf(dueno) === -1) lista.unshift(dueno);
+  var lista = [];
+  administradoresAcademia_().forEach(function (c) {
+    var correo = String(c || '').trim().toLowerCase();
+    if (esCorreoPermitido_(correo) && lista.indexOf(correo) === -1) lista.push(correo);
+  });
   return lista;
 }
 

@@ -9,6 +9,8 @@
   var evaluacion = null;   // { moduloId, preguntas, respuestas, puntajeAprobacion }
   var panel = null;        // datos del panel de administración
   var permisos = null;     // resultado de la verificación de permisos
+  var detalle = null;      // avance detallado de un colaborador (panel)
+  var filtroPanel = { texto: '', estado: 'todos', admins: false };
   var ocupado = false;
 
   var app = document.getElementById('app');
@@ -161,6 +163,7 @@
 
   function ir(nueva, sinHistorial) {
     if (nueva.tipo === 'evaluacion' && (!evaluacion || evaluacion.moduloId !== nueva.moduloId)) evaluacion = null;
+    if (nueva.tipo === 'colaborador') detalle = null; // siempre datos frescos al abrir el detalle
     vista = nueva;
     render();
     window.scrollTo(0, 0);
@@ -182,6 +185,7 @@
     var destino = { tipo: el.getAttribute('data-ir') };
     if (el.getAttribute('data-modulo')) destino.moduloId = el.getAttribute('data-modulo');
     if (el.getAttribute('data-leccion')) destino.leccionId = el.getAttribute('data-leccion');
+    if (el.getAttribute('data-email')) destino.email = el.getAttribute('data-email');
     if (destino.tipo === 'continuar') {
       var s = D.programa.siguiente;
       if (!s) destino = { tipo: D.certificado.disponible ? 'certificado' : 'inicio' };
@@ -207,6 +211,7 @@
       case 'resultado': html = vistaResultado(); break;
       case 'certificado': html = vistaCertificado(); break;
       case 'panel': html = vistaPanel(); break;
+      case 'colaborador': html = vistaColaborador(); break;
       default: html = vistaInicio();
     }
     app.innerHTML = html;
@@ -588,10 +593,11 @@
       '</div></div>';
 
     html += '<div class="kpis">' +
-      '<div class="kpi"><strong>' + r.colaboradores + '</strong><span>colaboradores</span></div>' +
+      '<div class="kpi"><strong>' + r.colaboradores + '</strong><span>colaboradores en formación</span></div>' +
       '<div class="kpi"><strong>' + r.avancePromedio + '%</strong><span>avance promedio</span></div>' +
       '<div class="kpi"><strong>' + r.certificados + '</strong><span>certificados</span></div>' +
       '<div class="kpi"><strong>' + r.practicasPendientes + '</strong><span>evaluaciones prácticas por registrar</span></div>' +
+      '<div class="kpi"><strong>' + r.inactivos + '</strong><span>sin ingresar hace 7 días o más</span></div>' +
       '<div class="kpi"><strong>' + panel.porClasificar + '</strong><span>archivos nuevos por clasificar</span></div>' +
     '</div>';
 
@@ -604,28 +610,27 @@
         }).join('') : '<p>Todo el material está compartido con el dominio. ✓</p>') + '</section>';
     }
 
-    html += '<section class="tarjeta" style="margin-bottom:18px"><div class="fila"><h2 style="margin:0">Colaboradores</h2><span class="espaciador"></span>' +
+    html += '<section class="tarjeta" style="margin-bottom:18px"><div class="fila"><h2 style="margin:0">Avance de cada colaborador</h2><span class="espaciador"></span>' +
       '<button class="boton boton--chico" type="button" id="btn-practica">' + icono('usuarios', 'icono--chico') + 'Registrar evaluación práctica</button></div>';
     if (!panel.colaboradores.length) {
       html += '<p class="muted" style="margin-top:12px">Aún no ingresa ningún colaborador. Comparte el enlace de la academia con los nuevos ingresos.</p>';
     } else {
-      html += '<div class="tabla-envoltura"><table class="tabla"><thead><tr><th>Colaborador</th><th>Avance</th><th>Módulo actual</th><th>Evaluaciones</th><th>Último ingreso</th><th>Certificado</th><th></th></tr></thead><tbody>' +
-        panel.colaboradores.map(function (c) {
-          var aprobadas = c.evaluaciones.filter(function (e) { return e.aprobada; }).length;
-          var evs = '<span class="puntos" aria-label="' + aprobadas + ' de ' + c.evaluaciones.length + ' evaluaciones aprobadas">' + c.evaluaciones.map(function (e) {
-            var estado = e.aprobada ? 'ok' : (e.intentos ? 'intento' : 'pendiente');
-            var detalle = e.modulo + ': ' + (e.aprobada ? 'aprobada' : (e.intentos ? 'no aprobada' : 'sin rendir')) +
-              (e.mejor !== null && e.mejor !== undefined ? ' · mejor puntaje ' + e.mejor + '%' : '');
-            return '<span class="punto punto--' + estado + '" title="' + esc(detalle) + '"></span>';
-          }).join('') + '</span><span class="chico muted" style="white-space:nowrap">' + aprobadas + ' de ' + c.evaluaciones.length + '</span>';
-          return '<tr><td><strong>' + esc(c.nombre || c.email.split('@')[0]) + '</strong><br><span class="muted chico">' + esc(c.email) + (c.area ? ' · ' + esc(c.area) : '') + '</span></td>' +
-            '<td><div class="mini-barra"><div class="barra"><div class="barra__relleno" style="width:' + c.avance + '%"></div></div><strong>' + c.avance + '%</strong></div></td>' +
-            '<td class="chico">' + esc(c.moduloActual) + (c.practicasPendientes.length ? '<br><span class="insignia insignia--pendiente">Práctica por registrar</span>' : '') + '</td>' +
-            '<td><div class="fila" style="gap:8px;flex-wrap:nowrap">' + evs + '</div></td>' +
-            '<td class="chico">' + esc(fechaCorta(c.ultimoIngreso)) + '</td>' +
-            '<td class="chico">' + (c.certificado ? '<span class="insignia insignia--ok">' + icono('premio', 'icono--chico') + esc(c.certificado === 'sí' ? 'Sí' : fechaCorta(c.certificado)) + '</span>' : '—') + '</td>' +
-            '<td><button class="boton boton--fantasma boton--chico btn-practica-fila" type="button" data-email="' + esc(c.email) + '">Práctica</button></td></tr>';
-        }).join('') + '</tbody></table></div>';
+      html += '<div class="filtros">' +
+        '<label class="campo campo--buscar"><span class="sr">Buscar</span><input id="buscar-colaborador" type="search" placeholder="Buscar por nombre, correo o área" value="' + esc(filtroPanel.texto) + '"></label>' +
+        '<label class="campo"><span class="sr">Estado</span><select id="filtro-estado">' +
+          [['todos', 'Todos'], ['curso', 'En formación'], ['practica', 'Práctica por registrar'], ['inactivos', 'Sin ingresar hace 7+ días'],
+            ['sin-comenzar', 'Sin comenzar'], ['completos', 'Programa completo']].map(function (o) {
+            return '<option value="' + o[0] + '"' + (filtroPanel.estado === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') + '</select></label>' +
+        '<label class="check"><input id="filtro-admins" type="checkbox"' + (filtroPanel.admins ? ' checked' : '') + '> Incluir administradores</label>' +
+        '<span class="espaciador"></span><span class="chico muted" id="conteo-colaboradores"></span></div>' +
+        '<div class="tabla-envoltura"><table class="tabla tabla--matriz"><thead><tr><th>Colaborador</th><th>Avance</th>' +
+        panel.modulos.map(function (m) {
+          return '<th class="th-modulo" title="' + esc(m.titulo) + '"><span>' + esc((m.semana || '').replace('Semana ', 'S')) + '</span>' + esc(m.corto) + '</th>';
+        }).join('') + '<th>Último ingreso</th></tr></thead><tbody id="cuerpo-colaboradores"></tbody></table></div>' +
+        '<div class="leyenda chico muted"><span><i class="celda celda--completo"></i>Completado</span><span><i class="celda celda--curso"></i>En curso</span>' +
+        '<span><i class="celda celda--evaluacion"></i>Evaluación o práctica pendiente</span><span><i class="celda celda--pendiente"></i>Sin comenzar</span>' +
+        '<span><i class="celda celda--bloqueado"></i>Bloqueado</span><span>· Haz clic en una persona para ver su detalle.</span></div>';
     }
     html += '</section>';
 
@@ -637,6 +642,152 @@
       }).join('') + '</tbody></table></div>' +
       '<p class="chico muted" style="margin-top:12px">Para cambiar títulos, orden, visibilidad o preguntas edita las hojas «Módulos», «Lecciones» y «Preguntas» de la planilla. ' +
       'Los archivos nuevos de la carpeta aparecen en «Por clasificar»: asígnales un ID de módulo, escribe SI en «Incluir» y vuelve a sincronizar.</p></section>';
+    return html;
+  }
+
+  var ESTADOS_MODULO = {
+    completo: 'Completado', curso: 'En curso', evaluacion: 'Evaluación pendiente', practica: 'Práctica pendiente',
+    pendiente: 'Sin comenzar', bloqueado: 'Bloqueado'
+  };
+  var CLASE_INSIGNIA = { completo: 'ok', curso: 'curso', evaluacion: 'pendiente', practica: 'pendiente', pendiente: 'curso', bloqueado: 'bloqueado' };
+
+  function colaboradoresFiltrados() {
+    var texto = filtroPanel.texto.trim().toLowerCase();
+    return panel.colaboradores.filter(function (c) {
+      if (c.esAdmin && !filtroPanel.admins) return false;
+      if (texto && (c.nombre + ' ' + c.email + ' ' + c.area).toLowerCase().indexOf(texto) === -1) return false;
+      switch (filtroPanel.estado) {
+        case 'curso': return !c.terminado && c.avance > 0;
+        case 'practica': return c.practicasPendientes.length > 0;
+        case 'inactivos': return !c.terminado && c.diasSinIngreso !== null && c.diasSinIngreso >= 7;
+        case 'sin-comenzar': return c.avance === 0;
+        case 'completos': return c.terminado;
+        default: return true;
+      }
+    });
+  }
+
+  function renderTablaColaboradores() {
+    var cuerpo = document.getElementById('cuerpo-colaboradores');
+    if (!cuerpo) return;
+    var lista = colaboradoresFiltrados();
+    var cortos = {};
+    panel.modulos.forEach(function (m) { cortos[m.id] = m.corto; });
+    cuerpo.innerHTML = lista.length ? lista.map(function (c) {
+      var inactivo = !c.terminado && c.diasSinIngreso !== null && c.diasSinIngreso >= 7;
+      return '<tr class="fila-click" data-ir="colaborador" data-email="' + esc(c.email) + '" tabindex="0" title="Ver el avance de ' + esc(c.nombre || c.email) + '">' +
+        '<td class="td-persona"><strong>' + esc(c.nombre || c.email.split('@')[0]) + '</strong>' + (c.esAdmin ? ' <span class="insignia insignia--curso">Admin</span>' : '') +
+          '<br><span class="muted chico">' + esc(c.email).replace('@', '<wbr>@') + (c.area ? ' · ' + esc(c.area) : '') + '</span>' +
+          (c.certificado ? '<br><span class="insignia insignia--ok">' + icono('premio', 'icono--chico') + 'Certificado' + (c.certificado === 'sí' ? '' : ' · ' + esc(fechaCorta(c.certificado))) + '</span>' :
+            (c.practicasPendientes.length ? '<br><span class="insignia insignia--pendiente">' + icono('usuarios', 'icono--chico') + 'Práctica por registrar</span>' : '')) + '</td>' +
+        '<td><div class="mini-barra"><div class="barra"><div class="barra__relleno" style="width:' + c.avance + '%"></div></div><strong>' + c.avance + '%</strong></div></td>' +
+        c.modulos.map(function (m) {
+          return '<td class="td-celda"><span class="celda celda--' + m.estado + '" title="' + esc(cortos[m.id] + ': ' + ESTADOS_MODULO[m.estado] + ' · ' + m.progreso + '%') + '">' +
+            (m.estado === 'completo' ? icono('check', 'icono--chico') : m.estado === 'bloqueado' ? icono('candado', 'icono--chico') : m.progreso + '%') + '</span></td>';
+        }).join('') +
+        '<td class="chico" style="white-space:nowrap">' + esc(fechaCorta(c.ultimoIngreso)) + (inactivo ? '<br><span class="insignia insignia--pendiente">hace ' + c.diasSinIngreso + ' días</span>' : '') + '</td></tr>';
+    }).join('') : '<tr><td colspan="' + (panel.modulos.length + 3) + '" class="muted">Nadie coincide con el filtro.</td></tr>';
+    var conteo = document.getElementById('conteo-colaboradores');
+    if (conteo) conteo.textContent = lista.length + ' de ' + panel.colaboradores.filter(function (c) { return filtroPanel.admins || !c.esAdmin; }).length + ' personas';
+  }
+
+  function anillo(porcentaje, etiqueta) {
+    var circ = 2 * Math.PI * 52;
+    return '<div class="anillo" role="img" aria-label="' + esc(etiqueta) + ' ' + porcentaje + '%">' +
+      '<svg viewBox="0 0 120 120"><circle class="anillo__fondo" cx="60" cy="60" r="52" fill="none" stroke-width="12"/>' +
+      '<circle class="anillo__valor" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + circ.toFixed(1) +
+      '" stroke-dashoffset="' + (circ * (1 - porcentaje / 100)).toFixed(1) + '"/></svg>' +
+      '<div class="anillo__texto"><div><strong>' + porcentaje + '%</strong><span>' + esc(etiqueta) + '</span></div></div></div>';
+  }
+
+  function vistaColaborador() {
+    if (!D.usuario.admin) return vistaNoEncontrada();
+    var migas = '<nav class="migas" aria-label="Ruta"><button type="button" data-ir="panel">Panel</button><span>›</span><span>Avance del colaborador</span></nav>';
+    if (!detalle || detalle.perfil.email !== vista.email) {
+      var email = vista.email;
+      llamar('obtenerDetalleColaborador', email).then(function (datos) {
+        detalle = datos;
+        if (vista.tipo === 'colaborador' && vista.email === email) render();
+      }).catch(function (e) {
+        aviso((e && e.message) || 'No se pudo cargar el avance.', 'error');
+        ir({ tipo: 'panel' });
+      });
+      return migas + '<div class="cargando" role="status"><span class="spinner" aria-hidden="true"></span> Cargando el avance…</div>';
+    }
+    var d = detalle;
+    var p = d.perfil;
+    var nombre = p.nombre || p.email.split('@')[0];
+    var iniciales2 = nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(function (t) { return t.charAt(0); }).join('').toUpperCase();
+    var actual = d.modulos.filter(function (m) { return m.estado !== 'completo'; })[0];
+    var evaluacionesOk = 0;
+    var evaluacionesTotal = 0;
+    d.modulos.forEach(function (m) {
+      if (m.evaluacion) { evaluacionesTotal++; if (m.evaluacion.aprobada) evaluacionesOk++; }
+      if (m.practica) { evaluacionesTotal++; if (m.practica.aprobada) evaluacionesOk++; }
+    });
+
+    var html = migas + '<section class="hero perfil">' +
+      '<div style="position:relative;z-index:1">' +
+        '<div class="fila"><span class="avatar avatar--grande">' + esc(iniciales2) + '</span><div>' +
+          '<h1 style="margin:0">' + esc(nombre) + '</h1>' +
+          '<div class="muted">' + esc(p.email) + (p.area ? ' · ' + esc(p.area) : '') + '</div></div></div>' +
+        '<div class="fila" style="margin-top:14px">' +
+          (d.terminado ? '<span class="insignia insignia--ok">' + icono('premio', 'icono--chico') + 'Programa completo' + (p.certificado ? ' · ' + esc(fecha(p.certificado)) : '') + '</span>' :
+            '<span class="insignia insignia--curso">' + icono('ruta', 'icono--chico') + 'En curso: ' + esc(actual ? actual.titulo : '') + '</span>') +
+          (p.admin ? '<span class="insignia insignia--curso">Administrador</span>' : '') +
+        '</div>' +
+        '<div class="hero__acciones no-imprimir">' +
+          '<button class="boton boton--chico" type="button" id="btn-practica-detalle" data-email="' + esc(p.email) + '">' + icono('usuarios', 'icono--chico') + 'Registrar evaluación práctica</button>' +
+          '<button class="boton boton--secundario boton--chico" type="button" data-ir="panel">' + icono('flechaIzq', 'icono--chico') + 'Volver al panel</button>' +
+        '</div>' +
+      '</div>' + anillo(d.avance, 'de avance') + '</section>';
+
+    html += '<div class="metricas metricas--4">' +
+      '<div class="metrica"><strong>' + d.modulosCompletos + ' / ' + d.totalModulos + '</strong><span>módulos completados</span></div>' +
+      '<div class="metrica"><strong>' + d.leccionesCompletadas + ' / ' + d.totalLecciones + '</strong><span>lecciones vistas</span></div>' +
+      '<div class="metrica"><strong>' + evaluacionesOk + ' / ' + evaluacionesTotal + '</strong><span>evaluaciones aprobadas</span></div>' +
+      '<div class="metrica"><strong>' + esc(fechaCorta(p.ultimaActividad || p.ultimoIngreso)) + '</strong><span>última actividad · ingresó el ' + esc(fechaCorta(p.primerIngreso)) + '</span></div>' +
+    '</div>';
+
+    html += '<h2>Avance por módulo</h2>';
+    d.modulos.forEach(function (m) {
+      var ev = '';
+      if (m.evaluacion) {
+        ev += '<span class="chico">' + icono('pregunta', 'icono--chico') + ' Evaluación: ' +
+          (m.evaluacion.intentos ? (m.evaluacion.aprobada ? 'aprobada' : 'no aprobada') + ' · mejor ' + m.evaluacion.mejorPuntaje + '% · ' +
+            m.evaluacion.intentos + (m.evaluacion.intentos === 1 ? ' intento' : ' intentos') : 'sin rendir') + '</span>';
+      }
+      if (m.practica) {
+        ev += '<span class="chico">' + icono('usuarios', 'icono--chico') + ' Práctica: ' +
+          (m.practica.registrada ? (m.practica.aprobada ? 'aprobada' : 'por reforzar') + ' · ' + m.practica.puntaje + '%' +
+            (m.practica.evaluador ? ' · ' + esc(m.practica.evaluador) : '') : 'pendiente') + '</span>';
+      }
+      html += '<details class="tarjeta modulo-detalle"' + (actual && actual.id === m.id ? ' open' : '') + '>' +
+        '<summary><div class="modulo-detalle__cabeza">' +
+          '<div><span class="chico muted">' + esc(m.semana) + ' · ' + esc(m.pilar) + '</span><h3 style="margin:2px 0 0">' + esc(m.titulo) + '</h3></div>' +
+          '<span class="insignia insignia--' + CLASE_INSIGNIA[m.estado] + '">' + esc(ESTADOS_MODULO[m.estado]) + '</span></div>' +
+          '<div class="mini-barra"><div class="barra"><div class="barra__relleno" style="width:' + m.progreso + '%"></div></div><strong>' + m.progreso + '%</strong>' +
+          '<span class="chico muted" style="white-space:nowrap">' + m.completadas + ' de ' + m.obligatorias + ' lecciones</span></div>' +
+          (ev ? '<div class="fila" style="margin-top:6px;gap:16px">' + ev + '</div>' : '') +
+        '</summary>' +
+        '<ul class="lista-lecciones">' + m.lecciones.map(function (l) {
+          return '<li><span class="temario__check' + (l.completada ? ' temario__check--ok' : '') + '">' + (l.completada ? icono('check') : '') + '</span>' +
+            '<span class="espaciador">' + esc(l.titulo) + ' <span class="chico muted">· ' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.obligatoria ? '' : ' · opcional') + '</span></span>' +
+            '<span class="chico muted">' + (l.completada ? esc(fechaCorta(l.fecha)) : 'pendiente') + '</span></li>';
+        }).join('') + '</ul>' +
+        (m.practica && m.practica.comentario ? '<div class="destacado chico"><strong>Retroalimentación:</strong> ' + esc(m.practica.comentario) + '</div>' : '') +
+      '</details>';
+    });
+
+    html += '<section class="tarjeta" style="margin-top:18px"><h2>Historial de evaluaciones</h2>';
+    html += d.historial.length ? '<div class="tabla-envoltura"><table class="tabla"><thead><tr><th>Fecha</th><th>Módulo</th><th>Tipo</th><th>Puntaje</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody>' +
+      d.historial.map(function (h) {
+        return '<tr><td class="chico">' + esc(fechaCorta(h.fecha)) + '</td><td>' + esc(h.modulo) + '</td><td class="chico">' + esc(h.tipo) + '</td>' +
+          '<td><strong>' + h.puntaje + '%</strong></td>' +
+          '<td><span class="insignia ' + (h.aprobado ? 'insignia--ok' : 'insignia--pendiente') + '">' + (h.aprobado ? 'Aprobado' : 'No aprobado') + '</span></td>' +
+          '<td class="chico">' + (h.tipo === 'Práctica' ? esc((h.evaluador ? h.evaluador + ': ' : '') + h.comentario) : (h.intento ? 'Intento ' + esc(h.intento) : '')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="muted">Aún no rinde evaluaciones.</p>';
+    html += '</section>';
     return html;
   }
 
@@ -680,6 +831,7 @@
       llamar('registrarEvaluacionPractica', document.getElementById('pr-email').value, document.getElementById('pr-modulo').value,
         Number(porcentaje.value), document.getElementById('pr-comentario').value).then(function (r) {
         panel = r.panel;
+        detalle = null;
         cerrarModal();
         aviso('Evaluación registrada: ' + r.resultado.puntaje + '% · ' + (r.resultado.aprobado ? 'aprobada' : 'por reforzar'), 'ok');
         render();
@@ -863,9 +1015,20 @@
     }
     var practica = document.getElementById('btn-practica');
     if (practica) practica.onclick = function () { abrirModalPractica(''); };
-    app.querySelectorAll('.btn-practica-fila').forEach(function (b) {
-      b.onclick = function () { abrirModalPractica(b.getAttribute('data-email')); };
-    });
+    var practicaDetalle = document.getElementById('btn-practica-detalle');
+    if (practicaDetalle) practicaDetalle.onclick = function () { abrirModalPractica(practicaDetalle.getAttribute('data-email')); };
+
+    var buscar = document.getElementById('buscar-colaborador');
+    if (buscar) {
+      renderTablaColaboradores();
+      buscar.addEventListener('input', function () { filtroPanel.texto = buscar.value; renderTablaColaboradores(); });
+      document.getElementById('filtro-estado').addEventListener('change', function (e) { filtroPanel.estado = e.target.value; renderTablaColaboradores(); });
+      document.getElementById('filtro-admins').addEventListener('change', function (e) { filtroPanel.admins = e.target.checked; renderTablaColaboradores(); });
+      document.getElementById('cuerpo-colaboradores').addEventListener('keydown', function (e) {
+        var fila = e.target.closest('.fila-click');
+        if (fila && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); fila.click(); }
+      });
+    }
   }
 
   /* ---------------------------------------------------------------- inicio */

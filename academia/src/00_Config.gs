@@ -9,6 +9,15 @@
 /** Único dominio de correo que puede entrar a la academia. */
 var DOMINIO_PERMITIDO = 'tuproyectodevida.cl';
 
+/**
+ * Administradores: las ÚNICAS cuentas que ven el panel con el avance de cada colaborador.
+ * La lista vive en 11_Administradores.gs (ADMINISTRADORES_ACADEMIA). No se puede ampliar desde la planilla
+ * y el dueño del script no es administrador si no está en la lista. Sin lista, nadie ve el panel.
+ */
+function administradoresAcademia_() {
+  return typeof ADMINISTRADORES_ACADEMIA !== 'undefined' && Array.isArray(ADMINISTRADORES_ACADEMIA) ? ADMINISTRADORES_ACADEMIA : [];
+}
+
 /** Carpeta «TPDV ACADEMY» compartida en Drive (fuente del contenido). */
 var CARPETA_ACADEMIA_ID = '1hCDqvmusCl0nnC8TvKChiH_9ibKsR_b1';
 
@@ -24,7 +33,6 @@ var CONFIG_DEFECTO = [
   ['PUNTAJE_APROBACION', '80', 'Porcentaje mínimo para aprobar cada evaluación (0 a 100).'],
   ['INTENTOS_MAXIMOS', '0', 'Intentos permitidos por evaluación. 0 = sin límite.'],
   ['ORDEN_OBLIGATORIO', 'SI', 'SI: cada módulo se desbloquea al completar el anterior. NO: ruta libre.'],
-  ['ADMINISTRADORES', '', 'Correos @' + DOMINIO_PERMITIDO + ' con acceso al panel, separados por coma. El dueño del script siempre es administrador.'],
   ['CORREO_CONTACTO', '', 'Correo de ayuda que verán los colaboradores (opcional).'],
   ['CARPETA_CONTENIDO_ID', CARPETA_ACADEMIA_ID, 'Carpeta de Drive que se revisa al sincronizar contenido nuevo.'],
   // Kit de marca: Manual de Marca TPDV (dic-2025). Colores principales #005A82 · #007264 · #85B500 · #FFB829.

@@ -43,7 +43,9 @@ material de cada pilar y la columna «Fuente» de la hoja «Preguntas» indica d
    `@tuproyectodevida.cl` (`src/01_Acceso.gs`). Una cuenta externa ve la página «Acceso restringido» y no recibe
    ningún dato. El dominio está fijo en el código, así que no se puede ampliar editando la planilla.
 3. **Respuestas en el servidor**: las respuestas correctas nunca viajan al navegador antes de enviar la evaluación.
-4. **Administradores**: el dueño del script y los correos de la clave `ADMINISTRADORES`, siempre del dominio.
+4. **Panel de administración solo para la lista de `src/11_Administradores.gs`**: nadie más lo ve, ni siquiera
+   el dueño del script, y la planilla no puede agregar administradores. Ese archivo no se sube al repositorio
+   (está en `.gitignore`); se crea a partir de `11_Administradores.gs.example`. Si falta, nadie ve el panel.
 
 > ⚠️ El proyecto de Apps Script debe crearse con una **cuenta @tuproyectodevida.cl** (ideal: una cuenta del área, por
 > ejemplo `academia@tuproyectodevida.cl`). Si se crea con una cuenta personal, Google no entrega el correo de los
@@ -59,7 +61,8 @@ material de cada pilar y la columna «Fuente» de la hoja «Preguntas» indica d
 2. En **Configuración del proyecto** (engranaje) activa **«Mostrar el archivo de manifiesto appsscript.json»**.
 3. Crea un archivo por cada uno de `src/` con el mismo nombre y pega su contenido:
    - Archivos de **secuencia de comandos** (`+ → Secuencia de comandos`): `00_Config`, `01_Acceso`, `02_Datos`,
-     `03_Contenido`, `04_Progreso`, `05_Evaluaciones`, `06_Api`, `07_Instalacion`, `10_Catalogo`.
+     `03_Contenido`, `04_Progreso`, `05_Evaluaciones`, `06_Api`, `07_Instalacion`, `10_Catalogo` y
+     `11_Administradores` (copia de `11_Administradores.gs.example` con los correos que verán el panel).
    - Archivos **HTML** (`+ → HTML`): `Index`, `Estilos`, `App`, `AccesoDenegado`.
    - Reemplaza el contenido de `appsscript.json` y borra el `Código.gs` vacío.
 
@@ -106,12 +109,17 @@ publicarlo en la misma URL.
 
 | Hoja | Para qué |
 |---|---|
-| **Config** | Nombre, puntaje de aprobación (`PUNTAJE_APROBACION`), intentos (`INTENTOS_MAXIMOS`, 0 = sin límite), orden obligatorio, administradores, correo de ayuda, colores, tipografías y logos. |
+| **Config** | Nombre, puntaje de aprobación (`PUNTAJE_APROBACION`), intentos (`INTENTOS_MAXIMOS`, 0 = sin límite), orden obligatorio, correo de ayuda, colores, tipografías y logos. (Los administradores **no** se definen aquí: ver `11_Administradores`.) |
 | **Módulos** | Título, descripción, objetivos (uno por línea), semana, pilar, orden y `Visible`. `Tipo = Práctica` agrega la evaluación que registra la tutora. |
 | **Lecciones** | Una fila por material: módulo, orden, sección, título, tipo, ID de Drive o URL (YouTube o enlace), duración, obligatoria y visible. |
 | **Preguntas** | Selección múltiple: módulo, pregunta, opciones A–D, letra correcta, explicación y fuente. |
 | **Por clasificar** | Archivos nuevos que aparecieron en la carpeta. Escribe el ID del módulo, pon `SI` en «Incluir» y presiona **Sincronizar con Drive** en el panel. Los que tienen `NO` ya fueron revisados (actas, borradores, claves del evaluador) y no se publican. |
 | **Usuarios · Progreso · Resultados** | Registro automático de cada colaborador: ingresos, lecciones vistas, puntajes, intentos y fecha del certificado. |
+
+**Panel de administración.** Muestra a cada colaborador con su avance en los 8 módulos (completado, en curso,
+evaluación o práctica pendiente, sin comenzar o bloqueado), su último ingreso y alertas de inactividad (7 días o más).
+Se puede buscar por nombre, correo o área y filtrar por estado. Al hacer clic en una persona se abre su detalle:
+lecciones vistas con fecha, puntajes e intentos de cada evaluación, evaluación práctica y retroalimentación.
 
 **Evaluación práctica (semana 4).** En **Panel → Registrar evaluación práctica** elige al colaborador, ingresa los
 puntos de la rúbrica (por ejemplo 26 de 30; la plataforma calcula el %) y la retroalimentación. Con 80% o más se
@@ -161,7 +169,7 @@ El código del servidor se prueba en Node con un simulador de Apps Script (Drive
 node --test academia/tests/*.test.js
 ```
 
-Las 19 pruebas cubren el bloqueo de cuentas externas, los permisos de administración, la instalación, el recorrido
+Las 21 pruebas cubren el bloqueo de cuentas externas, que solo la lista de administradores vea el panel, el avance por colaborador, la instalación, el recorrido
 completo hasta el certificado, la sincronización con Drive, la verificación de permisos, la seguridad de la página y la
 consistencia del catálogo.
 
@@ -188,6 +196,7 @@ academia/
 │   ├── 06_Api.gs            doGet y funciones que llama la página
 │   ├── 07_Instalacion.gs    instalar() y sincronización diaria
 │   ├── 10_Catalogo.gs       programa inicial, preguntas y lecturas propias
+│   ├── 11_Administradores.gs.example   plantilla de la lista de administradores (la real no se publica)
 │   └── Index / Estilos / App / AccesoDenegado .html   interfaz
 └── tests/                   simulador de Apps Script, pruebas y vista previa
 ```
