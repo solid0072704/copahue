@@ -533,6 +533,7 @@ def formulario_cliente(cliente=None):
         servicios = st.multiselect(
             "Servicios contratados", calendario.SERVICIOS,
             default=[s for s in c.get("servicios", []) if s in calendario.SERVICIOS], key=f"{k}-servicios",
+            placeholder="Elige los servicios",
             help="De aquí salen los vencimientos que se generan cada mes y cada año para este cliente.",
         )
         f1, f2, f3 = st.columns(3)
