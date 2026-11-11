@@ -118,6 +118,11 @@ Las reglas están en `agentes_ebook/analista.py` y las plantillas de correo en `
 - Los agentes leen Gmail en modo solo lectura (no marcan correos como leídos) y solo escriben borradores o
   envían correos según el modo que elijas.
 
+### Hacia agentes que terminan el trabajo solos
+
+La guía [`docs/guia-equipo-agentes.md`](docs/guia-equipo-agentes.md) define qué significa «hecho» para cada agente,
+cómo verificar cada ciclo, qué sigue necesitando tu aprobación y un plan de 7 días para llegar ahí.
+
 ### Pruebas
 
 ```bash
