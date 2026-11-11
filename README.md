@@ -3,8 +3,97 @@
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
+| `gestion_clientes.py` | **Plataforma de gestión de clientes para estudios contables**: cartera de clientes, vencimientos tributarios y laborales, honorarios y cobranza | `streamlit run gestion_clientes.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+
+---
+
+## 🗂️ Gestión de clientes para estudios contables
+
+Una sola pantalla para que el estudio sepa, cada mañana, **qué vence, qué falta pedirle a cada cliente y quién debe honorarios**.
+Pensada para estudios contables chilenos (RUT, F29, Previred, Operación Renta, honorarios en pesos o UF).
+
+```bash
+pip install -r requirements.txt
+streamlit run gestion_clientes.py
+```
+
+¿Quieres verla funcionando antes de cargar tus datos? En la barra lateral, **🧪 Datos de demostración → Cargar demo**
+(un estudio ficticio con RUT y correos inventados).
+
+| Pestaña | Qué resuelve |
+|---|---|
+| **📊 Panel** | Vencimientos atrasados y de los próximos 14 días, carga de trabajo por responsable, honorarios por cobrar según antigüedad y emitido vs. cobrado por mes. Se puede filtrar por persona del equipo. |
+| **👥 Clientes** | Cartera con RUT validado (dígito verificador), régimen tributario, servicios contratados, responsable y honorario. Cada cliente tiene su ficha con vencimientos, cuenta corriente de honorarios, bitácora y datos. |
+| **📅 Vencimientos** | Genera con un clic las obligaciones del mes (o del año) para todos los clientes activos según sus servicios. El estado, la fecha, el responsable y las notas se editan directo en la tabla. También admite tareas puntuales (requerimientos del SII, trámites). |
+| **💰 Honorarios** | Emite los cobros del mes (convierte los pactados en UF), registra pagos totales o abonos, muestra la mora por tramos y redacta el recordatorio de pago para enviarlo por correo o WhatsApp. |
+| **🗒️ Bitácora** | Llamadas, correos, reuniones y acuerdos con cada cliente, firmados por quien los anota. |
+| **⚙️ Configuración** | Equipo, valor de la UF, calendario de vencimientos, importación de clientes desde CSV/Excel y exportación completa a Excel. |
+
+### Cómo empezar con tus clientes
+
+1. En **⚙️ Configuración** anota a tu **equipo** y el **valor de la UF** (si cobras honorarios en UF).
+2. Carga tus clientes: uno a uno en **👥 Clientes → ➕ Nuevo cliente**, o todos juntos con **Importar clientes**
+   (descarga ahí la planilla de ejemplo). Importar dos veces no duplica ni sobrescribe.
+3. Marca en cada cliente sus **servicios contratados**: de ahí salen sus vencimientos.
+4. Cada mes: **📅 Vencimientos → Generar** y **💰 Honorarios → Emitir**. Ambos se pueden repetir sin riesgo.
+
+### Calendario de vencimientos
+
+| Obligación | Cuándo vence (referencia) | Se genera si el cliente tiene |
+|---|---|---|
+| F29 · IVA, PPM y retenciones | Día 20 del mes siguiente (12 si no declara por internet con documentos electrónicos) | IVA mensual (F29) |
+| Cotizaciones previsionales (Previred) | Día 13 del mes siguiente (10 con planilla presencial) | Remuneraciones |
+| Libro de Remuneraciones Electrónico | Día 15 del mes siguiente | Remuneraciones |
+| DJ 1887, DJ 1879 y DJ de rentas del régimen | Marzo del año siguiente | Declaraciones juradas |
+| F22 · Renta anual | 30 de abril del año siguiente | Renta anual (F22) |
+| Patente municipal | 31 de julio y 31 de enero | Patente municipal |
+
+> **Las fechas son referenciales.** El SII, la Dirección del Trabajo y Previred publican sus calendarios cada año
+> (las declaraciones juradas cambian con frecuencia). Ajusta el día y el mes en **⚙️ Configuración → Calendario de
+> vencimientos**, o edita la fecha de un vencimiento puntual en su tabla.
+
+Si la fecha cae en sábado, domingo o feriado nacional, se corre al día hábil siguiente. El Día de los Pueblos Indígenas,
+las elecciones y los feriados regionales no vienen incluidos: agrégalos en `ESTUDIO_FERIADOS_EXTRA`. Mientras no lo
+hagas, un vencimiento que caiga en uno de esos días se muestra en su fecha original, es decir, antes de la real.
+
+### Configuración (`.env`)
+
+| Variable | Para qué |
+|---|---|
+| `ESTUDIO_NOMBRE`, `ESTUDIO_FIRMA` | Nombre del estudio y firma de los mensajes a clientes |
+| `ESTUDIO_CLAVE` | Clave de acceso a la plataforma. **Defínela si la app queda accesible desde internet.** |
+| `ESTUDIO_EQUIPO` | Equipo inicial, separado por comas (después se edita en la app) |
+| `ESTUDIO_VALOR_UF` | Valor inicial de la UF (después se actualiza en la app) |
+| `ESTUDIO_HONORARIOS_DIA_VENCE` | Día del mes siguiente en que vencen los honorarios (por defecto, 5) |
+| `ESTUDIO_DATOS_PAGO` | Datos de transferencia que se agregan a los recordatorios de pago |
+| `ESTUDIO_DIAS_ALERTA` | Días de anticipación con que un vencimiento pasa a 🟡 (por defecto, 7) |
+| `ESTUDIO_FERIADOS_EXTRA` | Feriados adicionales `AAAA-MM-DD`, separados por comas |
+| `ESTUDIO_DB` | Archivo de datos (por defecto, `data/estudio.db`) |
+
+### Datos y seguridad
+
+- Todo se guarda en `data/estudio.db` (SQLite, ignorado por git). Respáldalo, o usa **⬇️ Exportar todo a Excel**.
+- La plataforma **no guarda claves tributarias ni de Previred** y no se conecta al SII: no las anotes en las notas.
+- `ESTUDIO_CLAVE` es una clave única compartida por el equipo, suficiente para una red interna. Para publicarla en
+  internet, ponla detrás del inicio de sesión de tu proveedor (por ejemplo, el control de acceso de Streamlit Cloud).
+- Los recordatorios se abren en tu correo o en WhatsApp para que tú los envíes: la plataforma no manda nada sola.
+
+Si usas el tablero del ebook, **⚙️ Configuración → Traer clientes ganados** crea como prospectos los leads que
+marcaste en la etapa «Cliente».
+
+```
+estudio/
+  config.py        configuración desde .env / secrets
+  rut.py           validación y formato de RUT
+  db.py            base SQLite: clientes, vencimientos, cobros, pagos, bitácora
+  calendario.py    catálogo de obligaciones, feriados, generación de vencimientos, semáforo
+  cobranza.py      emisión de honorarios, pagos, mora por tramos, mensajes a clientes
+  intercambio.py   importar clientes (CSV/Excel), exportar a Excel, traer leads del ebook
+  demo.py          estudio ficticio de demostración
+gestion_clientes.py  plataforma Streamlit
+```
 
 ---
 
