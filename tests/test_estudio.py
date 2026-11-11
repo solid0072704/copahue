@@ -7,7 +7,7 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from estudio import calendario, cobranza, demo, intercambio
+from estudio import calendario, cobranza, demo, indicadores, intercambio, tema
 from estudio import rut as rutlib
 from estudio.config import Config, a_numero
 from estudio.db import BaseDatos, ErrorValidacion, estado_cobro
@@ -476,6 +476,129 @@ def test_importar_leads_del_ebook(db, cfg):
     assert prospecto["contacto"] == "Ana Pérez" and "Gerente" in prospecto["notas"]
 
 
+# ---------------------------------------------------------------- UF en línea
+class _Respuesta:
+    def __init__(self, datos=None, estado=200):
+        self._datos, self.estado = datos, estado
+
+    def raise_for_status(self):
+        if self.estado >= 400:
+            raise RuntimeError(f"HTTP {self.estado}")
+
+    def json(self):
+        if self._datos is None:
+            raise ValueError("no es JSON")
+        return self._datos
+
+
+def _get(datos=None, estado=200, error=None, llamadas=None):
+    def get(url, timeout=None, headers=None):
+        if llamadas is not None:
+            llamadas.append(url)
+        if error:
+            raise error
+        return _Respuesta(datos, estado)
+
+    return get
+
+
+# Misma forma que la respuesta de mindicador.cl/api/uf (valores inventados).
+RESPUESTA_UF = {
+    "version": "1.7.0", "autor": "mindicador.cl", "codigo": "uf", "nombre": "Unidad de fomento (UF)", "unidad_medida": "Pesos",
+    "serie": [
+        {"fecha": "2026-11-12T03:00:00.000Z", "valor": 39512.5},
+        {"fecha": "2026-11-11T03:00:00.000Z", "valor": 39510.25},
+        {"fecha": "2026-11-10T03:00:00.000Z", "valor": 39508.0},
+    ],
+}
+
+
+def test_uf_toma_el_valor_de_hoy_y_no_uno_futuro():
+    assert indicadores.valor_del_dia(RESPUESTA_UF, HOY) == (39510.25, HOY)
+    assert indicadores.valor_del_dia(RESPUESTA_UF, date(2026, 11, 14)) == (39512.5, date(2026, 11, 12))  # fin de semana sin dato nuevo
+    desordenada = {"serie": list(reversed(RESPUESTA_UF["serie"]))}
+    assert indicadores.valor_del_dia(desordenada, HOY) == (39510.25, HOY)
+
+
+@pytest.mark.parametrize(
+    "datos",
+    [
+        {}, {"serie": []}, {"serie": "x"}, None, [],
+        {"serie": [{"fecha": "2026-11-11", "valor": 395}]},  # fuera de rango: no es una UF
+        {"serie": [{"fecha": "2026-11-11", "valor": "abc"}, {"fecha": "ayer", "valor": 39500}, {"valor": 39500}]},
+        {"serie": [{"fecha": "2026-10-20T03:00:00.000Z", "valor": 39400}]},  # demasiado antiguo
+        {"serie": [{"fecha": "2026-11-12T03:00:00.000Z", "valor": 39512.5}]},  # solo valores futuros
+    ],
+)
+def test_uf_rechaza_respuestas_inutiles(datos):
+    with pytest.raises(indicadores.ErrorIndicador):
+        indicadores.valor_del_dia(datos, HOY)
+
+
+def test_consultar_uf_traduce_los_errores_de_red():
+    assert indicadores.consultar_uf(HOY, get=_get(RESPUESTA_UF)) == (39510.25, HOY)
+    for get in (_get(estado=503), _get(error=TimeoutError("lento")), _get(datos=None)):
+        with pytest.raises(indicadores.ErrorIndicador, match="No se pudo consultar"):
+            indicadores.consultar_uf(HOY, get=get)
+
+
+def test_actualizar_uf_una_vez_al_dia(db, cfg):
+    llamadas = []
+    assert indicadores.actualizar_uf(db, cfg, HOY, get=_get(RESPUESTA_UF, llamadas=llamadas)) == "actualizada"
+    assert cobranza.valor_uf(db, cfg) == 39510.25
+    estado = indicadores.estado_uf(db, cfg)
+    assert estado["fecha"] == "2026-11-11" and "mindicador.cl" in estado["fuente"] and estado["error"] == ""
+    assert indicadores.actualizar_uf(db, cfg, HOY, get=_get(RESPUESTA_UF, llamadas=llamadas)) == "vigente"
+    assert len(llamadas) == 1  # con el valor de hoy guardado no vuelve a consultar
+    assert indicadores.actualizar_uf(db, cfg, HOY, forzar=True, get=_get(RESPUESTA_UF, llamadas=llamadas)) == "actualizada"
+    assert len(llamadas) == 2
+
+
+def test_actualizar_uf_sin_conexion_conserva_el_valor_y_no_insiste(db, cfg):
+    from datetime import datetime, timedelta, timezone
+
+    ahora = datetime(2026, 11, 11, 12, 0, tzinfo=timezone.utc)
+    llamadas = []
+    caido = _get(error=ConnectionError("sin internet"), llamadas=llamadas)
+    assert indicadores.actualizar_uf(db, cfg, HOY, get=caido, ahora=ahora) == "error"
+    assert cobranza.valor_uf(db, cfg) == 40000.0  # sigue el valor configurado
+    assert "No se pudo consultar" in indicadores.estado_uf(db, cfg)["error"]
+    assert indicadores.actualizar_uf(db, cfg, HOY, get=caido, ahora=ahora + timedelta(minutes=30)) == "en_espera"
+    assert len(llamadas) == 1  # no reintenta en cada clic
+    assert indicadores.actualizar_uf(db, cfg, HOY, get=_get(RESPUESTA_UF, llamadas=llamadas), ahora=ahora + timedelta(hours=4)) == "actualizada"
+    assert indicadores.estado_uf(db, cfg)["error"] == ""
+
+
+def test_uf_manual_vale_por_el_dia(db, cfg):
+    indicadores.guardar_uf_manual(db, 39999, HOY)
+    llamadas = []
+    assert indicadores.actualizar_uf(db, cfg, HOY, get=_get(RESPUESTA_UF, llamadas=llamadas)) == "vigente"
+    assert cobranza.valor_uf(db, cfg) == 39999 and not llamadas
+    assert indicadores.estado_uf(db, cfg)["fuente"] == "ingresada a mano"
+    manana = date(2026, 11, 12)
+    assert indicadores.actualizar_uf(db, cfg, manana, get=_get(RESPUESTA_UF, llamadas=llamadas)) == "actualizada"
+    assert cobranza.valor_uf(db, cfg) == 39512.5
+
+
+# ---------------------------------------------------------------- apariencia
+def test_tema_escapa_el_texto_del_usuario():
+    malo = '<img src=x onerror="alert(1)">'
+    for fragmento in (
+        tema.fila(malo, lado=malo, lado_sub=malo), tema.kpi(malo, malo, malo), tema.chip(malo), tema.chip(malo, tema.ROJO),
+        tema.vacio(malo, malo), tema.datos([(malo, malo)]),
+    ):
+        assert "<img" not in fragmento and "&lt;img" in fragmento
+    assert "<img" not in tema.avatar(malo) and ">SO<" in tema.avatar(malo)
+
+
+def test_tema_iniciales_y_datos():
+    assert tema.iniciales("Café Barrio Italia SpA") == "CB"
+    assert tema.iniciales("ñandú") == "Ñ"
+    assert tema.iniciales("") == "?" and tema.iniciales(None) == "?" and tema.iniciales("  ...  ") == "?"
+    assert tema.color_avatar("Cliente") == tema.color_avatar("Cliente")
+    assert tema.datos([("RUT", "1-9"), ("Giro", ""), ("Trabajadores", 0), ("Notas", None)]).count("<span>") == 2
+
+
 # ---------------------------------------------------------------- demo y aplicación
 def test_demo_carga_una_sola_vez_y_se_borra_completa(db, cfg):
     assert demo.cargar(db, cfg, HOY) == 11
@@ -514,6 +637,7 @@ def _app(monkeypatch, tmp_path, **entorno):
 
     monkeypatch.setenv("ESTUDIO_DB", str(tmp_path / "app.db"))
     monkeypatch.setenv("TABLERO_DB", str(tmp_path / "ebook.db"))
+    monkeypatch.setenv("ESTUDIO_UF_AUTOMATICA", "no")  # las pruebas no salen a internet
     monkeypatch.delenv("ESTUDIO_CLAVE", raising=False)
     for clave, valor in entorno.items():
         monkeypatch.setenv(clave, valor)
@@ -523,43 +647,85 @@ def _app(monkeypatch, tmp_path, **entorno):
     return AppTest.from_file(str(__import__("pathlib").Path(__file__).parent.parent / "gestion_clientes.py"), default_timeout=60)
 
 
-def test_app_vacia_y_con_demo(monkeypatch, tmp_path):
+def _boton(at, etiqueta=None, clave=None):
+    """Primer botón con esa etiqueta, o cuya clave empieza con `clave`."""
+    return next(b for b in at.button if (etiqueta and b.label == etiqueta) or (clave and str(b.key or "").startswith(clave)))
+
+
+def _html(at):
+    return " ".join(h.proto.body for h in at.get("html") if "<style>" not in h.proto.body)
+
+
+def test_app_vacia_demo_y_todas_las_pantallas(monkeypatch, tmp_path):
     at = _app(monkeypatch, tmp_path).run()
     assert not at.exception
-    assert any("Todavía no hay clientes" in i.value for i in at.info)
+    assert "Empecemos por tus clientes" in _html(at)
 
-    next(b for b in at.button if b.label == "Cargar demo").click().run()
+    _boton(at, "Ver con datos de ejemplo").click().run()
     assert not at.exception and not at.error
-    metricas = {m.label: m.value for m in at.metric}
-    assert metricas["Clientes activos"] == "10"
-    assert metricas["Por cobrar"].startswith("$")
+    assert "Lo que viene" in [s.value for s in at.subheader]
+    assert "Atrasados" in _html(at) and "Por cobrar" in _html(at)
 
-    next(b for b in at.button if b.label == "Borrar demo").click().run()
-    assert not at.exception
-    assert any("Todavía no hay clientes" in i.value for i in at.info)
+    for pantalla, texto in (("clientes", "Agrícola Valle Verde"), ("vencimientos", "Previred"), ("cobros", "Transportes Cordillera"), ("mas", "")):
+        _boton(at, clave=f"nav-{pantalla}").click().run()
+        assert not at.exception, pantalla
+        assert at.session_state["pagina"] == pantalla and texto in _html(at)
+
+    _boton(at, "Borrar demo").click().run()
+    _boton(at, clave="nav-inicio").click().run()
+    assert not at.exception and "Empecemos por tus clientes" in _html(at)
 
 
-def test_app_crea_cliente_desde_el_formulario(monkeypatch, tmp_path):
+def test_app_listo_cierra_el_vencimiento_y_los_indicadores_navegan(monkeypatch, tmp_path):
     at = _app(monkeypatch, tmp_path).run()
-    campo = lambda etiqueta: next(t for t in at.text_input if t.label == etiqueta)  # noqa: E731
-    campo("RUT").input("55.555.001-4")
-    campo("Razón social o nombre *").input("Panadería Prueba SpA")
-    next(b for b in at.button if b.label == "Crear cliente").click().run()
-    assert not at.exception and not at.error
-    assert any("Panadería Prueba SpA" in s.value for s in at.subheader)  # se abre su ficha
+    _boton(at, "Ver con datos de ejemplo").click().run()
+    base = BaseDatos(str(tmp_path / "app.db"))
+    try:
+        abiertas = len(base.obligaciones(abiertas=True))
+        _boton(at, clave="accion-listo-ini-").click().run()
+        assert not at.exception
+        assert len(base.obligaciones(abiertas=True)) == abiertas - 1
+    finally:
+        base.cerrar()
 
-    campo("RUT").input("55.555.001-9")  # dígito verificador incorrecto
-    campo("Razón social o nombre *").input("Otra SpA")
-    next(b for b in at.button if b.label == "Crear cliente").click().run()
-    assert any("no es válido" in e.value for e in at.error)
+    _boton(at, clave="abrir-kpi-atrasados").click().run()
+    assert not at.exception
+    assert at.session_state["pagina"] == "vencimientos" and at.session_state["filtro_venc"] == "Atrasados"
+
+
+def test_app_abre_la_ficha_de_un_cliente(monkeypatch, tmp_path):
+    at = _app(monkeypatch, tmp_path).run()
+    _boton(at, "Ver con datos de ejemplo").click().run()
+    _boton(at, clave="nav-clientes").click().run()
+    _boton(at, "Abrir Café Barrio Italia SpA").click().run()
+    assert not at.exception
+    assert at.session_state["pagina"] == "cliente"
+    assert 'class="heroe"' in _html(at) and "Café Barrio Italia SpA" in _html(at)
+    for seccion in ("Cobros", "Notas", "Datos"):
+        next(c for c in at.button_group if c.key and str(c.key).startswith("sec-")).set_value(seccion).run()
+        assert not at.exception, seccion
+    assert "tomas.herrera@barrio.example" in _html(at)
+
+    _boton(at, clave="volver").click().run()
+    assert at.session_state["pagina"] == "clientes"
+
+
+def test_app_escapa_los_datos_del_cliente(monkeypatch, tmp_path):
+    base = BaseDatos(str(tmp_path / "app.db"))
+    base.crear_cliente(rut="55.555.001-4", razon_social="<script>alert(1)</script> & Cía.")
+    base.cerrar()
+    at = _app(monkeypatch, tmp_path).run()
+    _boton(at, clave="nav-clientes").click().run()
+    assert not at.exception
+    assert "<script>alert(1)" not in _html(at) and "&lt;script&gt;alert(1)" in _html(at)
 
 
 def test_app_pide_clave(monkeypatch, tmp_path):
     at = _app(monkeypatch, tmp_path, ESTUDIO_CLAVE="secreta").run()
-    assert not at.exception and len(at.tabs) == 0
+    assert not at.exception and not any(b.key == "nav-inicio" for b in at.button)
     at.text_input[0].input("incorrecta")
     at.button[0].click().run()
-    assert any("incorrecta" in e.value for e in at.error) and len(at.tabs) == 0
+    assert any("incorrecta" in e.value for e in at.error) and not any(b.key == "nav-inicio" for b in at.button)
     at.text_input[0].input("secreta")
     at.button[0].click().run()
-    assert not at.exception and len(at.tabs) > 0
+    assert not at.exception and any(b.key == "nav-inicio" for b in at.button)

@@ -82,6 +82,7 @@ class Config:
 
     # --- Honorarios ---
     valor_uf: float = 0.0
+    uf_automatica: bool = True
     honorarios_dia_vence: int = 5
     datos_pago: str = ""
 
@@ -100,6 +101,7 @@ class Config:
             dias_alerta=max(1, _env_int("ESTUDIO_DIAS_ALERTA", 7)),
             feriados_extra=_env_fechas("ESTUDIO_FERIADOS_EXTRA"),
             valor_uf=_env_float("ESTUDIO_VALOR_UF", 0.0),
+            uf_automatica=_env("ESTUDIO_UF_AUTOMATICA", "si").lower() not in ("0", "no", "false", "off"),
             honorarios_dia_vence=min(28, max(1, _env_int("ESTUDIO_HONORARIOS_DIA_VENCE", 5))),
             datos_pago=_env("ESTUDIO_DATOS_PAGO").replace("\\n", "\n"),
             ruta_db=_env("ESTUDIO_DB", "data/estudio.db"),

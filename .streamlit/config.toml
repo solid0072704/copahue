@@ -1,0 +1,13 @@
+# Apariencia de las apps de este repositorio: tema oscuro con acento verde.
+# (La plataforma del estudio contable agrega sus propios estilos en estudio/tema.py.)
+[theme]
+base = "dark"
+primaryColor = "#21d566"
+backgroundColor = "#121212"
+secondaryBackgroundColor = "#1f1f1f"
+textColor = "#ffffff"
+borderColor = "#2e2e2e"
+buttonRadius = "full"
+
+[client]
+toolbarMode = "minimal"

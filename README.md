@@ -19,25 +19,36 @@ pip install -r requirements.txt
 streamlit run gestion_clientes.py
 ```
 
-¿Quieres verla funcionando antes de cargar tus datos? En la barra lateral, **🧪 Datos de demostración → Cargar demo**
-(un estudio ficticio con RUT y correos inventados).
+¿Quieres verla funcionando antes de cargar tus datos? En la pantalla de inicio, **Ver con datos de ejemplo**
+(un estudio ficticio con RUT y correos inventados; se borran en **Más → Datos de demostración**).
 
-| Pestaña | Qué resuelve |
+Está diseñada primero para el celular: tema oscuro, navegación en el borde inferior al alcance del pulgar
+(en el computador pasa a una columna a la izquierda), listas de tarjetas que se tocan para abrir y formularios
+en ventanas propias. Las acciones de todos los días quedan a un toque: **Listo** en un vencimiento, **Pagó** en un cobro.
+
+| Pantalla | Qué resuelve |
 |---|---|
-| **📊 Panel** | Vencimientos atrasados y de los próximos 14 días, carga de trabajo por responsable, honorarios por cobrar según antigüedad y emitido vs. cobrado por mes. Se puede filtrar por persona del equipo. |
-| **👥 Clientes** | Cartera con RUT validado (dígito verificador), régimen tributario, servicios contratados, responsable y honorario. Cada cliente tiene su ficha con vencimientos, cuenta corriente de honorarios, bitácora y datos. |
-| **📅 Vencimientos** | Genera con un clic las obligaciones del mes (o del año) para todos los clientes activos según sus servicios. El estado, la fecha, el responsable y las notas se editan directo en la tabla. También admite tareas puntuales (requerimientos del SII, trámites). |
-| **💰 Honorarios** | Emite los cobros del mes (convierte los pactados en UF), registra pagos totales o abonos, muestra la mora por tramos y redacta el recordatorio de pago para enviarlo por correo o WhatsApp. |
-| **🗒️ Bitácora** | Llamadas, correos, reuniones y acuerdos con cada cliente, firmados por quien los anota. |
-| **⚙️ Configuración** | Equipo, valor de la UF, calendario de vencimientos, importación de clientes desde CSV/Excel y exportación completa a Excel. |
+| **Inicio** | Cuatro indicadores que llevan a su detalle (atrasados, por vencer, esperando al cliente, por cobrar), lo que viene en los próximos 14 días y quién debe. Se filtra por persona del equipo. |
+| **Clientes** | Búsqueda por nombre, RUT o contacto. Cada cliente tiene su ficha con accesos directos (WhatsApp, llamar, correo), sus vencimientos, su cuenta corriente de honorarios, notas y datos. El RUT se valida con su dígito verificador. |
+| **Vencimientos** | Genera con un toque las obligaciones del mes (o del año) para todos los clientes activos según sus servicios. Filtros rápidos (urgentes, atrasados, esperando cliente). En el computador también hay una vista de tabla editable. Admite tareas puntuales (requerimientos del SII, trámites). |
+| **Cobros** | Emite los honorarios del mes (convierte los pactados en UF con el valor del día), registra pagos totales o abonos, ordena a los clientes por atraso y redacta el recordatorio de pago para enviarlo por correo o WhatsApp. |
+| **Más** | Bitácora del estudio, valor de la UF, equipo, calendario de vencimientos, importación desde CSV/Excel, exportación completa a Excel y datos de demostración. |
 
 ### Cómo empezar con tus clientes
 
-1. En **⚙️ Configuración** anota a tu **equipo** y el **valor de la UF** (si cobras honorarios en UF).
-2. Carga tus clientes: uno a uno en **👥 Clientes → ➕ Nuevo cliente**, o todos juntos con **Importar clientes**
+1. En **Más** anota a tu **equipo**. La **UF** se actualiza sola (ver más abajo).
+2. Carga tus clientes: uno a uno con **Clientes → Nuevo cliente**, o todos juntos en **Más → Importar y exportar**
    (descarga ahí la planilla de ejemplo). Importar dos veces no duplica ni sobrescribe.
 3. Marca en cada cliente sus **servicios contratados**: de ahí salen sus vencimientos.
-4. Cada mes: **📅 Vencimientos → Generar** y **💰 Honorarios → Emitir**. Ambos se pueden repetir sin riesgo.
+4. Cada mes, la plataforma te avisa cuando faltan los **vencimientos** y los **honorarios** del período y los
+   genera con un botón. Ambos se pueden repetir sin riesgo.
+
+### UF en línea
+
+La UF se actualiza sola una vez al día desde [mindicador.cl](https://mindicador.cl), un servicio gratuito y sin
+clave que publica los indicadores del Banco Central de Chile. Si no hay conexión o el servicio no responde, la
+plataforma sigue funcionando con el último valor guardado y lo indica en **Más → Valor de la UF**, donde también
+se puede ingresar a mano o forzar la actualización. Se desactiva con `ESTUDIO_UF_AUTOMATICA=no`.
 
 ### Calendario de vencimientos
 
@@ -51,8 +62,8 @@ streamlit run gestion_clientes.py
 | Patente municipal | 31 de julio y 31 de enero | Patente municipal |
 
 > **Las fechas son referenciales.** El SII, la Dirección del Trabajo y Previred publican sus calendarios cada año
-> (las declaraciones juradas cambian con frecuencia). Ajusta el día y el mes en **⚙️ Configuración → Calendario de
-> vencimientos**, o edita la fecha de un vencimiento puntual en su tabla.
+> (las declaraciones juradas cambian con frecuencia). Ajusta el día y el mes en **Más → Calendario de
+> vencimientos**, o edita la fecha de un vencimiento puntual tocando su tarjeta.
 
 Si la fecha cae en sábado, domingo o feriado nacional, se corre al día hábil siguiente. El Día de los Pueblos Indígenas,
 las elecciones y los feriados regionales no vienen incluidos: agrégalos en `ESTUDIO_FERIADOS_EXTRA`. Mientras no lo
@@ -65,7 +76,8 @@ hagas, un vencimiento que caiga en uno de esos días se muestra en su fecha orig
 | `ESTUDIO_NOMBRE`, `ESTUDIO_FIRMA` | Nombre del estudio y firma de los mensajes a clientes |
 | `ESTUDIO_CLAVE` | Clave de acceso a la plataforma. **Defínela si la app queda accesible desde internet.** |
 | `ESTUDIO_EQUIPO` | Equipo inicial, separado por comas (después se edita en la app) |
-| `ESTUDIO_VALOR_UF` | Valor inicial de la UF (después se actualiza en la app) |
+| `ESTUDIO_UF_AUTOMATICA` | `si` (por defecto) actualiza la UF cada día desde mindicador.cl; `no` para ingresarla a mano |
+| `ESTUDIO_VALOR_UF` | Valor de respaldo de la UF, por si la app parte sin conexión |
 | `ESTUDIO_HONORARIOS_DIA_VENCE` | Día del mes siguiente en que vencen los honorarios (por defecto, 5) |
 | `ESTUDIO_DATOS_PAGO` | Datos de transferencia que se agregan a los recordatorios de pago |
 | `ESTUDIO_DIAS_ALERTA` | Días de anticipación con que un vencimiento pasa a 🟡 (por defecto, 7) |
@@ -74,14 +86,16 @@ hagas, un vencimiento que caiga en uno de esos días se muestra en su fecha orig
 
 ### Datos y seguridad
 
-- Todo se guarda en `data/estudio.db` (SQLite, ignorado por git). Respáldalo, o usa **⬇️ Exportar todo a Excel**.
+- Todo se guarda en `data/estudio.db` (SQLite, ignorado por git). Respáldalo, o usa **Más → Exportar todo a Excel**.
 - La plataforma **no guarda claves tributarias ni de Previred** y no se conecta al SII: no las anotes en las notas.
 - `ESTUDIO_CLAVE` es una clave única compartida por el equipo, suficiente para una red interna. Para publicarla en
   internet, ponla detrás del inicio de sesión de tu proveedor (por ejemplo, el control de acceso de Streamlit Cloud).
 - Los recordatorios se abren en tu correo o en WhatsApp para que tú los envíes: la plataforma no manda nada sola.
 
-Si usas el tablero del ebook, **⚙️ Configuración → Traer clientes ganados** crea como prospectos los leads que
-marcaste en la etapa «Cliente».
+- La única conexión saliente es la consulta diaria de la UF (no envía ningún dato del estudio).
+
+Si usas el tablero del ebook, **Más → Importar y exportar → Traer clientes del tablero del ebook** crea como
+prospectos los leads que marcaste en la etapa «Cliente».
 
 ```
 estudio/
@@ -90,9 +104,12 @@ estudio/
   db.py            base SQLite: clientes, vencimientos, cobros, pagos, bitácora
   calendario.py    catálogo de obligaciones, feriados, generación de vencimientos, semáforo
   cobranza.py      emisión de honorarios, pagos, mora por tramos, mensajes a clientes
+  indicadores.py   UF en línea (mindicador.cl) con respaldo en el último valor guardado
+  tema.py          apariencia: estilos y componentes HTML (tarjetas, indicadores, avatares)
   intercambio.py   importar clientes (CSV/Excel), exportar a Excel, traer leads del ebook
   demo.py          estudio ficticio de demostración
-gestion_clientes.py  plataforma Streamlit
+gestion_clientes.py      plataforma Streamlit
+.streamlit/config.toml   tema oscuro con acento verde (aplica a todas las apps de este repositorio)
 ```
 
 ---
