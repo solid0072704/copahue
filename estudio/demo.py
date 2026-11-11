@@ -1,5 +1,6 @@
 """Datos de demostración: un estudio ficticio para recorrer la plataforma sin cargar clientes reales."""
 
+import unicodedata
 from datetime import date, timedelta
 
 from . import calendario, cobranza
@@ -32,8 +33,13 @@ def _rut(n):
     return f"{cuerpo}-{digito_verificador(cuerpo)}"
 
 
+def _ascii(texto):
+    """Minúsculas sin tildes ni eñes, para armar correos de ejemplo."""
+    return unicodedata.normalize("NFKD", texto.lower()).encode("ascii", "ignore").decode()
+
+
 def _dominio(nombre):
-    return "".join(ch for ch in nombre.lower().split(" ")[1] if ch.isalpha()) + ".example"
+    return "".join(ch for ch in _ascii(nombre).split(" ")[1] if ch.isalpha()) + ".example"
 
 
 def cargar(db, cfg, hoy=None):
@@ -49,7 +55,7 @@ def cargar(db, cfg, hoy=None):
 
     ids = []
     for n, (razon, tipo, giro, regimen, contacto, servicios, honorario, moneda, trabajadores, comuna) in enumerate(_CLIENTES, start=1):
-        nombre = contacto.replace("Dra. ", "").lower().split(" ")
+        nombre = _ascii(contacto.replace("Dra. ", "")).split(" ")
         ids.append(
             db.crear_cliente(
                 rut=_rut(n), razon_social=razon, tipo=tipo, giro=giro, regimen=REGIMENES[regimen], contacto=contacto,

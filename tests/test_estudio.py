@@ -482,6 +482,7 @@ def test_demo_carga_una_sola_vez_y_se_borra_completa(db, cfg):
     assert demo.cargar(db, cfg, HOY) == 0
     clientes = db.clientes()
     assert all(c["fuente"] == "demo" and c["email"].endswith(".example") for c in clientes)
+    assert all(c["email"].isascii() for c in clientes)
     assert all(rutlib.validar(c["rut"]) for c in clientes if c["rut"])
     situacion = {calendario.semaforo(o, HOY) for o in db.obligaciones()}
     assert {"Atrasada", "Próxima", "Cerrada"} <= situacion
