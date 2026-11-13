@@ -10,3 +10,6 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Memoria del agente de ayuno
+data/*.json
+data/*.json.tmp

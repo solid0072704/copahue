@@ -1,0 +1,81 @@
+# Agente de ayuno intermitente: te escribe al celular cuando abre y cierra tu ventana de comida,
+# sin necesidad de tener tu PC encendido.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets (al menos un canal):
+#        Telegram:  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+#        WhatsApp:  WHATSAPP_TELEFONO, CALLMEBOT_APIKEY
+#        ntfy:      NTFY_TEMA
+#      Opcional:    ANTHROPIC_API_KEY (Claude redacta mensajes distintos cada día)
+#   2. Variables: AYUNO_ACTIVO = true   (sin esta variable el flujo no corre)
+#      Opcionales: AYUNO_VENTANA_INICIO (12:00), AYUNO_VENTANA_FIN (20:00), AYUNO_HORA_MANANA (08:00),
+#                  AYUNO_DIAS, AYUNO_AVISOS, AYUNO_AVISO_PREVIO_MIN, AYUNO_NOMBRE, ZONA_HORARIA
+name: Agente de ayuno
+
+on:
+  schedule:
+    # Cada 15 minutos. Si un aviso cae dentro de los próximos 14, el agente espera su hora exacta.
+    - cron: "4,19,34,49 * * * *"
+  workflow_dispatch:
+    inputs:
+      prueba:
+        description: "Enviar un mensaje de prueba ahora"
+        type: boolean
+        default: true
+
+concurrency:
+  group: agente-ayuno
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ayuno:
+    if: vars.AYUNO_ACTIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-ayuno.txt
+
+      - run: pip install -r requirements-ayuno.txt
+
+      # La memoria del agente (qué avisos ya envió) se guarda entre ejecuciones en la caché de Actions.
+      - name: Recuperar memoria del agente
+        uses: actions/cache/restore@v4
+        with:
+          path: data/ayuno_estado.json
+          key: ayuno-estado-${{ github.run_id }}
+          restore-keys: ayuno-estado-
+
+      - name: Ejecutar agente
+        id: agente
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WHATSAPP_TELEFONO: ${{ secrets.WHATSAPP_TELEFONO }}
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          NTFY_TEMA: ${{ secrets.NTFY_TEMA }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ZONA_HORARIA: ${{ vars.ZONA_HORARIA }}
+          AYUNO_VENTANA_INICIO: ${{ vars.AYUNO_VENTANA_INICIO }}
+          AYUNO_VENTANA_FIN: ${{ vars.AYUNO_VENTANA_FIN }}
+          AYUNO_HORA_MANANA: ${{ vars.AYUNO_HORA_MANANA }}
+          AYUNO_DIAS: ${{ vars.AYUNO_DIAS }}
+          AYUNO_AVISOS: ${{ vars.AYUNO_AVISOS }}
+          AYUNO_AVISO_PREVIO_MIN: ${{ vars.AYUNO_AVISO_PREVIO_MIN }}
+          AYUNO_NOMBRE: ${{ vars.AYUNO_NOMBRE }}
+        run: python run_ayuno.py ${{ inputs.prueba && '--prueba' || '--esperar 14' }}
+
+      - name: Guardar memoria del agente
+        if: always() && steps.agente.outputs.cambio == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/ayuno_estado.json
+          key: ayuno-estado-${{ github.run_id }}

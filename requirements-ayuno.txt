@@ -1,0 +1,5 @@
+# Dependencias mínimas del agente de ayuno (las usa GitHub Actions).
+# anthropic es opcional: solo se usa si defines ANTHROPIC_API_KEY.
+anthropic
+tzdata
+python-dotenv
