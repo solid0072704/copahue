@@ -5,6 +5,7 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `senales_mercado.py` | **Señales de mercado por correo**: avisa cuándo conviene entrar, mantener o reducir (EE.UU. y cripto) | `python senales_mercado.py` |
 
 ---
 
@@ -142,4 +143,53 @@ agentes_ebook/
   orquestador.py   ciclo completo de los agentes
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
+```
+
+---
+
+## 📈 Señales de mercado por correo
+
+`senales_mercado.py` revisa una vez al día el estado del mercado y te escribe **solo cuando la señal cambia**,
+más un resumen cada sábado. No compra ni vende nada: solo informa.
+
+| Señal | Qué significa |
+|---|---|
+| `FAVORABLE` | Conviene entrar o aumentar, de forma escalonada |
+| `NEUTRAL` | Mantener lo que tienes, sin aumentar |
+| `DEFENSIVO` | No abrir posiciones nuevas; reducir o salir |
+
+### Cómo se calcula
+
+Usa tres skills gratuitas (sin claves de API) de `.claude/skills/`, cada una con un puntaje de 0 a 100:
+
+- **Mercado de EE.UU.**: promedio de `market-breadth-analyzer` (amplitud del mercado) y `uptrend-analyzer`
+  (proporción de acciones en tendencia alcista). `FAVORABLE` desde 60, `DEFENSIVO` bajo 40.
+- **Cripto**: `crypto-regime-analyzer`. `FAVORABLE` desde 80, `DEFENSIVO` bajo 40 (los cortes de la propia skill).
+
+Para cambiar de estado el puntaje debe superar el corte por 2 puntos, así no llegan correos de ida y vuelta
+cuando oscila en el borde. Con datos de más de 5 días no se cambia la señal.
+
+Limitaciones que conviene conocer:
+
+- La regla que combina los dos indicadores de EE.UU. es propia de este repositorio y **no está validada con
+  datos históricos** (sin backtest). Son indicadores estadísticos, no una recomendación personalizada ni una
+  garantía de resultados.
+- La skill `exposure-coach`, que integra estas señales, no se usa: sin las fuentes de pago (régimen macro y
+  riesgo de techo) nunca permite entradas nuevas.
+- Es una señal del mercado en general (sirve para un ETF de índice), no de acciones individuales.
+- En cripto, el dato de *funding* de Binance no está disponible desde algunos países y se omite.
+
+### Puesta en marcha
+
+El flujo `.github/workflows/senales-mercado.yml` corre todos los días a las 10:17 UTC, antes de la apertura
+de Wall Street. Funciona sin configurar nada: publica cada aviso como un *issue* del repositorio y GitHub te
+lo notifica por correo. Para recibirlo como correo directo, crea los secrets `GMAIL_USER` y
+`GMAIL_APP_PASSWORD` (los mismos de los agentes del ebook; `NOTIFY_EMAIL` es opcional). Para pausarlo, crea
+la variable `SENALES_ACTIVAS=false`.
+
+```bash
+python senales_mercado.py                # revisa y avisa si la señal cambió
+python senales_mercado.py --resumen      # además envía el resumen
+python senales_mercado.py --sin-enviar   # solo muestra el resultado
+python senales_mercado.py --sin-cripto   # omite cripto (tarda varios minutos)
 ```

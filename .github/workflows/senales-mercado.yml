@@ -1,0 +1,67 @@
+# Revisa una vez al día las señales de mercado (EE.UU. y cripto) y te avisa por correo
+# cuando cambian, más un resumen cada sábado. No compra ni vende nada.
+#
+# Funciona sin configurar nada: si no hay credenciales de Gmail, el aviso se publica como
+# un issue de este repositorio y GitHub te lo notifica por correo.
+#
+# Para recibirlo como correo directo (Settings → Secrets and variables → Actions → Secrets):
+#   GMAIL_USER, GMAIL_APP_PASSWORD y, opcional, NOTIFY_EMAIL (los mismos de los agentes del ebook).
+# Para pausarlo: Variables → SENALES_ACTIVAS = false.
+name: Señales de mercado
+
+on:
+  schedule:
+    # 10:17 UTC: antes de la apertura de Wall Street, con los datos del cierre anterior.
+    - cron: "17 10 * * 0-5"
+    - cron: "17 10 * * 6" # sábado: incluye el resumen semanal
+  workflow_dispatch:
+    inputs:
+      resumen:
+        description: "Enviar el resumen ahora aunque no haya cambios"
+        type: boolean
+        default: false
+
+concurrency:
+  group: senales-mercado
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  senales:
+    if: vars.SENALES_ACTIVAS != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install requests tzdata
+
+      # La señal anterior se guarda entre ejecuciones en la caché de Actions, no en el repositorio.
+      - name: Recuperar la señal anterior
+        uses: actions/cache/restore@v4
+        with:
+          path: data/senales
+          key: senales-mercado-${{ github.run_id }}
+          restore-keys: senales-mercado-
+
+      - name: Calcular señales y avisar
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python senales_mercado.py ${{ (github.event.schedule == '17 10 * * 6' || inputs.resumen) && '--resumen' || '' }}
+
+      - name: Guardar la señal
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/senales
+          key: senales-mercado-${{ github.run_id }}

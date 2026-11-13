@@ -10,3 +10,6 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Señales de mercado: estado, informes y caché (se regeneran en cada ejecución)
+data/senales/
+.crypto_regime_cache/
