@@ -3,6 +3,7 @@
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
+| `tablero_linkedin.py` | **Prospector de LinkedIn**: califica prospectos, redacta invitaciones y mensajes, y te arma la cola diaria para ofrecer finanzas fraccionales | `streamlit run tablero_linkedin.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
 
@@ -142,4 +143,130 @@ agentes_ebook/
   orquestador.py   ciclo completo de los agentes
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
+```
+
+---
+
+## 💼 Prospector de LinkedIn (finanzas fraccionales)
+
+Un sistema de prospección para tu **perfil personal** de LinkedIn. Los agentes hacen todo el trabajo
+de preparación y tú solo ejecutas el clic final:
+
+```mermaid
+flowchart LR
+    F[📥 Fuentes<br/>contactos, listas, ebook, búsquedas] --> C[🎯 Calificador<br/>score y prioridad A/B/C]
+    C --> S[🗓️ Secuencia<br/>invitación → 3 mensajes]
+    S --> Q[📋 Cola de hoy<br/>con límites diarios]
+    Q -->|tú haces clic y marcas «Enviado»| L((LinkedIn))
+    L -->|avisos por correo| G[(Tu Gmail)]
+    G --> Y[🔁 Sincronización<br/>quién aceptó, quién respondió]
+    Y --> S
+    Q --> N[🔔 Correo diario con tu cola]
+```
+
+| Automático | Lo haces tú (un clic por persona) |
+|---|---|
+| Importar y deduplicar prospectos, calificarlos contra tu cliente ideal | Abrir el perfil, pegar el texto y enviar |
+| Redactar la nota de invitación (dentro del límite de caracteres) y los 3 mensajes | Marcar **✅ Enviado** en el tablero |
+| Decidir a quién le toca hoy, en qué orden y sin pasar tus límites | Conversar cuando alguien responde |
+| Detectar quién aceptó y quién respondió (lee los avisos de LinkedIn en tu Gmail) | |
+| Programar los seguimientos (día 4 y día 8) y cerrar a quien no responde | |
+| Enviarte por correo la cola del día y avisarte apenas alguien responde | |
+
+> **¿Por qué no envía solo?** LinkedIn prohíbe en sus condiciones de uso los bots y extensiones que
+> operan una cuenta (invitar, escribir o extraer datos de forma automática) y restringe los perfiles
+> que los usan. Como se trata de tu perfil personal —tu principal activo comercial—, este prospector
+> **nunca inicia sesión en LinkedIn ni actúa por ti allí**. Con la cola lista, enviar 15 invitaciones
+> y 20 mensajes toma unos 10 minutos al día.
+
+### Puesta en marcha
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env              # si aún no lo tienes; revisa la sección «Prospector de LinkedIn»
+streamlit run tablero_linkedin.py
+```
+
+1. **Pruébalo primero**: barra lateral → **🧪 Datos de demostración → Cargar demo**.
+2. **Suma prospectos** (pestaña **➕ Sumar prospectos**):
+   - **Tus contactos**: en LinkedIn, *Yo → Ajustes y privacidad → Privacidad de datos → Obtener una copia
+     de tus datos → Contactos*. Sube el `Connections.csv` que te llega. A tus contactos se les escribe
+     directo, sin invitación.
+   - **Una lista** en CSV/Excel (Sales Navigator, Apollo, un gremio, tu CRM) con nombre, cargo, empresa y,
+     ojalá, la URL del perfil.
+   - **Los leads del ebook** calientes y tibios, con un botón.
+   - **Búsquedas listas** de tus cargos objetivo en tu mercado; agregas a mano a quienes calcen o, con IA,
+     pegas la página de resultados y se extraen solos.
+3. **Trabaja la pestaña 📋 Hoy** cada mañana: *Abrir en LinkedIn → pegar → ✅ Enviado*.
+4. **Conecta Gmail** (mismos `GMAIL_USER` y `GMAIL_APP_PASSWORD` del tablero del ebook) para que las
+   aceptaciones y respuestas se detecten solas y recibas la cola por correo. Debe ser el Gmail donde
+   LinkedIn te envía sus avisos, con las notificaciones por correo de invitaciones y mensajes activadas.
+
+Para que trabaje sin abrir el tablero (sincroniza, planifica y te envía la cola diaria):
+
+```bash
+python run_prospector.py --loop 30                   # un ciclo cada 30 minutos
+python run_prospector.py --importar Connections.csv  # importar desde la terminal
+python run_prospector.py --ebook                     # sumar leads del ebook
+python run_prospector.py --ver                       # ver la cola de hoy en la terminal
+python run_prospector.py --demo                      # datos ficticios
+```
+
+El tablero y `run_prospector.py` deben usar el mismo archivo `data/tablero_ebook.db` (misma máquina),
+porque es en el tablero donde marcas lo enviado.
+
+### La secuencia
+
+| Paso | Cuándo | Qué dice |
+|---|---|---|
+| Invitación | Al entrar a la cola (solo no contactos) | Nota breve y sin venta, dentro de `LI_NOTA_MAX` caracteres |
+| Mensaje 1 | Al aceptar (o de inmediato si ya era contacto) | Qué haces en una línea + una pregunta sobre su flujo de caja y reportes |
+| Mensaje 2 | 4 días después, si no respondió | Las tres preguntas típicas de una empresa que crece + tu material (`LI_RECURSO_LINK`) |
+| Mensaje 3 | 8 días después | Invitación directa a tu `OFERTA_REUNION` (con `LINK_AGENDA` si lo tienes) y cierre amable |
+
+Si responde, la secuencia se detiene y el tablero te sugiere el mensaje para proponer la reunión.
+Si no acepta en `LI_DIAS_RETIRAR` días o no responde tras el último mensaje, pasa a **Sin respuesta**.
+Cada texto se puede editar antes de enviarlo; con `ANTHROPIC_API_KEY`, la IA personaliza los de la cola del día.
+
+### ¿Cómo se califica un prospecto?
+
+| Factor | Puntos |
+|---|---|
+| Cargo: decisor (gerente general, CEO, fundador, socio, dueño…) / finanzas / otra gerencia / jefatura / otro | +40 / +25 / +20 / +10 / +5 |
+| Cargo dentro de `LI_CARGOS_OBJETIVO` | +10 |
+| Informa su empresa | +10 |
+| Está en tu `MERCADO_OBJETIVO` | +15 |
+| Industria dentro de `LI_INDUSTRIAS_OBJETIVO` | +10 |
+| Ya es tu contacto | +10 |
+| Descargó tu ebook | +15 |
+| Cargo con un término de `LI_EXCLUIR` (estudiantes, quienes buscan empleo, otros CFO fraccionales…) | Excluido |
+
+**A** ≥ `LI_UMBRAL_A` (70) · **B** ≥ `LI_UMBRAL_B` (45) · **C** el resto. Entran a la cola las prioridades
+hasta `LI_PRIORIDAD_MINIMA` (por defecto A y B), primero los puntajes más altos.
+
+### Límites y buenas prácticas
+
+- Por defecto: **15 invitaciones al día, 80 en 7 días y 20 mensajes al día**. Son conservadores a propósito;
+  súbelos de a poco y solo si tu tasa de aceptación es buena (sobre 30 %).
+- Las cuentas gratuitas de LinkedIn permiten pocas invitaciones con nota al mes y notas más cortas
+  (`LI_NOTA_MAX=200`; con Premium, 300). Si se te acaban, envía la invitación sin nota: la secuencia sigue igual.
+- Retira las invitaciones que nadie aceptó (el tablero te lo recuerda en las notas del prospecto).
+- La detección por Gmail lee solo remitente, asunto y fecha de los avisos de LinkedIn. Es de mejor esfuerzo:
+  si un aviso cambia de formato o hay dos prospectos con el mismo nombre, no adivina, y puedes marcar
+  **🤝 Aceptó** o **🙌 Respondió** a mano.
+
+Estructura:
+
+```
+prospector_linkedin/
+  config.py        cliente ideal, oferta, límites y cadencia (variables LI_* del .env)
+  db.py            tablas li_prospectos y li_acciones (en el mismo archivo .db de los agentes)
+  fuentes.py       importación: contactos de LinkedIn, CSV/Excel, ebook, búsquedas, alta manual
+  calificador.py   score y prioridad A/B/C
+  mensajes.py      nota de invitación, secuencia de mensajes y propuesta de reunión
+  secuencia.py     plan por prospecto, cola diaria y límites
+  sincronizar.py   lee los avisos de LinkedIn en tu Gmail (aceptó / respondió)
+  notificador.py   correo con la cola diaria y aviso de novedades
+  llm.py           personalización opcional con Claude
+  orquestador.py   ciclo completo y demo
 ```

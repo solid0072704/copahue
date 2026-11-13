@@ -15,7 +15,7 @@ import unicodedata
 from datetime import datetime, timedelta, timezone
 from email.header import decode_header, make_header
 from email.message import EmailMessage
-from email.utils import formataddr, getaddresses, parsedate_to_datetime
+from email.utils import formataddr, getaddresses, parseaddr, parsedate_to_datetime
 from html.parser import HTMLParser
 
 from .db import iso
@@ -200,6 +200,24 @@ def _fecha_imap(dt):
     return dt.strftime("%d-%b-%Y")
 
 
+def encabezado_desde_bytes(crudo):
+    """{de_nombre, de_correo, asunto, fecha} a partir de los encabezados de un correo. None si no se puede leer."""
+    try:
+        msg = email.message_from_bytes(crudo)
+        nombre, correo = parseaddr(msg.get("From", ""))
+        fecha = parsedate_to_datetime(msg.get("Date"))
+        if fecha.tzinfo is None:
+            fecha = fecha.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+    return {
+        "de_nombre": _decodificar(nombre),
+        "de_correo": correo.lower(),
+        "asunto": _decodificar(msg.get("Subject", "")),
+        "fecha": fecha,
+    }
+
+
 class ClienteGmail:
     def __init__(self, cfg):
         self.cfg = cfg
@@ -295,6 +313,24 @@ class ClienteGmail:
             fechas = sorted(f for f in self._fechas_de(uids) if f >= desde)
             if fechas:
                 resultado[correo] = fechas
+        return resultado
+
+    def encabezados_de(self, remitente, desde, limite=400):
+        """Remitente, asunto y fecha de los correos de un remitente (o dominio) desde una fecha. No lee los cuerpos."""
+        self._seleccionar("\\All")
+        uids = self._buscar("FROM", f'"{remitente}"', "SINCE", _fecha_imap(desde))[-limite:]
+        resultado = []
+        for i in range(0, len(uids), 100):
+            estado, datos = self.imap.uid(
+                "FETCH", b",".join(uids[i : i + 100]), "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])"
+            )
+            if estado != "OK":
+                continue
+            for item in datos:
+                if isinstance(item, tuple) and len(item) == 2:
+                    encabezado = encabezado_desde_bytes(item[1])
+                    if encabezado:
+                        resultado.append(encabezado)
         return resultado
 
     def crear_borrador(self, para, asunto, texto, html=None):
