@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}{{ g.titulo_seo or g.titulo }}{% endblock %}
+{% block meta %}{{ g.meta_descripcion }}{% endblock %}
+{% block og_tipo %}article{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto">
+  {{ m.migas([("Inicio", u('/')), ("Guías de compra", u('/guias/')), (g.nombre_nicho, none)]) }}
+  <article class="guia">
+    <header class="cabeza-pagina">
+      <h1>{{ g.titulo }}</h1>
+      <p class="meta-guia">Actualizada el <time datetime="{{ actualizado }}">{{ actualizado }}</time> · Selección basada en datos de compradores reales</p>
+    </header>
+    <div class="texto">{% for parrafo in g.intro %}<p{% if loop.first %} class="lead"{% endif %}>{{ parrafo }}</p>{% endfor %}</div>
+
+    <section>
+      <h2>Resumen rápido</h2>
+      <div class="tabla-scroll">
+        <table class="comparativa">
+          <thead><tr><th scope="col">#</th><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Valoración</th><th scope="col">Envío</th></tr></thead>
+          <tbody>
+          {% for item in items %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td><a href="#{{ item.p.slug }}">{{ item.p.nombre }}</a></td>
+              <td>{{ item.p.precio_clp|precio }}</td>
+              <td>{% if item.p.valoracion %}★ {{ item.p.valoracion|round|int }}%{% else %}—{% endif %}</td>
+              <td>{% if item.p.dias_envio %}~{{ item.p.dias_envio }} días{% else %}10-20 días{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {% if g.criterios %}
+    <section class="texto">
+      <h2>Cómo elegir {{ g.nombre_nicho|lower }}</h2>
+      {% for c in g.criterios %}<h3>{{ c.titulo }}</h3><p>{{ c.texto }}</p>{% endfor %}
+    </section>
+    {% endif %}
+
+    <section>
+      <h2>Los {{ items|length }} mejores de nuestra selección</h2>
+      {% for item in items %}
+      <div class="guia-item" id="{{ item.p.slug }}">
+        <a class="guia-item-img" href="{{ item.p.url }}"><img src="{{ item.p.imagen }}" alt="{{ item.p.seo.alt_imagen or item.p.nombre }}" width="220" height="220" loading="lazy" referrerpolicy="no-referrer"></a>
+        <div>
+          <h3>{{ loop.index }}. <a href="{{ item.p.url }}">{{ item.p.nombre }}</a></h3>
+          <p>{{ item.por_que }}</p>
+          {% if item.ideal_para %}<p class="ideal"><strong>Ideal para:</strong> {{ item.ideal_para }}</p>{% endif %}
+          <p class="guia-item-pie"><span class="precio">{{ item.p.precio_clp|precio }}</span><a class="boton-sec" href="{{ item.p.url }}">Ver detalles</a></p>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    {% if g.faq %}
+    <section>
+      <h2>Preguntas frecuentes</h2>
+      {{ m.faq(g.faq) }}
+    </section>
+    {% endif %}
+
+    {% if g.conclusion %}<section class="texto"><h2>Conclusión</h2><p>{{ g.conclusion }}</p></section>{% endif %}
+    <p class="aviso-guia">Ver todos los productos de <a href="{{ nicho_url }}">{{ g.nombre_nicho }}</a>.</p>
+    {% if tienda.afiliado %}<p class="nota">Esta guía contiene enlaces de afiliado: si compras a través de ellos podemos recibir una comisión, sin costo extra para ti. No influye en el orden, que se basa en datos.</p>{% endif %}
+  </article>
+</div>
+{% endblock %}

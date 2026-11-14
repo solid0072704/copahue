@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}{{ datos.titulo_seo or nicho.nombre ~ ' | ' ~ tienda.nombre }}{% endblock %}
+{% block meta %}{{ datos.meta_descripcion }}{% endblock %}
+{% block contenido %}
+<div class="contenedor">
+  {{ m.migas([("Inicio", u('/')), (nicho.nombre, none)]) }}
+  <header class="cabeza-pagina">
+    <h1>{{ datos.h1 or nicho.nombre }}</h1>
+    {% if datos.intro %}<p class="lead">{{ datos.intro[0] }}</p>{% endif %}
+  </header>
+  {% if guia %}<p class="aviso-guia">📘 ¿No sabes cuál elegir? Lee nuestra <a href="{{ guia.url }}">{{ guia.titulo }}</a>.</p>{% endif %}
+  <div class="barra-orden">
+    <span>{{ productos|length }} productos</span>
+    <label>Ordenar por
+      <select data-ordenar=".grilla-categoria">
+        <option value="score">Recomendados</option>
+        <option value="pedidos">Más pedidos</option>
+        <option value="precio-asc">Menor precio</option>
+        <option value="precio-desc">Mayor precio</option>
+      </select>
+    </label>
+  </div>
+  <div class="grilla grilla-categoria">{% for p in productos %}{{ m.tarjeta(p, loop.index <= 4) }}{% endfor %}</div>
+  {% if datos.intro|length > 1 %}
+  <section class="texto texto-seo">
+    <h2>Sobre {{ nicho.nombre|lower }}</h2>
+    {% for parrafo in datos.intro[1:] %}<p>{{ parrafo }}</p>{% endfor %}
+  </section>
+  {% endif %}
+  <section class="bloque">
+    <h2>Otras categorías</h2>
+    <div class="chips">{% for n in nichos if n.slug != nicho.slug %}<a class="chip" href="{{ n.url }}">{{ n.nombre }}</a>{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}

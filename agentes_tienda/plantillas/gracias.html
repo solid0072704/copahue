@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}¡Recibimos tu pedido! | {{ tienda.nombre }}{% endblock %}
+{% block meta %}Confirmación de pedido.{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto">
+  <section class="gracias" data-gracias data-whatsapp="{{ tienda.whatsapp }}">
+    <h1>¡Gracias! Recibimos tu pedido</h1>
+    <p class="lead" data-gracias-texto>Te enviaremos la confirmación a tu correo.</p>
+    <div data-gracias-producto></div>
+    <ol class="pasos-lista">
+      <li><strong>Paga tu pedido</strong> con el botón de pago (si no aparece, te escribiremos con el enlace).</li>
+      <li><strong>Lo despachamos</strong> y te enviamos el número de seguimiento.</li>
+      <li><strong>Lo recibes</strong> en tu domicilio en el plazo indicado en la página del producto.</li>
+    </ol>
+    <p><a href="{{ u('/') }}">← Seguir comprando</a></p>
+  </section>
+</div>
+{% endblock %}

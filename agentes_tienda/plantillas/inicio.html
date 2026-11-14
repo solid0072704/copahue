@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}{% if (tienda.nombre ~ tienda.eslogan)|length <= 57 %}{{ tienda.nombre }} – {{ tienda.eslogan }}{% else %}{{ tienda.nombre }} – Tienda online con envío a todo Chile{% endif %}{% endblock %}
+{% block meta %}{{ tienda.eslogan|truncar(70, '') }}. Cada día elegimos los productos mejor evaluados por compradores, con precio en pesos.{% endblock %}
+{% block contenido %}
+<section class="portada">
+  <div class="contenedor portada-fila">
+    <div>
+      <h1>{{ tienda.eslogan }}</h1>
+      <p class="portada-sub">Cada día revisamos miles de productos y dejamos solo los mejor evaluados, con precio en pesos y el tiempo real de envío a tu región.</p>
+      <form class="busqueda busqueda-grande" action="{{ u('/buscar/') }}" method="get" role="search">
+        <label class="sr" for="q-portada">Buscar productos</label>
+        <input id="q-portada" name="q" type="search" placeholder="Busca entre {{ total }} productos seleccionados" autocomplete="off">
+        <button type="submit">Buscar</button>
+      </form>
+      <ul class="sellos">
+        <li>🚚 Envío a todo Chile</li>
+        <li>🔒 {% if tienda.afiliado %}Compra protegida en el proveedor{% else %}Pago seguro{% endif %}</li>
+        <li>⭐ Solo productos bien evaluados</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="contenedor">
+  {% if nichos %}
+  <section class="bloque">
+    <h2>Explora por categoría</h2>
+    <div class="grilla-nichos">
+      {% for n in nichos %}
+      <a class="nicho" href="{{ n.url }}" style="--c: {{ n.color }}">
+        <span class="nicho-icono">{{ m.icono(n.icono, n.color) }}</span>
+        <span class="nicho-nombre">{{ n.nombre }}</span>
+        <span class="nicho-cant">{{ n.cantidad }} productos</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if destacados %}
+  <section class="bloque">
+    <div class="bloque-cabeza"><h2>Los más destacados de hoy</h2></div>
+    <div class="grilla">{% for p in destacados %}{{ m.tarjeta(p, loop.index <= 4) }}{% endfor %}</div>
+  </section>
+  {% else %}
+  <section class="bloque vacio">
+    <h2>Estamos preparando la vitrina</h2>
+    <p>Nuestros agentes están buscando los mejores productos. Vuelve pronto.</p>
+  </section>
+  {% endif %}
+
+  {% for n, productos in filas if productos %}
+  <section class="bloque">
+    <div class="bloque-cabeza"><h2>{{ n.nombre }}</h2><a href="{{ n.url }}">Ver los {{ n.cantidad }} →</a></div>
+    <div class="grilla">{% for p in productos %}{{ m.tarjeta(p) }}{% endfor %}</div>
+  </section>
+  {% endfor %}
+
+  {% if guias %}
+  <section class="bloque">
+    <h2>Guías de compra</h2>
+    <div class="grilla-guias">
+      {% for g in guias %}<a class="guia-tarjeta" href="{{ g.url }}"><span class="etiqueta">{{ g.nicho }}</span><span>{{ g.titulo }}</span></a>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="bloque como">
+    <h2>¿Cómo elegimos los productos?</h2>
+    <div class="pasos">
+      <div><strong>1. Revisamos a diario</strong><p>Analizamos precios, pedidos y valoraciones de miles de productos de proveedores que envían a Chile.</p></div>
+      <div><strong>2. Puntuamos con datos</strong><p>Cada producto recibe un puntaje por demanda, evaluación de compradores, precio y rapidez de envío.</p></div>
+      <div><strong>3. Publicamos solo lo mejor</strong><p>Si un producto sube de precio, deja de estar disponible o empeora su evaluación, sale de la vitrina.</p></div>
+    </div>
+  </section>
+</div>
+{% endblock %}

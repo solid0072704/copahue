@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}Política de privacidad | {{ tienda.nombre }}{% endblock %}
+{% block meta %}Qué datos personales recopila {{ tienda.nombre }}, para qué los usa y cómo ejercer tus derechos.{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto texto legal">
+  {{ m.migas([("Inicio", u('/')), ("Privacidad", none)]) }}
+  <h1>Política de privacidad</h1>
+  <p>En {{ tienda.razon_social or tienda.nombre }} cuidamos tus datos personales de acuerdo con la legislación chilena de protección de datos personales.</p>
+  <h2>Qué datos recopilamos</h2>
+  <ul>
+    {% if not tienda.afiliado %}<li><strong>Datos de tu pedido:</strong> nombre, correo, teléfono y dirección de despacho, que ingresas al comprar.</li>{% endif %}
+    <li><strong>Datos de navegación:</strong> {% if tienda.ga_id %}usamos Google Analytics para medir visitas de forma agregada{% else %}registros técnicos básicos de nuestro proveedor de hosting{% endif %}.</li>
+    {% if tienda.afiliado %}<li><strong>Enlaces de afiliado:</strong> al hacer clic en una oferta, el proveedor puede usar cookies para atribuir la compra. Su uso se rige por la política de privacidad del proveedor.</li>{% endif %}
+  </ul>
+  <h2>Para qué los usamos</h2>
+  <p>{% if not tienda.afiliado %}Para procesar y despachar tu pedido, enviarte el seguimiento y atender reclamos. {% endif %}Para mejorar el sitio. No vendemos tus datos ni los usamos para fines distintos sin tu consentimiento.</p>
+  {% if not tienda.afiliado %}
+  <h2>Con quién los compartimos</h2>
+  <p>Solo con quienes participan en tu compra: el proveedor y la empresa de transporte (dirección y teléfono para la entrega) y la plataforma de pagos.</p>
+  {% endif %}
+  <h2>Tus derechos</h2>
+  <p>Puedes solicitar acceso, rectificación, eliminación u oposición al tratamiento de tus datos escribiendo {% if tienda.correo %}a <a href="mailto:{{ tienda.correo }}">{{ tienda.correo }}</a>{% else %}desde la página de <a href="{{ u('/contacto/') }}">contacto</a>{% endif %}.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Página no encontrada | {{ tienda.nombre }}{% endblock %}
+{% block meta %}La página que buscas no existe.{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto">
+  <section class="gracias">
+    <h1>No encontramos esta página</h1>
+    <p class="lead">Puede que el producto haya cambiado de dirección. Prueba con el buscador o revisa las categorías.</p>
+    <form class="busqueda busqueda-grande" action="{{ u('/buscar/') }}" method="get" role="search">
+      <label class="sr" for="q-404">Buscar productos</label>
+      <input id="q-404" name="q" type="search" placeholder="¿Qué estás buscando?">
+      <button type="submit">Buscar</button>
+    </form>
+    <div class="chips">{% for n in nichos %}<a class="chip" href="{{ n.url }}">{{ n.nombre }}</a>{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}

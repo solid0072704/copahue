@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}{% if tienda.afiliado %}Cómo funciona{% else %}Envíos y devoluciones{% endif %} | {{ tienda.nombre }}{% endblock %}
+{% block meta %}{% if tienda.afiliado %}Cómo elegimos los productos, cómo se compra y qué protección tienes al comprar desde {{ tienda.nombre }}.{% else %}Plazos de envío a todo Chile, seguimiento, derecho a retracto de 10 días y garantía legal de 6 meses en {{ tienda.nombre }}.{% endif %}{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto texto legal">
+  {{ m.migas([("Inicio", u('/')), ("Cómo funciona" if tienda.afiliado else "Envíos y devoluciones", none)]) }}
+  {% if tienda.afiliado %}
+  <h1>Cómo funciona {{ tienda.nombre }}</h1>
+  <p class="lead">Somos un buscador de productos: revisamos cada día miles de artículos de proveedores internacionales que envían a Chile y publicamos solo los mejor evaluados.</p>
+  <h2>Cómo elegimos</h2>
+  <p>Cada producto recibe un puntaje de 0 a 100 que combina la cantidad de pedidos, la valoración de compradores, el precio y el tiempo de envío a Chile. Descartamos réplicas de marcas, productos restringidos y los que no tienen buena evaluación.</p>
+  <h2>Cómo compras</h2>
+  <ol>
+    <li>Elige un producto y presiona «Ver oferta».</li>
+    <li>Llegarás a la página del proveedor: revisa variantes, precio final y plazo.</li>
+    <li>Paga en el proveedor con tu tarjeta. Recibirás el seguimiento en tu cuenta.</li>
+  </ol>
+  <h2>Protección al comprador</h2>
+  <p>La compra está cubierta por la política de protección del proveedor: si el producto no llega o no corresponde a lo descrito, puedes abrir una disputa y pedir el reembolso desde tu cuenta.</p>
+  <h2>Transparencia</h2>
+  <p>Podemos recibir una comisión por las compras hechas desde nuestros enlaces, sin costo extra para ti.</p>
+  {% else %}
+  <h1>Envíos y devoluciones</h1>
+  <h2>Envíos a todo Chile</h2>
+  <p>Despachamos a todas las regiones. Los productos salen desde bodegas internacionales y el plazo estimado aparece en cada producto (en general, entre 10 y 20 días hábiles desde la confirmación del pago). Te enviamos el número de seguimiento por correo.</p>
+  <h2>Derecho a retracto (10 días)</h2>
+  <p>Puedes retractarte dentro de 10 días desde que recibes tu pedido, si el producto está sin uso y con su embalaje. Escríbenos y te indicaremos cómo devolverlo; reembolsaremos el precio pagado.</p>
+  <h2>Garantía legal (6 meses)</h2>
+  <p>Si el producto falla o no es lo que compraste, dentro de 6 meses puedes elegir cambio, reparación o devolución del dinero.</p>
+  <h2>Medios de pago</h2>
+  <p>Tarjetas de débito y crédito a través de una plataforma de pagos segura, o transferencia bancaria.</p>
+  {% endif %}
+  <p>¿Dudas? <a href="{{ u('/contacto/') }}">Escríbenos</a>.</p>
+</div>
+{% endblock %}

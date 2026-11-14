@@ -1,0 +1,44 @@
+{% macro tarjeta(p, prioridad=false) %}
+<article class="tarjeta" data-precio="{{ p.precio_clp or 0 }}" data-pedidos="{{ p.pedidos or 0 }}" data-score="{{ p.score or 0 }}">
+  <a class="tarjeta-img" href="{{ p.url }}" tabindex="-1" aria-hidden="true">
+    <img src="{{ p.imagen }}" alt="{{ p.seo.alt_imagen or p.nombre }}" width="400" height="400"{% if not prioridad %} loading="lazy"{% endif %} decoding="async" referrerpolicy="no-referrer">
+  </a>
+  <div class="tarjeta-cuerpo">
+    <span class="tarjeta-nicho">{{ p.nicho }}</span>
+    <h3 class="tarjeta-nombre"><a href="{{ p.url }}">{{ p.nombre }}</a></h3>
+    <p class="tarjeta-datos">
+      {% if p.valoracion %}<span class="val" title="Valoraciones positivas de compradores">★ {{ p.valoracion|round|int }}%</span>{% endif %}
+      {% if p.pedidos %}<span>{{ p.pedidos|corto }} pedidos</span>{% endif %}
+    </p>
+    <p class="tarjeta-pie">
+      <span class="precio">{{ p.precio_clp|precio }}</span>
+      {% if p.dias_envio %}<span class="envio">Llega en ~{{ p.dias_envio }} días</span>{% endif %}
+    </p>
+  </div>
+</article>
+{% endmacro %}
+
+{% macro migas(items) %}
+<nav class="migas" aria-label="Ruta de navegación">
+  <ol>
+    {% for nombre, url in items %}
+    <li>{% if url %}<a href="{{ url }}">{{ nombre }}</a>{% else %}<span aria-current="page">{{ nombre }}</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}
+
+{% macro faq(preguntas) %}
+<div class="faq">
+  {% for f in preguntas %}
+  <details{% if loop.first %} open{% endif %}>
+    <summary>{{ f.pregunta }}</summary>
+    <p>{{ f.respuesta }}</p>
+  </details>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro icono(path, color, tam=28) %}
+<svg viewBox="0 0 24 24" width="{{ tam }}" height="{{ tam }}" fill="none" stroke="{{ color }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ path|safe }}</svg>
+{% endmacro %}

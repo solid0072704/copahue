@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}Términos y condiciones | {{ tienda.nombre }}{% endblock %}
+{% block meta %}Términos y condiciones de uso de {{ tienda.nombre }}: precios, compras, envíos, derecho a retracto y garantía.{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto texto legal">
+  {{ m.migas([("Inicio", u('/')), ("Términos y condiciones", none)]) }}
+  <h1>Términos y condiciones</h1>
+  <p>Estos términos regulan el uso del sitio {{ tienda.url }} (en adelante, «el sitio»), operado por {{ tienda.razon_social or tienda.nombre }}{% if tienda.rut %}, RUT {{ tienda.rut }}{% endif %}. Al usar el sitio aceptas estas condiciones, que se rigen por las leyes de la República de Chile, en especial la Ley N° 19.496 sobre Protección de los Derechos de los Consumidores.</p>
+  {% if tienda.afiliado %}
+  <h2>1. Qué es este sitio</h2>
+  <p>{{ tienda.nombre }} es un sitio de recomendación de productos. No vendemos directamente: cuando presionas «Ver oferta» te dirigimos a la tienda del proveedor (por ejemplo, AliExpress), donde realizas la compra bajo sus propios términos, políticas de pago, envío, devolución y protección al comprador.</p>
+  <h2>2. Enlaces de afiliado</h2>
+  <p>Participamos en programas de afiliados. Si compras a través de nuestros enlaces, el proveedor puede pagarnos una comisión, sin costo adicional para ti. Esto no influye en nuestro puntaje, que se calcula con datos objetivos (valoraciones, pedidos, precio y tiempo de envío).</p>
+  <h2>3. Precios e información</h2>
+  <p>Los precios se muestran en pesos chilenos como referencia, convertidos con el dólar observado del día, y pueden cambiar en cualquier momento en la tienda del proveedor. La información de cada producto proviene del proveedor; el precio, stock, variantes y plazos definitivos son los que indica el proveedor al momento de pagar.</p>
+  <h2>4. Responsabilidad</h2>
+  <p>El contrato de compraventa se celebra entre tú y el proveedor. Ante cualquier problema con un pedido, usa los canales de reclamo y protección al comprador del proveedor. Igualmente puedes escribirnos y te orientaremos.</p>
+  {% else %}
+  <h2>1. Productos y precios</h2>
+  <p>Los precios se expresan en pesos chilenos e incluyen IVA. El precio vigente es el publicado al momento de confirmar el pedido. Las fotos e información de los productos son referenciales y provienen del fabricante o proveedor.</p>
+  <h2>2. Proceso de compra</h2>
+  <p>Para comprar completas el formulario de pedido con tus datos de despacho y pagas por los medios habilitados. El pedido se entiende confirmado cuando recibimos el pago; te enviaremos la confirmación por correo electrónico. Si por cualquier motivo no podemos cumplir el pedido, te devolveremos el total pagado.</p>
+  <h2>3. Despacho</h2>
+  <p>Los productos se despachan desde bodegas internacionales a todas las regiones de Chile. El plazo estimado se indica en cada producto y comienza a contar desde la confirmación del pago. Te enviaremos el número de seguimiento.</p>
+  <h2>4. Derecho a retracto</h2>
+  <p>Conforme al artículo 3 bis de la Ley N° 19.496, puedes retractarte de tu compra dentro de 10 días desde que recibes el producto, siempre que no lo hayas usado y lo devuelvas con su embalaje. Te reembolsaremos el precio pagado dentro de los plazos legales.</p>
+  <h2>5. Garantía legal</h2>
+  <p>Si el producto presenta fallas o no corresponde a lo comprado, dentro de los 6 meses siguientes a la recepción puedes elegir entre su reparación gratuita, su cambio o la devolución del dinero, de acuerdo con los artículos 19 y 20 de la Ley N° 19.496.</p>
+  {% endif %}
+  <h2>{% if tienda.afiliado %}5{% else %}6{% endif %}. Contacto</h2>
+  <p>Para consultas o reclamos escríbenos {% if tienda.correo %}a <a href="mailto:{{ tienda.correo }}">{{ tienda.correo }}</a>{% else %}desde la página de <a href="{{ u('/contacto/') }}">contacto</a>{% endif %}. También puedes acudir al Servicio Nacional del Consumidor (SERNAC).</p>
+</div>
+{% endblock %}

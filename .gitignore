@@ -10,3 +10,6 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Sitio generado por los agentes de la tienda (se publica desde GitHub Actions, no se versiona)
+_sitio/
+_sitio_indexnow.json

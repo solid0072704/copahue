@@ -7,3 +7,5 @@ altair
 python-dotenv
 tzdata
 anthropic
+jinja2
+google-auth

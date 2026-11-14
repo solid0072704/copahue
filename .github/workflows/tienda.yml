@@ -1,0 +1,120 @@
+# Tienda con agentes: cada día busca productos, escribe y optimiza los textos, construye el sitio,
+# lo publica en GitHub Pages y avisa a los buscadores. Gratis y sin tener tu PC encendido.
+#
+# Para activarlo:
+#   1. Settings → Pages → Build and deployment → Source: «GitHub Actions».
+#   2. Settings → Secrets and variables → Actions
+#      Secrets (al menos un proveedor):
+#        ALIEXPRESS_APP_KEY, ALIEXPRESS_APP_SECRET, ALIEXPRESS_TRACKING_ID   y/o   CJ_API_KEY
+#        Opcionales: ANTHROPIC_API_KEY, INDEXNOW_CLAVE, GSC_CREDENCIALES, MERCADOPAGO_ACCESS_TOKEN
+#      Variables:
+#        TIENDA_ACTIVA = true   (sin esta variable el flujo no corre ni consume minutos)
+#        Opcionales: TIENDA_NOMBRE, TIENDA_URL, TIENDA_DOMINIO, TIENDA_MODO, TIENDA_NICHOS, TIENDA_CORREO,
+#                    TIENDA_WHATSAPP, PEDIDOS_CORREO, GA_MEASUREMENT_ID, GOOGLE_SITE_VERIFICATION, ...
+name: Tienda (agentes + sitio)
+
+on:
+  schedule:
+    - cron: "23 10 * * *"   # todos los días, ~07:23 en Chile
+  workflow_dispatch:
+    inputs:
+      solo_sitio:
+        description: "Solo reconstruir el sitio (sin buscar productos)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: tienda
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # guarda tienda_datos/ (la memoria de los agentes) en el repositorio
+  pages: write
+  id-token: write
+
+jobs:
+  tienda:
+    if: vars.TIENDA_ACTIVA == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      ALIEXPRESS_APP_KEY: ${{ secrets.ALIEXPRESS_APP_KEY }}
+      ALIEXPRESS_APP_SECRET: ${{ secrets.ALIEXPRESS_APP_SECRET }}
+      ALIEXPRESS_TRACKING_ID: ${{ secrets.ALIEXPRESS_TRACKING_ID }}
+      CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INDEXNOW_CLAVE: ${{ secrets.INDEXNOW_CLAVE }}
+      GSC_CREDENCIALES: ${{ secrets.GSC_CREDENCIALES }}
+      MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
+      TIENDA_NOMBRE: ${{ vars.TIENDA_NOMBRE }}
+      TIENDA_ESLOGAN: ${{ vars.TIENDA_ESLOGAN }}
+      TIENDA_DOMINIO: ${{ vars.TIENDA_DOMINIO }}
+      TIENDA_MODO: ${{ vars.TIENDA_MODO }}
+      TIENDA_NICHOS: ${{ vars.TIENDA_NICHOS }}
+      TIENDA_CORREO: ${{ vars.TIENDA_CORREO }}
+      TIENDA_WHATSAPP: ${{ vars.TIENDA_WHATSAPP }}
+      TIENDA_RAZON_SOCIAL: ${{ vars.TIENDA_RAZON_SOCIAL }}
+      TIENDA_RUT: ${{ vars.TIENDA_RUT }}
+      TIENDA_COLOR: ${{ vars.TIENDA_COLOR }}
+      PEDIDOS_CORREO: ${{ vars.PEDIDOS_CORREO }}
+      PRECIO_MULTIPLICADOR: ${{ vars.PRECIO_MULTIPLICADOR }}
+      MARGEN_MINIMO: ${{ vars.MARGEN_MINIMO }}
+      SCORE_MINIMO: ${{ vars.SCORE_MINIMO }}
+      MAX_PRODUCTOS_POR_NICHO: ${{ vars.MAX_PRODUCTOS_POR_NICHO }}
+      EXCLUIR_PALABRAS: ${{ vars.EXCLUIR_PALABRAS }}
+      GSC_PROPIEDAD: ${{ vars.GSC_PROPIEDAD }}
+      GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
+      GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+      BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Ejecutar agentes (buscar → posicionar → construir)
+        id: agentes
+        env:
+          TIENDA_URL: ${{ vars.TIENDA_URL || steps.pages.outputs.base_url }}
+        run: python run_tienda.py ${{ inputs.solo_sitio && '--construir' || '' }} --resumen "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _sitio
+
+      - name: Publicar en GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Avisar a los buscadores (IndexNow)
+        if: env.INDEXNOW_CLAVE != ''
+        continue-on-error: true
+        env:
+          TIENDA_URL: ${{ vars.TIENDA_URL || steps.pages.outputs.base_url }}
+        run: python run_tienda.py --indexnow
+
+      # Los datos de la tienda son públicos (lo mismo que muestra el sitio). Guardarlos en git mantiene
+      # estables las URLs de los productos y deja un historial de cada decisión de los agentes.
+      - name: Guardar la memoria de los agentes
+        if: always() && steps.agentes.outcome == 'success'
+        run: |
+          git config user.name "agentes-tienda[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tienda_datos
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los datos."
+          else
+            git commit -m "🤖 Tienda: ciclo de los agentes del $(date -u +%F)"
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push origin HEAD:"$GITHUB_REF_NAME"
+          fi

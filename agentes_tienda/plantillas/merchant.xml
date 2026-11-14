@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+<title>{{ tienda.nombre }}</title>
+<link>{{ tienda.url }}</link>
+<description>{{ tienda.eslogan }}</description>
+{% for p in productos %}<item>
+  <g:id>{{ p.id }}</g:id>
+  <g:title>{{ p.nombre|truncar(150, '') }}</g:title>
+  <g:description>{{ ((p.seo.intro or '') ~ ' ' ~ ((p.seo.descripcion or [''])|first))|truncar(4900, '') }}</g:description>
+  <g:link>{{ p.url_abs }}</g:link>
+  <g:image_link>{{ p.imagen }}</g:image_link>
+  {% for img in p.imagenes[1:10] %}<g:additional_image_link>{{ img }}</g:additional_image_link>
+  {% endfor %}<g:availability>in_stock</g:availability>
+  <g:price>{{ p.precio_clp }} {{ tienda.moneda }}</g:price>
+  <g:condition>new</g:condition>
+  <g:identifier_exists>no</g:identifier_exists>
+  <g:product_type>{{ p.nicho }}</g:product_type>
+  <g:shipping><g:country>CL</g:country><g:service>Estándar</g:service><g:price>0 {{ tienda.moneda }}</g:price></g:shipping>
+</item>
+{% endfor %}</channel>
+</rss>

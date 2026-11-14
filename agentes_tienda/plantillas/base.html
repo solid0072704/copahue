@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="{{ tienda.idioma }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}{{ tienda.nombre }}{% endblock %}</title>
+<meta name="description" content="{% block meta %}{{ tienda.eslogan }}{% endblock %}">
+<link rel="canonical" href="{{ canonical }}">
+{% if not indexable %}<meta name="robots" content="noindex, follow">{% endif %}
+<meta property="og:site_name" content="{{ tienda.nombre }}">
+<meta property="og:locale" content="{{ tienda.idioma|replace('-', '_') }}">
+<meta property="og:title" content="{{ self.titulo() }}">
+<meta property="og:description" content="{{ self.meta() }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:type" content="{% block og_tipo %}website{% endblock %}">
+{% block og_imagen %}{% endblock %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="{{ tienda.color }}">
+{% if tienda.google_verificacion %}<meta name="google-site-verification" content="{{ tienda.google_verificacion }}">{% endif %}
+{% if tienda.bing_verificacion %}<meta name="msvalidate.01" content="{{ tienda.bing_verificacion }}">{% endif %}
+<link rel="icon" href="{{ u('/favicon.svg') }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ u('/assets/estilos.css') }}?v={{ version }}">
+<style>:root{--marca:{{ tienda.color }};--acento:{{ tienda.acento }}}</style>
+{% for bloque in ld|default([]) %}<script type="application/ld+json">{{ json_ld(bloque)|safe }}</script>
+{% endfor %}
+{% if tienda.ga_id and not demo %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ tienda.ga_id }}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','{{ tienda.ga_id }}');</script>
+{% endif %}
+</head>
+<body data-base="{{ u('') }}">
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+{% if demo %}<div class="aviso-demo" role="note">Modo demostración: productos, precios y datos de ejemplo. Conecta un proveedor para publicar la tienda real.</div>{% endif %}
+<header class="cabecera">
+  <div class="contenedor cabecera-fila">
+    <a class="logo" href="{{ u('/') }}"><span class="logo-marca" aria-hidden="true">{{ tienda.nombre[:1] }}</span><span class="logo-nombre">{{ tienda.nombre }}</span></a>
+    <form class="busqueda" action="{{ u('/buscar/') }}" method="get" role="search">
+      <label class="sr" for="q-cabecera">Buscar productos</label>
+      <input id="q-cabecera" name="q" type="search" placeholder="¿Qué estás buscando?" autocomplete="off">
+      <button type="submit" aria-label="Buscar"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </form>
+    {% if tienda.whatsapp and not tienda.afiliado %}<a class="cabecera-wa" href="https://wa.me/{{ tienda.whatsapp }}" rel="nofollow noopener" target="_blank">Ayuda por WhatsApp</a>{% endif %}
+  </div>
+  <nav class="nav-nichos" aria-label="Categorías">
+    <div class="contenedor nav-fila">
+      {% for n in nichos %}<a href="{{ n.url }}"{% if ruta == '/c/' ~ n.slug ~ '/' %} aria-current="page"{% endif %}>{{ n.nombre }}</a>{% endfor %}
+      {% if guias %}<a href="{{ u('/guias/') }}"{% if ruta.startswith('/guias/') %} aria-current="page"{% endif %}>Guías de compra</a>{% endif %}
+    </div>
+  </nav>
+</header>
+<main id="contenido">
+{% block contenido %}{% endblock %}
+</main>
+<footer class="pie">
+  <div class="contenedor pie-columnas">
+    <div>
+      <p class="logo"><span class="logo-marca" aria-hidden="true">{{ tienda.nombre[:1] }}</span><span class="logo-nombre">{{ tienda.nombre }}</span></p>
+      <p>{{ tienda.eslogan }}.</p>
+      {% if tienda.afiliado %}<p class="pie-aviso">Participamos en programas de afiliados: si compras a través de nuestros enlaces podemos recibir una comisión, sin costo extra para ti. Los precios son referenciales y se confirman en la tienda del proveedor.</p>{% endif %}
+    </div>
+    <div>
+      <h2>Categorías</h2>
+      <ul>{% for n in nichos %}<li><a href="{{ n.url }}">{{ n.nombre }}</a></li>{% endfor %}</ul>
+    </div>
+    {% if guias %}<div>
+      <h2>Guías de compra</h2>
+      <ul>{% for g in guias[:6] %}<li><a href="{{ g.url }}">{{ g.nicho }}</a></li>{% endfor %}</ul>
+    </div>{% endif %}
+    <div>
+      <h2>Ayuda</h2>
+      <ul>
+        <li><a href="{{ u('/como-comprar/') }}">{% if tienda.afiliado %}Cómo funciona{% else %}Envíos y devoluciones{% endif %}</a></li>
+        <li><a href="{{ u('/terminos/') }}">Términos y condiciones</a></li>
+        <li><a href="{{ u('/privacidad/') }}">Privacidad</a></li>
+        <li><a href="{{ u('/contacto/') }}">Contacto</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="contenedor pie-final">© {{ anio }} {{ tienda.razon_social or tienda.nombre }}{% if tienda.rut %} · RUT {{ tienda.rut }}{% endif %}</div>
+</footer>
+<script src="{{ u('/assets/app.js') }}?v={{ version }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}Buscar productos | {{ tienda.nombre }}{% endblock %}
+{% block meta %}Busca entre los productos seleccionados de {{ tienda.nombre }}.{% endblock %}
+{% block contenido %}
+<div class="contenedor">
+  <header class="cabeza-pagina">
+    <h1>Buscar productos</h1>
+    <form class="busqueda busqueda-grande" action="{{ u('/buscar/') }}" method="get" role="search">
+      <label class="sr" for="q-buscar">Buscar productos</label>
+      <input id="q-buscar" name="q" type="search" placeholder="Ej.: organizador, masajeador, perro…" autocomplete="off" data-buscador>
+      <button type="submit">Buscar</button>
+    </form>
+  </header>
+  <p class="resultado-info" data-info aria-live="polite">Escribe lo que necesitas.</p>
+  <div class="grilla" data-resultados></div>
+  <noscript><p>Activa JavaScript para usar el buscador, o explora las categorías:</p></noscript>
+  <section class="bloque">
+    <h2>Categorías</h2>
+    <div class="chips">{% for n in nichos %}<a class="chip" href="{{ n.url }}">{{ n.nombre }}</a>{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}

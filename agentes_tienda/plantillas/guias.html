@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}Guías de compra: elige mejor | {{ tienda.nombre }}{% endblock %}
+{% block meta %}Guías de compra con los productos mejor evaluados por categoría, precios en pesos y tiempos de envío a Chile. Actualizadas con datos reales.{% endblock %}
+{% block contenido %}
+<div class="contenedor">
+  {{ m.migas([("Inicio", u('/')), ("Guías de compra", none)]) }}
+  <header class="cabeza-pagina">
+    <h1>Guías de compra</h1>
+    <p class="lead">Comparamos los productos mejor evaluados de cada categoría para que elijas rápido y bien.</p>
+  </header>
+  {% if guias %}
+  <div class="grilla-guias">
+    {% for g in guias %}<a class="guia-tarjeta" href="{{ g.url }}"><span class="etiqueta">{{ g.nicho }}</span><span>{{ g.titulo }}</span></a>{% endfor %}
+  </div>
+  {% else %}
+  <p>Pronto publicaremos las primeras guías.</p>
+  {% endif %}
+  <section class="bloque">
+    <h2>Categorías</h2>
+    <div class="chips">{% for n in nichos %}<a class="chip" href="{{ n.url }}">{{ n.nombre }}</a>{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}{{ p.seo.titulo_seo or p.nombre }}{% endblock %}
+{% block meta %}{{ p.seo.meta_descripcion }}{% endblock %}
+{% block og_tipo %}product{% endblock %}
+{% block og_imagen %}<meta property="og:image" content="{{ p.imagen if p.imagen.startswith('http') else abs_url(p.imagen[u('')|length:]) }}">{% endblock %}
+{% block contenido %}
+{% set preguntas = (p.seo.faq or []) + (p.seo.faq_gsc or []) %}
+{% set texto_wa = 'Hola, me interesa: ' ~ p.nombre ~ ' (' ~ (p.precio_clp|precio) ~ ') ' ~ p.url_abs %}
+<div class="contenedor">
+  {{ m.migas([("Inicio", u('/')), (p.nicho, p.nicho_url), (p.nombre, none)]) }}
+  <div class="producto">
+    <div class="galeria">
+      <div class="galeria-principal">
+        <img id="foto-principal" src="{{ p.imagen }}" alt="{{ p.seo.alt_imagen or p.nombre }}" width="600" height="600" fetchpriority="high" referrerpolicy="no-referrer">
+      </div>
+      {% if p.imagenes|length > 1 %}
+      <div class="miniaturas">
+        {% for img in p.imagenes %}
+        <button type="button" data-foto="{{ img }}" aria-label="Ver foto {{ loop.index }} de {{ p.imagenes|length }}"{% if loop.first %} aria-pressed="true"{% endif %}>
+          <img src="{{ img }}" alt="{{ p.nombre }} – foto {{ loop.index }}" width="72" height="72" loading="lazy" referrerpolicy="no-referrer">
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="ficha">
+      <a class="etiqueta" href="{{ p.nicho_url }}">{{ p.nicho }}</a>
+      <h1>{{ p.nombre }}</h1>
+      <p class="ficha-datos">
+        {% if p.valoracion %}<span class="val">★ {{ p.valoracion|round|int }}% valoraciones positivas</span>{% endif %}
+        {% if p.pedidos %}<span>{{ p.pedidos|miles }} pedidos en el mundo</span>{% endif %}
+      </p>
+      {% if not p.disponible %}
+      <div class="alerta" role="status">Este producto no está disponible por ahora. <a href="#alternativas">Mira alternativas similares</a>.</div>
+      {% endif %}
+      <div class="caja-precio">
+        <p class="precio-grande">{{ p.precio_clp|precio }}{% if tienda.afiliado %} <small>aprox.</small>{% endif %}</p>
+        <p class="precio-nota">{% if tienda.afiliado %}Precio referencial en pesos chilenos; el valor final y las variantes se confirman en el proveedor.{% else %}IVA y envío a todo Chile incluidos{% endif %}</p>
+        {% if p.disponible %}
+        <a class="boton-cta" href="{{ p.cta.url }}" data-evento="clic_oferta" data-producto="{{ p.id }}"{% if p.cta.externo %} rel="sponsored nofollow noopener" target="_blank"{% endif %}>{{ p.cta.texto }}</a>
+        {% if tienda.whatsapp and not tienda.afiliado %}<a class="boton-sec" href="https://wa.me/{{ tienda.whatsapp }}?text={{ texto_wa|urlencode }}" rel="nofollow noopener" target="_blank">Consultar por WhatsApp</a>{% endif %}
+        {% endif %}
+      </div>
+      <ul class="garantias">
+        <li><strong>Envío a todo Chile:</strong> {% if p.dias_envio %}llega en aprox. {{ p.dias_envio }} días hábiles{% else %}entre 10 y 20 días hábiles{% endif %}, con número de seguimiento.</li>
+        {% if tienda.afiliado %}
+        <li><strong>Compra protegida:</strong> pagas en el proveedor, con reembolso si no llega o no es lo descrito.</li>
+        {% else %}
+        <li><strong>Derecho a retracto:</strong> 10 días desde que lo recibes. Garantía legal de 6 meses.</li>
+        <li><strong>Pago seguro</strong> con tarjetas de débito, crédito o transferencia.</li>
+        {% endif %}
+      </ul>
+      {% if p.seo.beneficios %}
+      <h2 class="titulo-chico">Lo que más destaca</h2>
+      <ul class="beneficios">{% for b in p.seo.beneficios %}<li>{{ b }}</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="detalle">
+    <section class="texto">
+      <h2>Sobre {{ p.nombre|lower if p.nombre|length < 45 else 'este producto' }}</h2>
+      {% if p.seo.intro %}<p class="lead">{{ p.seo.intro }}</p>{% endif %}
+      {% for parrafo in p.seo.descripcion or [] %}<p>{{ parrafo }}</p>{% endfor %}
+      {% if p.seo.usos %}
+      <h3>Ideal para</h3>
+      <ul>{% for uso in p.seo.usos %}<li>{{ uso }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if p.seo.caracteristicas %}
+      <h3>Características según el proveedor</h3>
+      <ul>{% for c in p.seo.caracteristicas %}<li>{{ c }}</li>{% endfor %}</ul>
+      {% endif %}
+    </section>
+
+    <section class="tabla-datos">
+      <h2>Envío y compra</h2>
+      <table>
+        <tr><th scope="row">Precio</th><td>{{ p.precio_clp|precio }}{% if tienda.afiliado %} (referencial){% else %} IVA incluido{% endif %}</td></tr>
+        <tr><th scope="row">Tiempo de envío</th><td>{% if p.dias_envio %}Aprox. {{ p.dias_envio }} días hábiles{% else %}10 a 20 días hábiles{% endif %}</td></tr>
+        <tr><th scope="row">Despacho</th><td>Desde bodega internacional, a todas las regiones de Chile</td></tr>
+        {% if p.valoracion %}<tr><th scope="row">Valoración de compradores</th><td>{{ p.valoracion|round|int }}% positiva{% if p.pedidos %} sobre {{ p.pedidos|miles }} pedidos{% endif %}</td></tr>{% endif %}
+        <tr><th scope="row">Devoluciones</th><td>{% if tienda.afiliado %}Según la protección al comprador del proveedor{% else %}10 días de retracto · 6 meses de garantía legal{% endif %}</td></tr>
+      </table>
+    </section>
+
+    {% if not tienda.afiliado and p.disponible and tienda.pedidos_correo %}
+    <section id="pedido" class="pedido">
+      <h2>Haz tu pedido</h2>
+      <p>Completa tus datos de despacho. Al enviar el formulario verás el enlace para pagar y te confirmaremos el pedido por correo.</p>
+      <form action="https://formsubmit.co/{{ tienda.pedidos_correo }}" method="post">
+        <input type="hidden" name="_subject" value="Nuevo pedido: {{ p.nombre }}">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" value="{{ abs_url('/gracias/') }}?p={{ p.slug }}">
+        <input type="text" name="_honey" class="sr" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="hidden" name="Producto" value="{{ p.nombre }}">
+        <input type="hidden" name="Código" value="{{ p.id }}">
+        <input type="hidden" name="Precio" value="{{ p.precio_clp|precio }}">
+        <input type="hidden" name="Página" value="{{ p.url_abs }}">
+        <div class="campos">
+          <label>Nombre y apellido<input name="Nombre" required autocomplete="name"></label>
+          <label>Correo<input name="email" type="email" required autocomplete="email"></label>
+          <label>Teléfono<input name="Teléfono" type="tel" required autocomplete="tel" placeholder="+56 9 ..."></label>
+          <label>Cantidad<input name="Cantidad" type="number" min="1" max="10" value="1" required></label>
+          <label class="ancho">Dirección<input name="Dirección" required autocomplete="street-address" placeholder="Calle, número, depto."></label>
+          <label>Comuna<input name="Comuna" required></label>
+          <label>Región
+            <select name="Región" required>
+              <option value="">Elige tu región</option>
+              {% for r in ["Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo", "Valparaíso", "Metropolitana de Santiago", "O'Higgins", "Maule", "Ñuble", "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", "Aysén", "Magallanes"] %}<option>{{ r }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="ancho">Comentarios (opcional)<textarea name="Comentarios" rows="2"></textarea></label>
+        </div>
+        <label class="check"><input type="checkbox" required> Acepto los <a href="{{ u('/terminos/') }}">términos y condiciones</a> y la <a href="{{ u('/privacidad/') }}">política de privacidad</a>.</label>
+        <button class="boton-cta" type="submit">Confirmar pedido · {{ p.precio_clp|precio }}</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if preguntas %}
+    <section>
+      <h2>Preguntas frecuentes</h2>
+      {{ m.faq(preguntas) }}
+    </section>
+    {% endif %}
+  </div>
+
+  {% if guia %}<p class="aviso-guia">📘 Compara antes de comprar: <a href="{{ guia.url }}">{{ guia.titulo }}</a></p>{% endif %}
+
+  {% if relacionados %}
+  <section id="alternativas" class="bloque">
+    <div class="bloque-cabeza"><h2>{% if p.disponible %}También te puede interesar{% else %}Alternativas similares{% endif %}</h2><a href="{{ p.nicho_url }}">Ver todo en {{ p.nicho }} →</a></div>
+    <div class="grilla">{% for r in relacionados %}{{ m.tarjeta(r) }}{% endfor %}</div>
+  </section>
+  {% endif %}
+</div>
+{% if p.disponible %}
+<div class="barra-compra" aria-hidden="true">
+  <span class="precio">{{ p.precio_clp|precio }}</span>
+  <a class="boton-cta" href="{{ p.cta.url }}" tabindex="-1" data-evento="clic_oferta" data-producto="{{ p.id }}"{% if p.cta.externo %} rel="sponsored nofollow noopener" target="_blank"{% endif %}>{{ p.cta.texto }}</a>
+</div>
+{% endif %}
+{% endblock %}

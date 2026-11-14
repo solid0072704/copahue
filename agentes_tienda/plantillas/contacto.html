@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block titulo %}Contacto | {{ tienda.nombre }}{% endblock %}
+{% block meta %}Escríbenos si tienes dudas sobre un producto, un pedido o una devolución. Te respondemos a la brevedad.{% endblock %}
+{% block contenido %}
+<div class="contenedor angosto texto legal">
+  {{ m.migas([("Inicio", u('/')), ("Contacto", none)]) }}
+  <h1>Contacto</h1>
+  <p class="lead">¿Tienes dudas sobre un producto, un pedido o una devolución? Escríbenos.</p>
+  <ul class="contacto">
+    {% if tienda.correo %}<li>Correo: <a href="mailto:{{ tienda.correo }}">{{ tienda.correo }}</a></li>{% endif %}
+    {% if tienda.whatsapp %}<li>WhatsApp: <a href="https://wa.me/{{ tienda.whatsapp }}" rel="nofollow noopener" target="_blank">+{{ tienda.whatsapp }}</a></li>{% endif %}
+    {% if not tienda.correo and not tienda.whatsapp %}<li>Pronto habilitaremos nuestros canales de contacto.</li>{% endif %}
+  </ul>
+  {% if tienda.razon_social or tienda.rut %}<p>{{ tienda.razon_social }}{% if tienda.rut %} · RUT {{ tienda.rut }}{% endif %}</p>{% endif %}
+</div>
+{% endblock %}

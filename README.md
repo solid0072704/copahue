@@ -1,7 +1,8 @@
-# Copahue · herramientas de finanzas
+# Copahue · herramientas de finanzas y comercio
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
+| `run_tienda.py` + `tablero_tienda.py` | **Tienda tipo marketplace con agentes**: un agente busca los mejores productos para vender (dropshipping/afiliados) y otro posiciona la tienda en Google, todo en automático | `python run_tienda.py --demo --servir` |
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
@@ -142,4 +143,104 @@ agentes_ebook/
   orquestador.py   ciclo completo de los agentes
 tablero_ebook.py   tablero Streamlit
 run_agentes.py     ejecución por terminal / cron / GitHub Actions
+```
+
+---
+
+## 🛍️ Tienda tipo marketplace con agentes
+
+Una tienda online estática (rápida, gratis en GitHub Pages y muy fácil de indexar) que dos agentes
+mantienen solos todos los días:
+
+```mermaid
+flowchart LR
+    P[(AliExpress · CJ<br/>CSV / Excel)] --> B[🔎 Buscador<br/>filtra, calcula precio<br/>y puntúa 0-100]
+    B -->|los mejores| S[📈 Posicionador SEO<br/>palabras clave, textos,<br/>guías de compra]
+    G[(Google Search Console)] -->|consultas reales| S
+    S --> C[🏗️ Constructor<br/>sitio + sitemap +<br/>schema.org + auditoría]
+    C --> W[🌐 GitHub Pages]
+    C -->|URLs nuevas o cambiadas| I[IndexNow<br/>Bing, Yandex…]
+```
+
+| Agente | Qué hace |
+|---|---|
+| **Buscador** | Busca cada categoría en los proveedores (AliExpress API de afiliados, CJ Dropshipping o un CSV de Dropi/AutoDS/etc.). Descarta réplicas de marcas, productos restringidos en Chile (baterías de litio, vapes, drones, láseres…) y los sin fotos. Convierte a pesos con el **dólar observado del día**, calcula precio de venta, margen y ganancia por venta, y puntúa: demanda (30), margen o comisión (25), valoración (15), precio de compra impulsiva (15), rapidez de envío (10) y fotos (5). Publica los mejores, revisa a diario precio y disponibilidad de lo publicado y **pausa** lo que deja de existir o pierde margen. |
+| **Posicionador** | Investiga qué escribe la gente en Google Chile (autocompletado) y elige la palabra clave de cada producto. Escribe título SEO, meta descripción, descripción, beneficios y preguntas frecuentes (con **Claude** si hay `ANTHROPIC_API_KEY`, sin inventar datos ni reseñas; si no, con plantillas basadas en datos). Crea textos de categoría y **guías «Los mejores … en Chile»**. Con Search Console conectado, **reescribe el título y la meta de las páginas que Google muestra pero nadie cliquea** (y espera 21 días para medir antes de volver a tocarlas). |
+| **Constructor** | Genera portada, categorías, una página por producto, guías, buscador interno, páginas legales chilenas (retracto de 10 días, garantía legal), `sitemap.xml` con fechas reales de cambio, `robots.txt`, datos estructurados (`Product`, `Offer`, `BreadcrumbList`, `ItemList`), feed de **Google Merchant Center** (modo dropshipping) y una **auditoría SEO** de cada página. Las URLs nunca cambian: si un producto se retira, su página queda viva con alternativas. |
+
+### Pruébala en 1 minuto (sin claves)
+
+```bash
+pip install -r requirements.txt
+python run_tienda.py --demo --servir      # abre http://localhost:8000
+streamlit run tablero_tienda.py           # tablero de control
+python run_tienda.py --borrar-demo        # cuando conectes un proveedor real
+```
+
+La demo usa productos ficticios y publica el sitio con `noindex` hasta que la borres.
+
+### Dos formas de ganar dinero (`TIENDA_MODO`)
+
+| | `afiliado` *(por defecto)* | `dropshipping` |
+|---|---|---|
+| Cómo ganas | Comisión (≈3-9 %) cuando alguien compra en AliExpress desde tu enlace | Diferencia entre tu precio y el costo del proveedor (margen mínimo configurable, IVA y comisión de pago incluidos) |
+| Qué haces tú | Nada: el cliente compra y recibe directo del proveedor | Recibes el pedido por correo (FormSubmit), el cliente paga con link de **Mercado Pago**, tú compras al proveedor con la dirección del cliente |
+| Requisitos | Cuenta de afiliado de AliExpress | Inicio de actividades en el SII y boleta electrónica, atención de reclamos y devoluciones (Ley 19.496) |
+| Automático | 100 % | Captación y cobro automáticos; la compra al proveedor es manual |
+
+### Puesta en marcha en GitHub (gratis, corre sola cada día)
+
+1. **Proveedor** (al menos uno):
+   - **AliExpress**: crea tu cuenta en <https://portals.aliexpress.com> (te da el *Tracking ID*) y una app de
+     afiliado en <https://openservice.aliexpress.com> (te da *App Key* y *App Secret*).
+   - **CJ Dropshipping** (para modo dropshipping): *My CJ → Authorization → API*.
+   - O importa un CSV/Excel de cualquier herramienta: `python run_tienda.py --importar productos.csv --nicho "Mascotas" --moneda CLP`
+     (o desde el tablero). Se reconocen columnas como *nombre, precio, imagen, rating, ventas, link, link_afiliado*.
+2. *Settings → Pages → Source:* **GitHub Actions**.
+3. *Settings → Secrets and variables → Actions*:
+   - Secrets: `ALIEXPRESS_APP_KEY`, `ALIEXPRESS_APP_SECRET`, `ALIEXPRESS_TRACKING_ID` (y/o `CJ_API_KEY`).
+     Opcionales: `ANTHROPIC_API_KEY`, `INDEXNOW_CLAVE`, `GSC_CREDENCIALES`, `MERCADOPAGO_ACCESS_TOKEN`.
+   - Variables: `TIENDA_ACTIVA=true` y, si quieres, `TIENDA_NOMBRE`, `TIENDA_NICHOS`, `TIENDA_MODO`, `TIENDA_CORREO`,
+     `TIENDA_WHATSAPP`, `TIENDA_DOMINIO`, `GOOGLE_SITE_VERIFICATION`… (lista completa en `.env.example`).
+4. Ejecuta el flujo **Tienda (agentes + sitio)** desde la pestaña *Actions* (luego corre solo cada mañana).
+   Cada ciclo guarda la memoria de los agentes en `tienda_datos/` con un commit: así ves en el historial qué
+   publicó, pausó o reescribió cada agente.
+5. **Google**: agrega la tienda en [Search Console](https://search.google.com/search-console), verifica con
+   `GOOGLE_SITE_VERIFICATION` y envía `sitemap.xml`. Para que el Posicionador aprenda de Google, crea una cuenta
+   de servicio en Google Cloud, habilita la *Search Console API*, agrégala como usuario de tu propiedad y guarda
+   su JSON en el secret `GSC_CREDENCIALES`.
+6. **Bing / IndexNow**: define `INDEXNOW_CLAVE` (cualquier texto de 8 a 128 letras y números). Tras cada
+   publicación se avisan solo las URLs nuevas o cambiadas.
+
+### Cosas que conviene saber
+
+- **Nada garantiza ventas.** El SEO de una tienda nueva suele tardar de 3 a 6 meses en traer visitas constantes;
+  las guías de compra y el aprendizaje desde Search Console son lo que más acelera. Un dominio propio (`.cl`)
+  ayuda a la confianza y al posicionamiento.
+- Google penaliza el contenido masivo de baja calidad: por eso el agente limita los productos nuevos por ciclo,
+  no inventa reseñas ni especificaciones y no publica guías con menos de 3 productos.
+- Revisa las páginas legales (`agentes_tienda/plantillas/terminos.html` y `privacidad.html`) con un abogado
+  antes de vender en modo dropshipping.
+- Tus decisiones mandan: desde el tablero puedes publicar, pausar o descartar cualquier producto y el agente lo respeta.
+
+### Estructura
+
+```
+agentes_tienda/
+  config.py        configuración desde .env / secrets
+  almacen.py       memoria en JSON (tienda_datos/), bitácora de decisiones
+  fuentes/         aliexpress.py · cj.py · archivo.py (CSV/Excel) · demo.py
+  divisas.py       dólar observado (mindicador.cl)
+  buscador.py      agente Buscador: filtros, precio, margen, score, selección
+  keywords.py      autocompletado de Google Chile
+  llm.py           redacción con Claude (opcional)
+  seo.py           agente Posicionador + auditoría SEO
+  indexacion.py    IndexNow y Google Search Console
+  pagos.py         links de pago de Mercado Pago (dropshipping)
+  sitio.py         generador del sitio estático + schema.org
+  plantillas/      HTML, CSS y JS de la tienda
+  orquestador.py   ciclo completo
+run_tienda.py      ejecución por terminal / GitHub Actions
+tablero_tienda.py  tablero Streamlit
+.github/workflows/tienda.yml
 ```

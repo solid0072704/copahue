@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="{{ tienda.color }}"/><path d="M14 46 28 22l7 11 5-7 10 20z" fill="#fff" fill-opacity=".92"/><circle cx="45" cy="18" r="5" fill="{{ tienda.acento }}"/></svg>
