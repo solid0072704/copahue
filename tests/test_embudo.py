@@ -180,7 +180,7 @@ def test_proyectos_sin_datos_y_fuera_del_plan(entrada, cfg):
     res = correr(entrada, cfg)
     peor = next(p for p in res["proyectos"] if p["nombre"] == "Peor es Nada")
     assert not peor["tiene_datos"] and peor["pot_real"] is None
-    assert "Viñedos de Santo Domingo (Vinedos de Santo Domingo)" in res["fuera"]
+    assert "Viñedos de Santo Domingo" in res["fuera"]
     putu = next(p for p in res["proyectos"] if p["nombre"] == "Raíces de Putú")
     assert putu["c"]["io"] == 2500  # «Raíces de Putu» en HubSpot
     # San Javier no tiene IO en el plan: no suma al portafolio.

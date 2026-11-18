@@ -140,7 +140,7 @@ CORREO_CSS = (
     f".ea{{color:{C_ACENTO}}}"
     + "".join(f".e-{k}{{color:{c};background:{f}}}.ec-{k}{{color:{c}}}.eb-{k}{{border-left:4px solid {c}}}"
               for k, (c, f) in C_ESTADO.items())
-)
+).replace("}", "}\n")
 
 
 class ErrorEntrada(Exception):
@@ -561,7 +561,9 @@ def analizar(plan, conteos, ritmo, cfg, hoy, historial=None):
     for tabla in (conteos["io"],):
         for nombre, n in tabla.items():
             if nombre not in usados:
-                fuera[nombre or "(sin proyecto)"] = fuera.get(nombre or "(sin proyecto)", 0) + n
+                # «Etiqueta (valor)» de HubSpot → se muestra solo la etiqueta.
+                visible = re.sub(r"\s\([^()]*\)$", "", nombre) or "(sin proyecto)"
+                fuera[visible] = fuera.get(visible, 0) + n
 
     # Portafolio: proyectos con plan y con datos en HubSpot.
     validos = [p for p in proyectos if p["tiene_datos"] and p["pot_plan"] > 0]
@@ -793,8 +795,8 @@ def _celda_tasa(tr):
 
 
 def _tabla(encabezado, filas, clase=""):
-    return (f'<div class="eox"><table role="presentation" class="etab{" " + clase if clase else ""}">'
-            f'<tr>{encabezado}</tr>{"".join(filas)}</table></div>')
+    return (f'<div class="eox"><table role="presentation" class="etab{" " + clase if clase else ""}">\n'
+            f'<tr>{encabezado}</tr>\n' + "\n".join(filas) + "\n</table></div>")
 
 
 def html_correo(res):
@@ -860,7 +862,7 @@ def html_correo(res):
             f"{escape(cfg['escalamiento']['nombre'])}.")
     partes.append(_h2("Resumen"))
     partes.append(
-        '<ul class="eul">' + "".join(f'<li class="eli">{r}</li>' for r in resumen) + "</ul>")
+        '<ul class="eul">\n' + "\n".join(f'<li class="eli">{r}</li>' for r in resumen) + "\n</ul>")
 
     # Embudo del portafolio
     filas = []
@@ -937,10 +939,10 @@ def html_correo(res):
             f'{(" (" + escape(persona["cargo"]) + ")") if persona.get("cargo") else ""} · '
             f'efecto <b class="ec-{f["estado"]}">{f_signo(f["impacto"])} ventas al año</b> en '
             f'{len(f["puntos"])} proyecto{"s" if len(f["puntos"]) != 1 else ""}</p>'
-            + _p(escape(portafolio_txt), "e13")
-            + _tabla(_th("Proyecto", "left") + _th("Real") + _th("Plan") + _th("Efecto") + _th("", "left"), filas)
+            + "\n" + _p(escape(portafolio_txt), "e13") + "\n"
+            + _tabla(_th("Proyecto", "left") + _th("Real") + _th("Plan") + _th("Efecto") + _th("", "left"), filas) + "\n"
             + _p(f"<b>Qué hacer antes del {escape(f_dia(viernes))}:</b> {escape(que_hacer(f))}")
-            + escalamiento + "</div>")
+            + ("\n" + escalamiento if escalamiento else "") + "\n</div>")
 
     # Plan por responsable
     por_persona = {}
@@ -1051,7 +1053,7 @@ def html_correo(res):
         f"del plan · 🔴 bajo eso.",
     ]
     partes.append(
-        '<ul class="eul es">' + "".join(f'<li class="eli">{escape(m)}</li>' for m in metodo) + "</ul>")
+        '<ul class="eul es">\n' + "\n".join(f'<li class="eli">{escape(m)}</li>' for m in metodo) + "\n</ul>")
     if res["advertencias"]:
         partes.append(_h2("Notas de datos"))
         partes.extend(_p(escape(a), "es") for a in res["advertencias"])
@@ -1063,9 +1065,9 @@ def html_correo(res):
         pie += f' (<a href="{escape(enlace)}" class="ea">abrir</a>)'
     partes.append(f'<p class="epie">{pie}.</p>')
 
-    cuerpo = "".join(partes)
-    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{CORREO_CSS}</style></head>'
-            f'<body style="margin:0;padding:0;background:{C_FONDO};"><div class="e">{cuerpo}</div></body></html>'), cuerpo
+    cuerpo = "\n".join(partes)
+    return (f'<!doctype html><html><head><meta charset="utf-8">\n<style>\n{CORREO_CSS}</style>\n</head>\n'
+            f'<body style="margin:0;padding:0;background:{C_FONDO};"><div class="e">\n{cuerpo}\n</div></body></html>\n'), cuerpo
 
 
 def texto_correo(res):
