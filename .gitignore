@@ -10,3 +10,5 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Node
+node_modules/
