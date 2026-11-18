@@ -2,6 +2,7 @@
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
+| `agentes_hubspot/embudo_semanal/` | **Agente programado** que cada lunes antes de las 8:00 compara el embudo real de HubSpot con el Escenario Pesimista de la planilla de marketing y envía los puntos críticos, el plan de acción y sus responsables ([runbook](agentes_hubspot/embudo_semanal/runbook.md)) | Tarea programada «Análisis semanal del embudo» |
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |

@@ -1,0 +1,224 @@
+{
+ "version": 1,
+ "planilla": {
+  "id": "1Shi0BsPlcCnmVorJjn85fTR3QxirZV4jdvWHsH6K7is",
+  "nombre": "2026 - Borrador Presupuesto de Marketing",
+  "hoja": "05 Performance Embudo",
+  "rango": "'05 Performance Embudo'!A1:I40",
+  "url": "https://docs.google.com/spreadsheets/d/1Shi0BsPlcCnmVorJjn85fTR3QxirZV4jdvWHsH6K7is/edit"
+ },
+ "destinatarios": [
+  {
+   "nombre": "Rodrigo Barceló",
+   "email": "rbarcelo@tuproyectodevida.cl"
+  },
+  {
+   "nombre": "Gonzalo Guerra",
+   "email": "gguerra@tuproyectodevida.cl"
+  },
+  {
+   "nombre": "Matías Lisboa",
+   "email": "mlisboa@tuproyectodevida.cl"
+  },
+  {
+   "nombre": "Raúl Díaz",
+   "email": "rdiaz@tuproyectodevida.cl"
+  },
+  {
+   "nombre": "Clemente Cerda",
+   "email": "ccerda@tuproyectodevida.cl"
+  }
+ ],
+ "cohorte": {
+  "semanas": 52,
+  "desfase_semanas": 6
+ },
+ "ritmo_dias": 28,
+ "umbrales": {
+  "rojo": -0.2,
+  "amarillo": -0.1,
+  "z_minimo": 1.645,
+  "n_minimo": 20,
+  "impacto_minimo": 1.0,
+  "max_puntos": 6,
+  "semanas_escalar": 3,
+  "semaforo_verde": 1.0,
+  "semaforo_amarillo": 0.9
+ },
+ "responsables": {
+  "io": {
+   "nombre": "Matías Lisboa",
+   "cargo": "Marketing",
+   "email": "mlisboa@tuproyectodevida.cl"
+  },
+  "mql": {
+   "nombre": "Matías Lisboa",
+   "cargo": "Marketing",
+   "email": "mlisboa@tuproyectodevida.cl"
+  },
+  "sql": {
+   "nombre": "Raúl Díaz",
+   "cargo": "Ventas",
+   "email": "rdiaz@tuproyectodevida.cl"
+  },
+  "opp": {
+   "nombre": "Raúl Díaz",
+   "cargo": "Ventas",
+   "email": "rdiaz@tuproyectodevida.cl"
+  },
+  "closed": {
+   "nombre": "Gonzalo Guerra",
+   "cargo": "Gerencia de Venta",
+   "email": "gguerra@tuproyectodevida.cl"
+  },
+  "won": {
+   "nombre": "Gonzalo Guerra",
+   "cargo": "Gerencia de Venta",
+   "email": "gguerra@tuproyectodevida.cl"
+  }
+ },
+ "escalamiento": {
+  "nombre": "Clemente Cerda",
+  "cargo": "Gerencia General",
+  "email": "ccerda@tuproyectodevida.cl"
+ },
+ "seguimiento": {
+  "nombre": "Rodrigo Barceló",
+  "cargo": "",
+  "email": "rbarcelo@tuproyectodevida.cl"
+ },
+ "proyectos": [
+  {
+   "plan": "Fundo Las Ortigas",
+   "hubspot": [
+    "Fundo Las Ortigas"
+   ]
+  },
+  {
+   "plan": "Peor es Nada",
+   "hubspot": []
+  },
+  {
+   "plan": "Raíces de Casablanca",
+   "hubspot": [
+    "Raíces de Casablanca"
+   ]
+  },
+  {
+   "plan": "Raíces de Concordia",
+   "hubspot": [
+    "Raíces de Concordia"
+   ]
+  },
+  {
+   "plan": "Raíces de Curicó",
+   "hubspot": [
+    "Raíces de Curicó"
+   ]
+  },
+  {
+   "plan": "Raíces de La Unión",
+   "hubspot": [
+    "Raíces de La Unión"
+   ]
+  },
+  {
+   "plan": "Raíces de Miramonte",
+   "hubspot": [
+    "Raíces de Miramonte"
+   ]
+  },
+  {
+   "plan": "Raíces de Mulpulmo",
+   "hubspot": [
+    "Raíces de Mulpulmo"
+   ]
+  },
+  {
+   "plan": "Raíces de Osorno",
+   "hubspot": [
+    "Raíces de Osorno"
+   ]
+  },
+  {
+   "plan": "Raíces de Puerto Octay",
+   "hubspot": [
+    "Raíces de Puerto Octay",
+    "Live Raíces de Puerto Octay"
+   ]
+  },
+  {
+   "plan": "Raíces de Purranque",
+   "hubspot": [
+    "Raíces de Purranque"
+   ]
+  },
+  {
+   "plan": "Raíces de Putú",
+   "hubspot": [
+    "Raíces de Putu"
+   ]
+  },
+  {
+   "plan": "Raíces de Rupanco",
+   "hubspot": [
+    "Raíces de Rupanco"
+   ]
+  },
+  {
+   "plan": "Raíces de San Javier",
+   "hubspot": [
+    "Raíces de San Javier"
+   ]
+  },
+  {
+   "plan": "Raíces de Santo Domingo",
+   "hubspot": [
+    "Raíces de Santo Domingo"
+   ]
+  },
+  {
+   "plan": "Raíces de Villa Alegre",
+   "hubspot": [
+    "Raíces de Villa Alegre"
+   ]
+  },
+  {
+   "plan": "Raíces del Río Cóndor",
+   "hubspot": [
+    "Raíces de Río Cóndor"
+   ]
+  },
+  {
+   "plan": "Raíces del Río Paloma",
+   "hubspot": [
+    "Raíces de Río Paloma"
+   ]
+  },
+  {
+   "plan": "Raíces del Río Rahue",
+   "hubspot": [
+    "Raíces del Río Rahue",
+    "Live Raíces del Río Rahue"
+   ]
+  },
+  {
+   "plan": "Raíces Los Coihues",
+   "hubspot": [
+    "Raíces Los Coihues"
+   ]
+  },
+  {
+   "plan": "Raíces Los Ulmos",
+   "hubspot": [
+    "Raíces de Los Ulmos"
+   ]
+  },
+  {
+   "plan": "Santuario de Hornopirén",
+   "hubspot": [
+    "Santuario de Hornopirén"
+   ]
+  }
+ ]
+}
