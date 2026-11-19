@@ -53,6 +53,8 @@ def test_pronunciacion():
     assert a_voz("descarga el ebook") == "descarga el íbuk"
     assert a_voz("gerente de finanzas o controller") == "gerente de finanzas o contróler"
     assert a_voz("conecta conmigo en LinkedIn") == "conecta conmigo en Línkedin"
+    assert a_voz("las skills y los plugins") == "las eskíls y los pláguins"
+    assert a_voz("una skill o un plugin") == "una eskil o un pláguin"
 
 
 def test_no_toca_palabras_con_digitos():

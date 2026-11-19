@@ -81,3 +81,38 @@ def proyecto(titulo: str, tarjetas: list[dict]) -> str:
             cuerpo = f'<p>{rico(t["t"])}</p>'
         out.append(f'<div class="pc" data-p="{t["p"]}"><h4>{esc(t["h"])}</h4>{cuerpo}</div>')
     return f'<div class="proyecto"><div class="pt">{ico("carpeta")}{esc(titulo)}</div>{"".join(out)}</div>'
+
+
+def puntos_con_icono(items: list[dict]) -> str:
+    """Lista de puntos con ícono (icono, t, d, p), para combinarla con otro bloque en una lámina libre."""
+    lis = []
+    for it in items:
+        d = f'<span>{rico(it["d"])}</span>' if it.get("d") else ""
+        lis.append(f'<li data-p="{it["p"]}"><span class="marca ic">{ico(it["icono"])}</span>'
+                   f'<div class="txt"><b>{rico(it["t"])}</b>{d}</div></li>')
+    return f'<ul class="puntos compacto">{"".join(lis)}</ul>'
+
+
+def artefacto(titulo: str, indicadores: list[tuple], simulador: dict, compartir: dict) -> str:
+    """Boceto de un artefacto de Claude: un tablero con indicadores (nombre, antes, ahora, color) y un simulador.
+
+    `simulador`: p, h, controles [(nombre, valor, avance 0-1)], resultado (texto, valor). `compartir`: p, t.
+    """
+    filas = "".join(f'<div class="ind"><span>{esc(n)}</span><b><small>{esc(a)} →</small> {esc(b)}</b>'
+                    f'<i class="semaforo {c}"></i></div>' for n, a, b, c in indicadores)
+    controles = "".join(f'<div class="desl"><span>{esc(n)}</span><div class="riel"><i style="width:{av * 100:.0f}%"></i></div>'
+                        f'<b>{esc(v)}</b></div>' for n, v, av in simulador["controles"])
+    etiqueta, valor = simulador["resultado"]
+    return (f'<div class="proyecto"><div class="pt">{ico("barras")}{esc(titulo)}<span class="pest">Artefacto</span></div>'
+            f'<div class="pc" data-p="1"><h4>Ratios 2024 → 2025</h4>{filas}</div>'
+            f'<div class="pc" data-p="{simulador["p"]}"><h4>{esc(simulador["h"])}</h4>{controles}'
+            f'<div class="res"><span>{esc(etiqueta)}</span><b>{esc(valor)}</b></div></div>'
+            f'<div class="comp" data-p="{compartir["p"]}">{ico("personas")}{esc(compartir["t"])}</div></div>')
+
+
+def conectores(fuentes: list[dict], nodo: tuple[str, str]) -> str:
+    """Diagrama de conectores: las herramientas donde están los datos (icono, t, d, p) y Claude leyéndolas."""
+    fu = "".join(f'<div class="fu" data-p="{f["p"]}">{ico(f["icono"])}<div><b>{esc(f["t"])}</b><span>{esc(f["d"])}</span></div></div>'
+                 for f in fuentes)
+    return (f'<div class="conecta"><div class="fuentes">{fu}</div><div class="fle">{ico("flecha")}</div>'
+            f'<div class="nodo"><b>{esc(nodo[0])}</b><span>{esc(nodo[1])}</span></div></div>')

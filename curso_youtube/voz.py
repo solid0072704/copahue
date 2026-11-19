@@ -20,6 +20,10 @@ PRONUNCIACION = [
     (r"\bDuPont\b", "Dupont"),
     (r"\bcontroller\b", "contróler"),
     (r"\bLinkedIn\b", "Línkedin"),
+    (r"\bplugins\b", "pláguins"),
+    (r"\bplugin\b", "pláguin"),
+    (r"\bskills\b", "eskíls"),
+    (r"\bskill\b", "eskil"),
 ]
 
 _UNIDADES = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",

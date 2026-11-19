@@ -4,9 +4,9 @@
  "tono": "[calm] [professional]",
  "flow_id": "vBZfuT4WWyqQND7uVfIQ",
  "fecha": "2026-11-19",
- "audios": 96,
- "caracteres": 59964,
- "minutos": 56.3,
+ "audios": 101,
+ "caracteres": 62908,
+ "minutos": 59.0,
  "segmentos": {
   "seg_000": {
    "session_id": "SXpUjqACIqZuC83TiZgK",
@@ -567,18 +567,48 @@
    "segundos": 29.23
   },
   "seg_093": {
+   "session_id": "5m7cpsOuXI6jaJKuwYrC",
+   "generation_id": "x2tDJZ8MuCYAkYBTSUaA",
+   "caracteres": 331,
+   "segundos": 17.63
+  },
+  "seg_094": {
+   "session_id": "KVVi1LXMUIMtvcw9dFp9",
+   "generation_id": "t4J91hidG0tGK5vYONKa",
+   "caracteres": 662,
+   "segundos": 36.44
+  },
+  "seg_095": {
+   "session_id": "34gLi2ZWqnWNzHKs9TSU",
+   "generation_id": "DYXJTVUEb3oSenUQqgfp",
+   "caracteres": 612,
+   "segundos": 33.49
+  },
+  "seg_096": {
+   "session_id": "Xs4JLE0paBMJAtCJSah7",
+   "generation_id": "rmjdE14IMr08I79D66lW",
+   "caracteres": 770,
+   "segundos": 45.56
+  },
+  "seg_097": {
+   "session_id": "y7Y79TjHwErviU5bZxn3",
+   "generation_id": "NTSeqPIWEUkhYkZ1w7Z4",
+   "caracteres": 569,
+   "segundos": 32.29
+  },
+  "seg_098": {
    "session_id": "i5w2AKwBl9UOJQgHrXia",
    "generation_id": "400kanILrC6al5xPAhmn",
    "caracteres": 653,
    "segundos": 37.8
   },
-  "seg_094": {
+  "seg_099": {
    "session_id": "EnCHDrdwYY8QLbYiIGOq",
    "generation_id": "ho6pff3Jc5S6qFBtPXQ7",
    "caracteres": 567,
    "segundos": 34.04
   },
-  "seg_095": {
+  "seg_100": {
    "session_id": "ua1NftQnvgwwyRC8I4lg",
    "generation_id": "uHMbru5TAYv40tisCvzW",
    "caracteres": 658,

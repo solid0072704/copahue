@@ -28,7 +28,8 @@ MODULOS = [
     dict(clave="m08_cuestiona", capitulo="Paso 7: señales de alerta", paso=7),
     dict(clave="m09_decide", capitulo="Paso 8: escenarios, plan de acción e informe", paso=8),
     dict(clave="m10_rutina", capitulo="Tu rutina mensual y los errores más comunes", kicker="Tu rutina mensual"),
-    dict(clave="m11_cierre", capitulo="Resumen y próximos pasos", kicker="Cierre"),
+    dict(clave="m11_herramientas", capitulo="Artefactos, conectores y plugins de Claude", kicker="Para ir más lejos"),
+    dict(clave="m12_cierre", capitulo="Resumen y próximos pasos", kicker="Cierre"),
 ]
 
 PAUSA_ENTRE_SEGMENTOS = 1.0  # segundos de silencio entre un audio y el siguiente

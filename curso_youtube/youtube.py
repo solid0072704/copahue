@@ -32,7 +32,7 @@ ETIQUETAS = [
     "inteligencia artificial en finanzas", "IA para finanzas", "ratios financieros", "flujo de caja",
     "capital de trabajo", "análisis vertical y horizontal", "desviaciones presupuesto", "control de gestión",
     "informe al directorio", "prompts para finanzas", "CFO", "gerente de finanzas", "pymes", "contabilidad",
-    "curso de finanzas", MARCA,
+    "curso de finanzas", "artefactos de Claude", "conectores de Claude", "plugins de Claude", "Claude skills", MARCA,
 ]
 
 APRENDIZAJES = [
@@ -44,6 +44,7 @@ APRENDIZAJES = [
     "Analizar desviaciones contra el presupuesto, separando el efecto volumen del efecto margen.",
     "Detectar señales de alerta con un «abogado del diablo».",
     "Cuantificar palancas y escenarios, y redactar un informe de una página para el directorio.",
+    "Conocer los artefactos, conectores, skills y plugins de Claude que ayudan en la gestión financiera.",
 ]
 
 

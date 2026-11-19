@@ -7,7 +7,7 @@ los subtítulos y los capítulos.
 | Qué | Dónde |
 |---|---|
 | Guion para leer y corregir | `GUION.md` (se genera) |
-| Narración y láminas, por módulo | `contenido/m00_intro.py` … `m11_cierre.py` |
+| Narración y láminas, por módulo | `contenido/m00_intro.py` … `m12_cierre.py` |
 | Caso práctico (Distribuidora Alerce, ficticia) | `caso.py` · todas las cifras se calculan y verifican aquí |
 | Material descargable para la audiencia | `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` |
 | Título, descripción, capítulos, etiquetas y miniatura | `youtube/publicacion.md` y `youtube/miniatura.png` |

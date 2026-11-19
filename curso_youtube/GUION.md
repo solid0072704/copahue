@@ -1,6 +1,6 @@
 # Guion · Análisis de estados financieros con Claude
 
-108 láminas · 96 audios · 57.852 caracteres de narración · ≈ 59 minutos
+113 láminas · 101 audios · 60.686 caracteres de narración · ≈ 62 minutos
 
 Cada párrafo es un cambio en pantalla. Las cifras se escriben como se ven; la voz las recibe en palabras.
 Para cambiar el texto, edita los archivos de `contenido/` y vuelve a generar este documento.
@@ -1105,9 +1105,54 @@ Y semana 4: las desviaciones, las señales de alerta y tu primer informe de una 
 En un mes vas a tener el método completo funcionando con tus propios números.
 
 
+## Artefactos, conectores y plugins de Claude
+
+### m11_s01 · Artefactos, conectores y plugins
+
+Todo lo que hicimos hasta aquí funciona en una conversación normal con Claude, sin instalar nada. Pero Claude tiene tres herramientas que te permiten ir más lejos en la gestión financiera: los artefactos, los conectores y los plugins. Te las presento brevemente, para que sepas qué son y cuándo conviene usarlas.
+
+### m11_s02 · Artefactos: del análisis a algo que puedes mostrar
+
+Empecemos por los artefactos. Un artefacto es lo que Claude crea para ti en una ventana aparte, al lado de la conversación: un documento, una presentación, un tablero o una pequeña herramienta interactiva.
+
+¿Para qué sirve en finanzas? Pídele, por ejemplo, que convierta los ratios del paso 4 en un tablero, con semáforos y la comparación entre años.
+
+O que arme los escenarios del paso 8 como un simulador: mueves los días de cobro y de inventario, y ves cuánta caja se libera.
+
+Lo sigues ajustando conversando, y lo puedes compartir con un enlace. Un cuidado: antes de compartirlo, revisa qué datos incluye y quién va a poder verlo.
+
+### m11_s03 · Conectores: Claude lee los datos donde ya están
+
+La segunda herramienta son los conectores. Un conector le permite a Claude trabajar con las herramientas que ya usas: tu carpeta en la nube, tu correo o tus planillas.
+
+En la práctica, en vez de descargar la planilla del cierre y subirla cada mes, le pides que la busque y la lea directamente desde tu carpeta.
+
+Tres cuidados. Claude respeta tus permisos: solo puede ver lo que tú ya puedes ver. Activa solo los conectores que realmente necesites, con la misma política de confidencialidad que vimos en el paso 1. Y en los planes para equipos, primero tiene que habilitarlos un administrador.
+
+### m11_s04 · Skills y plugins: flujos de trabajo ya armados
+
+Y la tercera: las skills y los plugins. Una skill, o habilidad, es un paquete de conocimiento y de pasos de trabajo, que Claude carga cuando la tarea lo requiere. Claude ya trae algunas: por ejemplo, para crear planillas Excel, documentos y presentaciones.
+
+Un plugin reúne varias skills, conectores y comandos para un tipo de trabajo, y se instala de una sola vez. Anthropic publica un plugin de finanzas, con flujos ya armados para asientos contables, conciliaciones, estados financieros, análisis de desviaciones y el cierre mensual. Y como siempre: lo que entregue se revisa antes de usarlo.
+
+También puedes crear tus propias skills. Los diez prompts de este curso, con tus definiciones y tu formato de informe, son un muy buen punto de partida.
+
+### m11_s05 · ¿Cuándo conviene usar cada una?
+
+¿Cuándo usar cada una? El artefacto, cuando necesitas mostrar y compartir el resultado.
+
+↳ El conector, cuando los datos cambian todos los meses y no quieres subirlos a mano.
+
+↳ Y la skill o el plugin, cuando repites siempre el mismo flujo de trabajo.
+
+Una advertencia: estas funciones dependen de tu plan, y sus nombres cambian con el tiempo. Revisa en la configuración de tu cuenta cuáles tienes disponibles.
+
+Y lo más importante: ninguna de estas herramientas reemplaza el método. Primero aprende a preguntar bien y a verificar. Después, automatiza.
+
+
 ## Resumen y próximos pasos
 
-### m11_s01 · Las cuatro lecciones del caso Alerce
+### m12_s01 · Las cuatro lecciones del caso Alerce
 
 Antes de despedirnos, las cuatro lecciones que deja el caso de Alerce. Uno: la utilidad no es caja. La empresa ganó 485 millones, y su operación consumió 685.
 
@@ -1117,7 +1162,7 @@ Tres: crecer cuesta caja. Son 75 pesos por cada 100 de venta nueva.
 
 Y cuatro: las desviaciones suelen tener un mismo origen. Aquí, la forma en que la empresa creció. Si te llevas estas cuatro ideas, ya vas a leer tus propios estados financieros con otros ojos.
 
-### m11_s02 · El método completo: 8 pasos
+### m12_s02 · El método completo: 8 pasos
 
 Repasemos. Ocho pasos. Preparar la información y el contexto.
 
@@ -1139,7 +1184,7 @@ En el caso de Alerce, ese recorrido nos llevó de una empresa que parecía estar
 
 Ninguno de esos pasos requiere ser experto en inteligencia artificial. Requiere saber qué preguntar.
 
-### m11_s03 · Tres formas de seguir
+### m12_s03 · Tres formas de seguir
 
 Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos números, y después hazlo con los tuyos.
 
