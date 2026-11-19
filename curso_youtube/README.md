@@ -19,6 +19,7 @@ python -m curso_youtube.deck                       # duración estimada por mód
 python -m curso_youtube.guion                      # GUION.md y material/prompts.md
 python -m curso_youtube.construir <trabajo>        # láminas en HTML y PNG de 1920 x 1080 (avisa si algo se sale)
 python -m curso_youtube.guion --voz <trabajo>/voz  # un .txt por audio: el texto exacto que recibe la voz
+#   opcional: --tono "[calm] [professional]" antepone una indicación de tono (ElevenLabs v4 no la lee en voz alta)
 #   … generar cada audio con la voz clonada y guardarlo como <audio>/seg_XXX.mp3 …
 python -m curso_youtube.ensamblar <trabajo> <audio> --salida curso.mp4 --fin 20
 python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los capítulos exactos

@@ -3,6 +3,7 @@
 Uso:
     python -m curso_youtube.guion                 # escribe curso_youtube/GUION.md (para leer y corregir)
     python -m curso_youtube.guion --voz <carpeta> # un .txt por audio (texto exacto que se envía a la voz) + segmentos.json
+    python -m curso_youtube.guion --voz <carpeta> --tono "[calm] [professional]"   # con indicación de tono
 """
 
 from __future__ import annotations
@@ -66,13 +67,17 @@ def prompts_markdown() -> str:
     return "\n".join(L)
 
 
-def exportar_voz(carpeta: Path) -> list[dict]:
+def exportar_voz(carpeta: Path, tono: str = "") -> list[dict]:
+    """Un .txt por audio. `tono` antepone indicaciones de tono para modelos que las aceptan,
+    por ejemplo «[calm] [professional]» en ElevenLabs v4 (la voz no las lee: solo cambian la entonación)."""
     carpeta.mkdir(parents=True, exist_ok=True)
     segs = deck.segmentos()
     manifiesto = []
+    prefijo = tono.strip() + " " if tono.strip() else ""
     for g in segs:
-        (carpeta / f"{g['id']}.txt").write_text(g["voz"] + "\n", encoding="utf-8")
-        manifiesto.append(dict(id=g["id"], laminas=g["laminas"], caracteres=g["caracteres"],
+        texto = prefijo + g["voz"]
+        (carpeta / f"{g['id']}.txt").write_text(texto + "\n", encoding="utf-8")
+        manifiesto.append(dict(id=g["id"], laminas=g["laminas"], caracteres=len(texto),
                                segundos_estimados=round(g["segundos_estimados"], 1)))
     (carpeta / "segmentos.json").write_text(json.dumps(manifiesto, ensure_ascii=False, indent=1), encoding="utf-8")
     return manifiesto
@@ -81,7 +86,8 @@ def exportar_voz(carpeta: Path) -> list[dict]:
 if __name__ == "__main__":
     if "--voz" in sys.argv:
         destino = Path(sys.argv[sys.argv.index("--voz") + 1])
-        m = exportar_voz(destino)
+        tono = sys.argv[sys.argv.index("--tono") + 1] if "--tono" in sys.argv else ""
+        m = exportar_voz(destino, tono)
         print(f"{len(m)} textos de voz en {destino} · {sum(x['caracteres'] for x in m)} caracteres · "
               f"el más largo: {max(x['caracteres'] for x in m)}")
     else:

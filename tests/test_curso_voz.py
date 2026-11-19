@@ -51,6 +51,7 @@ def test_pronunciacion():
     assert a_voz("un PDF o un CSV") == "un pe de efe o un ce ese ve"
     assert a_voz("«analiza este balance»") == "analiza este balance"
     assert a_voz("descarga el ebook") == "descarga el íbuk"
+    assert a_voz("gerente de finanzas o controller") == "gerente de finanzas o contróler"
 
 
 def test_no_toca_palabras_con_digitos():

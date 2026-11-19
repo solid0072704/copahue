@@ -18,6 +18,7 @@ PRONUNCIACION = [
     (r"\bPDF\b", "pe de efe"),
     (r"\bCSV\b", "ce ese ve"),
     (r"\bDuPont\b", "Dupont"),
+    (r"\bcontroller\b", "contróler"),
 ]
 
 _UNIDADES = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",
