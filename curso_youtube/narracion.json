@@ -5,7 +5,7 @@
  "flow_id": "vBZfuT4WWyqQND7uVfIQ",
  "fecha": "2026-11-19",
  "audios": 96,
- "caracteres": 59974,
+ "caracteres": 59964,
  "minutos": 56.3,
  "segmentos": {
   "seg_000": {
@@ -27,10 +27,10 @@
    "segundos": 25.89
   },
   "seg_003": {
-   "session_id": "XutTPaiz8p4JReYNtHFp",
-   "generation_id": "tbZxzUW5VAg1Uljf2eIb",
-   "caracteres": 716,
-   "segundos": 39.16
+   "session_id": "TDvgB31GuCRSdo9QrL6v",
+   "generation_id": "pRqVZDhrrEkYgikl2CUy",
+   "caracteres": 715,
+   "segundos": 39.55
   },
   "seg_004": {
    "session_id": "OSZKAoNqWb3wFsXgQ9Bf",
@@ -579,10 +579,10 @@
    "segundos": 34.04
   },
   "seg_095": {
-   "session_id": "baHURKGLlKrSSuj6eVXG",
-   "generation_id": "697yFMHURk095AvkUiG0",
-   "caracteres": 667,
-   "segundos": 36.13
+   "session_id": "ua1NftQnvgwwyRC8I4lg",
+   "generation_id": "uHMbru5TAYv40tisCvzW",
+   "caracteres": 658,
+   "segundos": 36.28
   }
  }
 }

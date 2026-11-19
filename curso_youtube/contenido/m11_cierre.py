@@ -40,7 +40,7 @@ LAMINAS = [
     dict(
         tipo="cierre", titulo="Tres formas de seguir",
         opciones=[
-            dict(p=0, n="01", icono="descarga", t="Descarga el ebook, el caso y los prompts",
+            dict(p=0, n="01", icono="descarga", t="Descarga el caso y los prompts",
                  d="Repite cada prompt con los mismos números, y después con los tuyos. Enlace en la descripción."),
             dict(p=1, n="02", icono="linkedin", t="Conecta conmigo en LinkedIn",
                  d="Búscame como **Rodrigo Barceló** o usa el enlace de la descripción, y cuéntame cómo te fue."),
@@ -50,7 +50,7 @@ LAMINAS = [
         gracias=dict(p=3, html="Gracias por acompañarme. <em>Nos vemos en el próximo video.</em>"),
         pasos=[
             "Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el "
-            "ebook, el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos "
+            "archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos "
             "números, y después hazlo con los tuyos.",
             "La segunda: conecta conmigo en LinkedIn. Búscame como Rodrigo Barceló, o usa el enlace que está en la "
             "descripción. Escríbeme por ahí si tienes dudas, o si quieres contarme cómo te fue con tus propios "

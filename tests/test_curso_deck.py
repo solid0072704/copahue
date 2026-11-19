@@ -63,3 +63,12 @@ def test_la_marca_es_el_autor_con_su_linkedin():
             assert 'class="logo-in"' in html and MARCA in html, s["id"]
     for g in deck.segmentos(laminas):
         assert "hyperion" not in g["voz"].lower(), g["id"]
+
+
+def test_el_curso_no_menciona_el_ebook():
+    laminas = _laminas()
+    for s in laminas:
+        ctx = dict(kicker=s["kicker"], modulo=s["modulo"], n_modulos=s["n_modulos"], avance=s["avance"])
+        assert "ebook" not in pagina(s, ctx).lower(), s["id"]
+    for g in deck.segmentos(laminas):
+        assert "ebook" not in g["texto"].lower() and "íbuk" not in g["voz"].lower(), g["id"]

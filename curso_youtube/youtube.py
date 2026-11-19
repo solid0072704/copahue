@@ -69,7 +69,6 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
         "horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para "
         "el directorio. Con un caso práctico completo y 10 prompts listos para usar.",
         "",
-        "📥 Ebook: [ENLACE AL EBOOK]",
         "📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]",
         f"💼 LinkedIn de {MARCA}: [ENLACE A TU PERFIL DE LINKEDIN]",
         "",
@@ -104,7 +103,7 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.",
          "```", "",
          "## Lista de verificación antes de publicar", "",
-         "- [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y tu perfil de LinkedIn).",
+         "- [ ] Reemplazar los dos enlaces entre [corchetes] (materiales y tu perfil de LinkedIn).",
          "- [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.",
          *(["- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final)."] if estimados else []),
          "- [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).",

@@ -1,6 +1,6 @@
 # Guion · Análisis de estados financieros con Claude
 
-108 láminas · 96 audios · 57.862 caracteres de narración · ≈ 59 minutos
+108 láminas · 96 audios · 57.852 caracteres de narración · ≈ 59 minutos
 
 Cada párrafo es un cambio en pantalla. Las cifras se escriben como se ven; la voz las recibe en palabras.
 Para cambiar el texto, edita los archivos de `contenido/` y vuelve a generar este documento.
@@ -64,7 +64,7 @@ Y lo vamos a hacer con un caso práctico: Distribuidora Alerce, una empresa fict
 
 A lo largo de la clase vamos a descubrir, con Claude, qué pasó y qué habría que hacer.
 
-En la descripción encuentras el enlace a nuestro ebook y al archivo del caso, para que repitas cada paso con los mismos números. Y un consejo: mira el curso con tus propios estados financieros a mano. Pausa el video en cada prompt, cópialo y pruébalo. Así, al terminar esta hora, no solo vas a conocer un método: vas a tener tu primer análisis hecho.
+En la descripción encuentras el enlace al archivo del caso y a los prompts, para que repitas cada paso con los mismos números. Y un consejo: mira el curso con tus propios estados financieros a mano. Pausa el video en cada prompt, cópialo y pruébalo. Así, al terminar esta hora, no solo vas a conocer un método: vas a tener tu primer análisis hecho.
 
 
 ## Qué puede y qué no puede hacer Claude
@@ -1141,7 +1141,7 @@ Ninguno de esos pasos requiere ser experto en inteligencia artificial. Requiere 
 
 ### m11_s03 · Tres formas de seguir
 
-Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el ebook, el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos números, y después hazlo con los tuyos.
+Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos números, y después hazlo con los tuyos.
 
 La segunda: conecta conmigo en LinkedIn. Búscame como Rodrigo Barceló, o usa el enlace que está en la descripción. Escríbeme por ahí si tienes dudas, o si quieres contarme cómo te fue con tus propios números.
 

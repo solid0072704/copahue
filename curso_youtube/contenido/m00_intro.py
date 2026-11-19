@@ -79,13 +79,13 @@ LAMINAS = [
             dict(p=1, eti="Caja en diciembre", val="65 <small>millones</small>", sub="Eran 620 a comienzos de año", tono="neg"),
         ],
         pie=dict(p=2, t="¿Cómo se puede vender más, ganar más y quedarse sin caja?"),
-        sub_pie=dict(p=3, icono="descarga", t="Ebook y archivo del caso: enlaces en la descripción del video"),
+        sub_pie=dict(p=3, icono="descarga", t="Archivo del caso y prompts: enlace en la descripción del video"),
         pasos=[
             "Y lo vamos a hacer con un caso práctico: Distribuidora Alerce, una empresa ficticia que en 2025 vendió "
             "18 % más que el año anterior y tuvo la mayor utilidad de su historia.",
             "+ Aun así, en diciembre casi no pudo pagar los sueldos.",
             "A lo largo de la clase vamos a descubrir, con Claude, qué pasó y qué habría que hacer.",
-            "En la descripción encuentras el enlace a nuestro ebook y al archivo del caso, para que repitas cada "
+            "En la descripción encuentras el enlace al archivo del caso y a los prompts, para que repitas cada "
             "paso con los mismos números. Y un consejo: mira el curso con tus propios estados financieros a mano. "
             "Pausa el video en cada prompt, cópialo y pruébalo. Así, al terminar esta hora, no solo vas a conocer "
             "un método: vas a tener tu primer análisis hecho.",
