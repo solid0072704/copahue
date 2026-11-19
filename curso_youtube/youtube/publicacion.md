@@ -28,7 +28,8 @@ CAPÍTULOS
 40:08 Paso 7: señales de alerta
 45:03 Paso 8: escenarios, plan de acción e informe
 50:56 Tu rutina mensual y los errores más comunes
-55:50 Resumen y próximos pasos
+55:50 Artefactos, conectores y plugins de Claude
+58:40 Resumen y próximos pasos
 
 LO QUE VAS A APRENDER
 • Preparar tus estados financieros y darle contexto a Claude (y qué cuidar en confidencialidad).
@@ -39,6 +40,7 @@ LO QUE VAS A APRENDER
 • Analizar desviaciones contra el presupuesto, separando el efecto volumen del efecto margen.
 • Detectar señales de alerta con un «abogado del diablo».
 • Cuantificar palancas y escenarios, y redactar un informe de una página para el directorio.
+• Conocer los artefactos, conectores, skills y plugins de Claude que ayudan en la gestión financiera.
 
 SOBRE EL CASO
 Distribuidora Alerce es una empresa ficticia creada para este curso. En 2025 vendió 18 % más y tuvo la mayor utilidad de su historia, pero su caja bajó de 620 a 65 millones. El curso muestra, con Claude, por qué pasó y qué hacer.
@@ -51,7 +53,7 @@ Contenido educativo; no constituye asesoría financiera, contable ni tributaria.
 
 ## Etiquetas
 
-análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, informe al directorio, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, Rodrigo Barceló
+análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, informe al directorio, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, artefactos de Claude, conectores de Claude, plugins de Claude, Claude skills, Rodrigo Barceló
 
 ## Comentario fijado (sugerido)
 
