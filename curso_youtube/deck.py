@@ -31,7 +31,7 @@ MODULOS = [
     dict(clave="m11_cierre", capitulo="Resumen y próximos pasos", kicker="Cierre"),
 ]
 
-PAUSA_ENTRE_SEGMENTOS = 0.55  # segundos de silencio entre un audio y el siguiente
+PAUSA_ENTRE_SEGMENTOS = 0.8  # segundos de silencio entre un audio y el siguiente
 
 
 def _kicker(m: dict) -> str:

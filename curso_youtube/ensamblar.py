@@ -119,7 +119,7 @@ def linea_de_tiempo(trabajo: Path, carpeta_audio: Path, solo: list[str], borrado
     segs = [g for g in deck.segmentos(laminas) if not solo or g["id"] in solo]
     audio_dir = trabajo / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
-    cursor, eventos, pistas, capitulos, subtitulos, faltantes = ENTRADA, [], [], [], [], []
+    cursor, eventos, pistas, capitulos, subtitulos, faltantes, avisos = ENTRADA, [], [], [], [], [], []
     for g in segs:
         origen = next((carpeta_audio / f"{g['id']}{ext}" for ext in (".mp3", ".wav", ".m4a")
                        if (carpeta_audio / f"{g['id']}{ext}").exists()), None)
@@ -127,6 +127,13 @@ def linea_de_tiempo(trabajo: Path, carpeta_audio: Path, solo: list[str], borrado
         if origen:
             dur = preparar_audio(origen, wav)
             sil = silencios(wav)
+            # Control de calidad del audio: duración muy distinta de la esperada o silencios anormales
+            razon = dur / g["segundos_estimados"]
+            if not 0.8 <= razon <= 1.25:
+                avisos.append(f"{g['id']}: dura {dur:.1f} s y se esperaban {g['segundos_estimados']:.1f} s (¿texto omitido o repetido?)")
+            largos = [b - a for a, b in sil if b - a > 2.0]
+            if largos:
+                avisos.append(f"{g['id']}: tiene {len(largos)} silencio(s) de más de 2 s (el mayor, {max(largos):.1f} s)")
         elif borrador:
             dur, sil = silencio_wav(wav, g["segundos_estimados"]), []
             faltantes.append(g["id"])
@@ -146,7 +153,7 @@ def linea_de_tiempo(trabajo: Path, carpeta_audio: Path, solo: list[str], borrado
         cursor += dur + deck.PAUSA_ENTRE_SEGMENTOS
     total = cursor - deck.PAUSA_ENTRE_SEGMENTOS + fin
     return dict(eventos=eventos, pistas=pistas, capitulos=capitulos, subtitulos=subtitulos, total=total,
-                faltantes=faltantes, segmentos=[g["id"] for g in segs])
+                faltantes=faltantes, avisos=avisos, segmentos=[g["id"] for g in segs])
 
 
 # --- Video y audio ----------------------------------------------------------
@@ -266,4 +273,6 @@ if __name__ == "__main__":
     tl = ensamblar(a.trabajo, a.audio, salida, a.solo, a.borrador, a.fin)
     print(f"Video: {salida}  ·  duración {_marca(tl['total'])}  ·  {len(tl['segmentos'])} audios"
           + (f"  ·  {len(tl['faltantes'])} en silencio (borrador)" if tl["faltantes"] else ""))
+    for aviso in tl["avisos"]:
+        print("AVISO de audio ·", aviso)
     print(f"Uso de la voz estimado a {CARACTERES_POR_SEGUNDO} caracteres por segundo; capítulos y subtítulos junto al video.")
