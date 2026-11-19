@@ -1,6 +1,6 @@
 # Guion · Análisis de estados financieros con Claude
 
-108 láminas · 96 audios · 57.936 caracteres de narración · ≈ 59 minutos
+108 láminas · 96 audios · 57.862 caracteres de narración · ≈ 59 minutos
 
 Cada párrafo es un cambio en pantalla. Las cifras se escriben como se ven; la voz las recibe en palabras.
 Para cambiar el texto, edita los archivos de `contenido/` y vuelve a generar este documento.
@@ -18,7 +18,7 @@ Cada mes cierras los estados financieros y tienes el balance, el estado de resul
 
 ### m00_s02 · Título del curso
 
-Hola, soy Rodrigo, de Hyperion Advisory. En esta clase de una hora vas a aprender a analizar estados financieros con Claude, paso a paso: desde preparar la información hasta entregar un informe con conclusiones y un plan de acción.
+Hola, soy Rodrigo Barceló. En esta clase de una hora vas a aprender a analizar estados financieros con Claude, paso a paso: desde preparar la información hasta entregar un informe con conclusiones y un plan de acción.
 
 ### m00_s03 · Lo único que necesitas
 
@@ -1143,7 +1143,7 @@ Ninguno de esos pasos requiere ser experto en inteligencia artificial. Requiere 
 
 Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el ebook, el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos números, y después hazlo con los tuyos.
 
-La segunda: si prefieres hacerlo acompañado, en Hyperion Advisory ofrecemos un diagnóstico financiero sin costo, de 30 minutos. Revisamos juntos cómo están hoy tus reportes, y te llevas dos o tres mejoras concretas. También encuentras el enlace en la descripción.
+La segunda: conecta conmigo en LinkedIn. Búscame como Rodrigo Barceló, o usa el enlace que está en la descripción. Escríbeme por ahí si tienes dudas, o si quieres contarme cómo te fue con tus propios números.
 
 Y la tercera: suscríbete al canal, y cuéntame en los comentarios qué paso te gustaría ver con más profundidad.
 

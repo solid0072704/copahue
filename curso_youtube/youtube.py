@@ -16,6 +16,7 @@ from pathlib import Path
 
 from . import deck
 from .ensamblar import ENTRADA, _marca
+from .laminas import LINKEDIN, MARCA
 
 AQUI = Path(__file__).parent
 SALIDA = AQUI / "youtube"
@@ -31,7 +32,7 @@ ETIQUETAS = [
     "inteligencia artificial en finanzas", "IA para finanzas", "ratios financieros", "flujo de caja",
     "capital de trabajo", "análisis vertical y horizontal", "desviaciones presupuesto", "control de gestión",
     "informe al directorio", "prompts para finanzas", "CFO", "gerente de finanzas", "pymes", "contabilidad",
-    "curso de finanzas", "Hyperion Advisory",
+    "curso de finanzas", MARCA,
 ]
 
 APRENDIZAJES = [
@@ -70,8 +71,7 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
         "",
         "📥 Ebook: [ENLACE AL EBOOK]",
         "📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]",
-        "📅 Diagnóstico financiero sin costo (30 minutos): [ENLACE DE AGENDA]",
-        "🌐 https://www.hyperionadvisory.cl",
+        f"💼 LinkedIn de {MARCA}: [ENLACE A TU PERFIL DE LINKEDIN]",
         "",
         "CAPÍTULOS",
         *capitulos,
@@ -104,7 +104,7 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.",
          "```", "",
          "## Lista de verificación antes de publicar", "",
-         "- [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y agenda).",
+         "- [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y tu perfil de LinkedIn).",
          "- [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.",
          *(["- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final)."] if estimados else []),
          "- [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).",
@@ -126,7 +126,8 @@ body{width:1280px;height:720px;overflow:hidden;font-family:"Inter Display","Inte
 h1{font-size:104px;line-height:.98;font-weight:800;letter-spacing:-.04em;margin-top:30px}
 h1 em{font-style:normal;color:#E3A72B}
 .sub{margin-top:30px;font-family:"Inter",sans-serif;font-size:40px;font-weight:650;color:#D5DEE8}
-.marca{position:absolute;left:64px;bottom:44px;font-family:"Inter",sans-serif;font-size:24px;font-weight:800;letter-spacing:.22em;color:#C9D3DE}
+.marca{position:absolute;left:64px;bottom:40px;display:flex;align-items:center;gap:16px;font-family:"Inter",sans-serif;font-size:24px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#C9D3DE}
+.marca svg{width:40px;height:40px;flex:none}
 .gr{position:absolute;right:56px;top:86px;width:400px;height:520px;background:linear-gradient(180deg,#17334F,#10263C);border:3px solid #2A4A6B;border-radius:34px;padding:34px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
 .gr .t{font-family:"Inter",sans-serif;font-size:25px;font-weight:700;letter-spacing:.12em;color:#8FB4DA;text-transform:uppercase}
 .gr .n{font-size:108px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-top:10px;color:#F0705C}
@@ -136,7 +137,7 @@ h1 em{font-style:normal;color:#E3A72B}
 <div class="iz"><span class="sello">CURSO COMPLETO · 1 HORA</span>
 <h1>Estados financieros con <em>Claude</em></h1>
 <div class="sub">8 pasos · 10 prompts · 1 caso práctico</div></div>
-<div class="marca">HYPERION ADVISORY</div>
+<div class="marca">__LOGO____MARCA__</div>
 <div class="gr"><div class="t">Caja</div><div class="n">−90 %</div><div class="d">con ventas +18 %</div>
 <svg viewBox="0 0 332 230"><line x1="0" y1="60" x2="332" y2="60" stroke="#5B7895" stroke-width="3"/>
 <rect x="6" y="14" width="46" height="46" rx="6" fill="#8FB4DA"/><rect x="62" y="0" width="46" height="14" rx="5" fill="#2FA36B"/>
@@ -147,7 +148,7 @@ h1 em{font-style:normal;color:#E3A72B}
 
 def miniatura(destino: Path) -> None:
     html = destino.with_suffix(".html")
-    html.write_text(MINIATURA_HTML, encoding="utf-8")
+    html.write_text(MINIATURA_HTML.replace("__LOGO__", LINKEDIN).replace("__MARCA__", MARCA), encoding="utf-8")
     script = ("const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();"
               "const c=await b.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1});const p=await c.newPage();"
               f"await p.goto('file://{html.resolve()}');await p.evaluate(()=>document.fonts.ready);"

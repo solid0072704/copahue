@@ -52,6 +52,7 @@ def test_pronunciacion():
     assert a_voz("«analiza este balance»") == "analiza este balance"
     assert a_voz("descarga el ebook") == "descarga el íbuk"
     assert a_voz("gerente de finanzas o controller") == "gerente de finanzas o contróler"
+    assert a_voz("conecta conmigo en LinkedIn") == "conecta conmigo en Línkedin"
 
 
 def test_no_toca_palabras_con_digitos():

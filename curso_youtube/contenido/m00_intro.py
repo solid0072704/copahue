@@ -19,9 +19,9 @@ LAMINAS = [
         sobre="Curso completo · 1 hora",
         titulo_html="Análisis de estados financieros con <em>Claude</em>",
         sub="De los números a las decisiones, paso a paso",
-        quien="Rodrigo · Hyperion Advisory",
+        quien="Rodrigo Barceló",
         pasos=[
-            "Hola, soy Rodrigo, de Hyperion Advisory. En esta clase de una hora vas a aprender a analizar estados "
+            "Hola, soy Rodrigo Barceló. En esta clase de una hora vas a aprender a analizar estados "
             "financieros con Claude, paso a paso: desde preparar la información hasta entregar un informe con "
             "conclusiones y un plan de acción.",
         ],

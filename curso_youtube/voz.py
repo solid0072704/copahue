@@ -19,6 +19,7 @@ PRONUNCIACION = [
     (r"\bCSV\b", "ce ese ve"),
     (r"\bDuPont\b", "Dupont"),
     (r"\bcontroller\b", "contróler"),
+    (r"\bLinkedIn\b", "Línkedin"),
 ]
 
 _UNIDADES = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",

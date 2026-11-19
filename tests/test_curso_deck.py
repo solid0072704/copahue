@@ -49,3 +49,17 @@ def test_modulos_en_orden_y_capitulos():
     assert modulos == sorted(modulos)
     assert set(modulos) == set(range(len(deck.MODULOS)))
     assert a_voz("Paso 3") == "Paso tres"
+
+
+def test_la_marca_es_el_autor_con_su_linkedin():
+    """El video se firma con el nombre del autor y el logo de LinkedIn; no nombra a ninguna empresa."""
+    from curso_youtube.laminas import MARCA
+    laminas = _laminas()
+    for s in laminas:
+        ctx = dict(kicker=s["kicker"], modulo=s["modulo"], n_modulos=s["n_modulos"], avance=s["avance"])
+        html = pagina(s, ctx)
+        assert "hyperion" not in html.lower(), s["id"]
+        if s["tipo"] not in ("gancho", "titulo_curso", "chips", "seccion", "cierre") or 'class="pie"' in html:
+            assert 'class="logo-in"' in html and MARCA in html, s["id"]
+    for g in deck.segmentos(laminas):
+        assert "hyperion" not in g["voz"].lower(), g["id"]

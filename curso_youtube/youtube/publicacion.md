@@ -8,29 +8,28 @@
 
 ## Descripción
 
-_Tiempos exactos del render final._
+_Tiempos estimados a partir del guion. Reemplázalos por el archivo de capítulos del render final._
 
 ```
 Aprende a analizar estados financieros con Claude, paso a paso: verificación, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para el directorio. Con un caso práctico completo y 10 prompts listos para usar.
 
 📥 Ebook: [ENLACE AL EBOOK]
 📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]
-📅 Diagnóstico financiero sin costo (30 minutos): [ENLACE DE AGENDA]
-🌐 https://www.hyperionadvisory.cl
+💼 LinkedIn de Rodrigo Barceló: [ENLACE A TU PERFIL DE LINKEDIN]
 
 CAPÍTULOS
 00:00 Introducción
-02:11 Qué puede y qué no puede hacer Claude
-06:22 Paso 1: preparar los datos y el contexto
-12:22 Paso 2: verificar que todo cuadre
-16:55 Paso 3: análisis vertical y horizontal
-21:44 Paso 4: ratios financieros
-28:47 Paso 5: flujo de efectivo y capital de trabajo
-35:22 Paso 6: desviaciones contra el presupuesto
-40:09 Paso 7: señales de alerta
-45:04 Paso 8: escenarios, plan de acción e informe
-50:57 Tu rutina mensual y los errores más comunes
-55:51 Resumen y próximos pasos
+02:15 Qué puede y qué no puede hacer Claude
+06:27 Paso 1: preparar los datos y el contexto
+12:35 Paso 2: verificar que todo cuadre
+17:17 Paso 3: análisis vertical y horizontal
+22:14 Paso 4: ratios financieros
+29:29 Paso 5: flujo de efectivo y capital de trabajo
+36:26 Paso 6: desviaciones contra el presupuesto
+41:21 Paso 7: señales de alerta
+46:31 Paso 8: escenarios, plan de acción e informe
+52:36 Tu rutina mensual y los errores más comunes
+57:29 Resumen y próximos pasos
 
 LO QUE VAS A APRENDER
 • Preparar tus estados financieros y darle contexto a Claude (y qué cuidar en confidencialidad).
@@ -53,7 +52,7 @@ Contenido educativo; no constituye asesoría financiera, contable ni tributaria.
 
 ## Etiquetas
 
-análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, informe al directorio, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, Hyperion Advisory
+análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, informe al directorio, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, Rodrigo Barceló
 
 ## Comentario fijado (sugerido)
 
@@ -65,8 +64,9 @@ Descárgalos junto con el archivo del caso: [ENLACE A LOS MATERIALES]
 
 ## Lista de verificación antes de publicar
 
-- [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y agenda).
+- [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y tu perfil de LinkedIn).
 - [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.
+- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final).
 - [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).
 - [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.
 - [ ] Categoría: Educación. Idioma del video: español.
