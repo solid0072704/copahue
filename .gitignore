@@ -10,3 +10,5 @@ __pycache__/
 .pytest_cache/
 # Índices locales de grok.py
 storage_vectorial/
+# Curso de YouTube: carpeta de trabajo (HTML, imágenes, audio y video generados)
+curso_youtube/_trabajo/

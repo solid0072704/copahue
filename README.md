@@ -5,6 +5,7 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+| `curso_youtube/` | **Curso de YouTube de 1 hora** «Análisis de estados financieros con Claude»: guion, láminas, caso práctico y armado del video | ver [`curso_youtube/README.md`](curso_youtube/README.md) |
 
 ---
 
