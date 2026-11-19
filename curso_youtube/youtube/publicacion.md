@@ -8,7 +8,7 @@
 
 ## Descripción
 
-_Tiempos estimados a partir del guion. Reemplázalos por el archivo de capítulos del render final._
+_Tiempos exactos del render final._
 
 ```
 Aprende a analizar estados financieros con Claude, paso a paso: verificación, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para el directorio. Con un caso práctico completo y 10 prompts listos para usar.
@@ -20,17 +20,17 @@ Aprende a analizar estados financieros con Claude, paso a paso: verificación, a
 
 CAPÍTULOS
 00:00 Introducción
-02:15 Qué puede y qué no puede hacer Claude
-06:26 Paso 1: preparar los datos y el contexto
-12:31 Paso 2: verificar que todo cuadre
-17:12 Paso 3: análisis vertical y horizontal
-22:08 Paso 4: ratios financieros
-29:20 Paso 5: flujo de efectivo y capital de trabajo
-36:15 Paso 6: desviaciones contra el presupuesto
-41:09 Paso 7: señales de alerta
-46:17 Paso 8: escenarios, plan de acción e informe
-52:20 Tu rutina mensual y los errores más comunes
-57:11 Resumen y próximos pasos
+02:11 Qué puede y qué no puede hacer Claude
+06:22 Paso 1: preparar los datos y el contexto
+12:22 Paso 2: verificar que todo cuadre
+16:55 Paso 3: análisis vertical y horizontal
+21:44 Paso 4: ratios financieros
+28:47 Paso 5: flujo de efectivo y capital de trabajo
+35:22 Paso 6: desviaciones contra el presupuesto
+40:09 Paso 7: señales de alerta
+45:04 Paso 8: escenarios, plan de acción e informe
+50:57 Tu rutina mensual y los errores más comunes
+55:51 Resumen y próximos pasos
 
 LO QUE VAS A APRENDER
 • Preparar tus estados financieros y darle contexto a Claude (y qué cuidar en confidencialidad).
@@ -67,7 +67,6 @@ Descárgalos junto con el archivo del caso: [ENLACE A LOS MATERIALES]
 
 - [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y agenda).
 - [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.
-- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final).
 - [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).
 - [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.
 - [ ] Categoría: Educación. Idioma del video: español.

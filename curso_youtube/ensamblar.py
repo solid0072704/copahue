@@ -2,13 +2,14 @@
 
 Uso:
     python -m curso_youtube.ensamblar <trabajo> <carpeta_audio> [--solo seg_000 seg_001 ...]
-                                      [--salida video.mp4] [--borrador] [--fin 20]
+                                      [--salida video.mp4] [--borrador] [--fin 20] [--anexos]
 
 - Espera un archivo de audio por segmento: <carpeta_audio>/seg_XXX.mp3 (o .wav). Los nombres y el texto de
   cada segmento salen de `python -m curso_youtube.guion --voz`.
 - Las imágenes deben existir en <trabajo>/frames (se generan con `python -m curso_youtube.construir`).
 - `--borrador` reemplaza los audios que faltan por silencio de la duración estimada, para revisar el ritmo.
 - `--fin` agrega segundos de la última lámina al final (espacio para la pantalla final de YouTube).
+- `--anexos` no renderiza: vuelve a escribir los subtítulos, los capítulos y los tiempos junto al video.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ import numpy as np
 from PIL import Image
 
 from . import deck
-from .voz import CARACTERES_POR_SEGUNDO
+from .voz import CARACTERES_POR_SEGUNDO, a_voz
 
 FPS = 30
 MUESTRAS = 48000
@@ -119,7 +120,7 @@ def linea_de_tiempo(trabajo: Path, carpeta_audio: Path, solo: list[str], borrado
     segs = [g for g in deck.segmentos(laminas) if not solo or g["id"] in solo]
     audio_dir = trabajo / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
-    cursor, eventos, pistas, capitulos, subtitulos, faltantes, avisos = ENTRADA, [], [], [], [], [], []
+    cursor, eventos, pistas, capitulos, subtitulos, faltantes, avisos, pausas = ENTRADA, [], [], [], [], [], [], []
     for g in segs:
         origen = next((carpeta_audio / f"{g['id']}{ext}" for ext in (".mp3", ".wav", ".m4a")
                        if (carpeta_audio / f"{g['id']}{ext}").exists()), None)
@@ -149,11 +150,12 @@ def linea_de_tiempo(trabajo: Path, carpeta_audio: Path, solo: list[str], borrado
                 capitulos.append((t0 if capitulos else 0.0, deck.MODULOS[s["modulo"]]["capitulo"]))
             eventos.append(dict(t=t0, frame=f"{p['lamina']}_p{p['paso']:02d}.png", seg=g["id"]))
             subtitulos.append((t0, t1, p["texto"]))
+        pausas += [(cursor + a, cursor + b) for a, b in sil]
         pistas.append((cursor, wav, dur))
         cursor += dur + deck.PAUSA_ENTRE_SEGMENTOS
     total = cursor - deck.PAUSA_ENTRE_SEGMENTOS + fin
     return dict(eventos=eventos, pistas=pistas, capitulos=capitulos, subtitulos=subtitulos, total=total,
-                faltantes=faltantes, avisos=avisos, segmentos=[g["id"] for g in segs])
+                faltantes=faltantes, avisos=avisos, pausas=pausas, segmentos=[g["id"] for g in segs])
 
 
 # --- Video y audio ----------------------------------------------------------
@@ -214,32 +216,154 @@ def _marca(t: float, coma: bool = False) -> str:
     return f"{int(h)}:{int(mi):02d}:{int(s):02d}" if h else f"{int(mi):02d}:{int(s):02d}"
 
 
-def _trozos(texto: str, largo: int = 84) -> list[str]:
-    """Parte un párrafo en subtítulos de hasta ~2 líneas, cortando en signos de puntuación cuando se puede."""
-    frases = re.findall(r"[^.?!…]+[.?!…»]*\s*", texto) or [texto]
+LARGO_SUBTITULO = 84        # caracteres: dos líneas de 42
+_FRASE = re.compile(r".+?(?:[.?!…]+[»\"”)]*(?=\s+|$)|$)", re.S)   # el punto de «6.105» no termina una frase
+
+
+_ENLACES = {"y", "e", "o", "u", "ni", "que", "de", "del", "con", "en", "a", "al", "para", "por", "sin", "desde", "hasta",
+            "porque", "pero", "como", "cuando", "donde", "si", "sino", "entre", "sobre", "contra", "según", "aunque"}
+_COLGANTES = _ENLACES | {"el", "la", "los", "las", "un", "una", "unos", "unas", "su", "sus", "tu", "tus", "mi", "mis",
+                         "lo", "le", "les", "se", "te", "no", "más", "muy", "es", "son", "cada", "este", "esta"}
+
+
+def _ajuste(t: str, i: int) -> float:
+    """Qué tan natural es cortar en el espacio i: mejor después de un signo o antes de una preposición o conjunción;
+    peor si deja una palabra colgando o separa una cifra de lo que mide."""
+    antes = t[:i].rsplit(" ", 1)[-1].lower()
+    despues = t[i + 1:].split(" ", 1)[0].lower().strip("¿¡«\"(")
+    if antes[-1:] in ",;:.?!…":
+        return -14.0
+    ajuste = 0.0
+    if despues in _ENLACES:
+        ajuste -= 7
+    if antes.strip("¿¡«\"(") in _COLGANTES:
+        ajuste += 9
+    if re.fullmatch(r"[\d.,]+", antes):
+        ajuste += 12
+    if despues.startswith("%"):
+        ajuste += 20
+    return ajuste
+
+
+def _cortar(frase: str, largo: int) -> list[str]:
+    """Parte una frase larga en trozos parejos, en el lugar más natural cerca del largo buscado."""
+    if len(frase) <= largo:
+        return [frase]
+    partes = -(-len(frase) // largo)
+    objetivo = len(frase) / partes
+    espacios = [i for i, c in enumerate(frase) if c == " " and 12 <= i <= largo and len(frase) - i > 12]
+    if not espacios:
+        return [frase]
+    corte = min(espacios, key=lambda i: abs(i - objetivo) + _ajuste(frase, i))
+    return [frase[:corte]] + _cortar(frase[corte + 1:], largo)
+
+
+def _trozos(texto: str, largo: int = LARGO_SUBTITULO) -> list[str]:
+    """Parte un párrafo en subtítulos de hasta dos líneas: una frase por subtítulo, las muy cortas se juntan."""
+    frases = [f.strip() for f in _FRASE.findall(" ".join(texto.split())) if f.strip()]
+    out: list[str] = []
+    for f in frases:
+        if out and len(out[-1]) + 1 + len(f) <= largo and min(len(out[-1]), len(f)) < 28:
+            out[-1] += " " + f
+        else:
+            out += _cortar(f, largo)
+    return out
+
+
+def _dos_lineas(t: str, ancho: int = LARGO_SUBTITULO // 2) -> str:
+    """Si no cabe en una línea, la divide en dos de largo parecido, en el lugar más natural."""
+    if len(t) <= ancho:
+        return t
+    espacios = [i for i, c in enumerate(t) if c == " "]
+    if not espacios:
+        return t
+    parejos = [i for i in espacios if max(i, len(t) - i - 1) <= ancho + 4] or espacios
+    corte = min(parejos, key=lambda i: abs(i - len(t) / 2) + _ajuste(t, i))
+    return t[:corte] + "\n" + t[corte + 1:]
+
+
+def _fuerza(trozo_anterior: str) -> int:
+    """Pausa que se espera después de un trozo: 2 si cierra una frase (o termina en dos puntos), 1 si termina en
+    coma o punto y coma, 0 si no hay signo."""
+    ultimo = trozo_anterior.rstrip("»\"”)")[-1:]
+    return 2 if ultimo in ".?!…:" else 1 if ultimo in ",;" else 0
+
+
+_ESPERA = (0, 3, 9)   # pausa antes de un trozo según la fuerza del corte, medida en caracteres hablados
+
+
+def _peso_hablado(trozo: str) -> float:
+    """Largo del texto tal como se dice, más las pausas de su puntuación interior."""
+    return (len(a_voz(trozo)) + _ESPERA[2] * len(re.findall(r"[.?!…:]\s", trozo))
+            + _ESPERA[1] * len(re.findall(r"[,;]\s", trozo)))
+
+
+def tiempos_de_subtitulos(t0: float, t1: float, trozos: list[str], pausas: list[tuple[float, float]]) -> list[float]:
+    """Instante en que empieza cada subtítulo de un paso que va de t0 a t1.
+
+    Estima cada cambio según el largo del texto hablado y, si el trozo anterior termina en un signo de puntuación,
+    lo lleva a la pausa real más cercana. Cada ajuste corrige la estimación de los que siguen.
+    """
+    n = len(trozos)
+    if n == 1:
+        return [t0]
+    fuerza = [0] + [_fuerza(trozos[i - 1]) for i in range(1, n)]
+    # posición, en caracteres hablados, en que empieza a sonar cada trozo
+    pos, corrido = [], 0.0
+    for f, trozo in zip(fuerza, trozos):
+        pos.append(corrido + _ESPERA[f])
+        corrido += _ESPERA[f] + _peso_hablado(trozo)
+    total = corrido
+    # la voz termina antes de t1 si el paso cierra con una pausa
+    fin_voz = min([a for a, b in pausas if t0 + 0.3 < a < t1 and b >= t1 - 0.12] + [t1])
+    dentro = [(a, b) for a, b in pausas if a > t0 + 0.2 and b < fin_voz - 0.2]
+    inicios: list[float | None] = [t0] + [None] * (n - 1)
+    ancla = 0
+    for i in range(1, n):
+        if not fuerza[i]:
+            continue
+        ritmo = (fin_voz - inicios[ancla]) / (total - pos[ancla])
+        estimado = inicios[ancla] + (pos[i] - pos[ancla]) * ritmo
+        margen, tope, premio = (1.0, 0.8, 2.5) if fuerza[i] == 2 else (0.6, 0.4, 1.0)
+        mejor, nota = None, -1e9
+        for a, b in dentro:
+            retoma = b - 0.06
+            if retoma < inicios[ancla] + 0.4 or abs(retoma - estimado) > margen:
+                continue
+            valor = premio * min(b - a, tope) - 0.8 * abs(retoma - estimado)
+            if valor > nota:
+                mejor, nota = (a, b), valor
+        if mejor:
+            inicios[i] = mejor[1] - 0.06
+            dentro = [p for p in dentro if p[0] > mejor[0]]
+            ancla = i
+    # los cambios sin pausa se reparten, según el texto hablado, entre los que sí quedaron fijos
+    fijos = [i for i, x in enumerate(inicios) if x is not None]
+    for k, i0 in enumerate(fijos):
+        i1 = fijos[k + 1] if k + 1 < len(fijos) else n
+        t_fin, p_fin = (inicios[i1], pos[i1]) if i1 < n else (fin_voz, total)
+        for j in range(i0 + 1, i1):
+            inicios[j] = inicios[i0] + (t_fin - inicios[i0]) * (pos[j] - pos[i0]) / (p_fin - pos[i0])
+    return [float(x) for x in inicios]
+
+
+def subtitulos_con_tiempo(tl: dict) -> list[tuple[float, float, str]]:
+    """(inicio, fin, texto) de cada subtítulo del video, en orden y sin traslapes."""
     out = []
-    for f in (x.strip() for x in frases if x.strip()):
-        while len(f) > largo:
-            corte = max(f.rfind(sep, 0, largo) for sep in (", ", "; ", ": ", " "))
-            corte = corte if corte > 20 else largo
-            out.append(f[:corte + 1].strip())
-            f = f[corte + 1:].strip()
-        if f:
-            out.append(f)
+    pausas = tl.get("pausas", [])
+    for t0, t1, texto in tl["subtitulos"]:
+        trozos = _trozos(texto)
+        cerca = [p for p in pausas if p[1] > t0 and p[0] < t1]
+        inicios = tiempos_de_subtitulos(t0, t1, trozos, cerca)
+        for i, trozo in enumerate(trozos):
+            fin = inicios[i + 1] if i + 1 < len(trozos) else t1
+            out.append((inicios[i], min(fin, max(inicios[i] + 0.3, fin - 0.04)), trozo))
     return out
 
 
 def escribir_srt(tl: dict, destino: Path) -> None:
-    bloques, n = [], 1
-    for t0, t1, texto in tl["subtitulos"]:
-        trozos = _trozos(texto)
-        pesos = [len(x) for x in trozos]
-        acum = t0
-        for trozo, peso in zip(trozos, pesos):
-            dur = (t1 - t0) * peso / sum(pesos)
-            bloques.append(f"{n}\n{_marca(acum, True)} --> {_marca(acum + dur - 0.04, True)}\n{trozo}\n")
-            acum += dur
-            n += 1
+    bloques = [f"{n}\n{_marca(a, True)} --> {_marca(b, True)}\n{_dos_lineas(texto)}\n"
+               for n, (a, b, texto) in enumerate(subtitulos_con_tiempo(tl), 1)]
     destino.write_text("\n".join(bloques), encoding="utf-8")
 
 
@@ -251,13 +375,19 @@ def ensamblar(trabajo: Path, carpeta_audio: Path, salida: Path, solo: list[str],
     salida.parent.mkdir(parents=True, exist_ok=True)
     _ffmpeg("-i", str(mudo), "-i", str(narracion), "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-ar", str(MUESTRAS),
             "-movflags", "+faststart", "-shortest", str(salida))
+    escribir_anexos(tl, salida)
+    return tl
+
+
+def escribir_anexos(tl: dict, salida: Path) -> None:
+    """Subtítulos, capítulos y tiempos de cada imagen, junto al video."""
     base = salida.with_suffix("")
+    base.parent.mkdir(parents=True, exist_ok=True)
     escribir_srt(tl, Path(str(base) + ".srt"))
     Path(str(base) + "_capitulos.txt").write_text(
         "\n".join(f"{_marca(t)} {nombre}" for t, nombre in tl["capitulos"]) + "\n", encoding="utf-8")
     Path(str(base) + "_tiempos.json").write_text(json.dumps(
         dict(total=tl["total"], eventos=tl["eventos"], faltantes=tl["faltantes"]), ensure_ascii=False, indent=1), encoding="utf-8")
-    return tl
 
 
 if __name__ == "__main__":
@@ -268,9 +398,15 @@ if __name__ == "__main__":
     ap.add_argument("--salida", type=Path, default=None)
     ap.add_argument("--borrador", action="store_true")
     ap.add_argument("--fin", type=float, default=0.0)
+    ap.add_argument("--anexos", action="store_true",
+                    help="no renderiza: solo vuelve a escribir subtítulos, capítulos y tiempos junto al video")
     a = ap.parse_args()
     salida = a.salida or (a.trabajo / "salida" / "curso.mp4")
-    tl = ensamblar(a.trabajo, a.audio, salida, a.solo, a.borrador, a.fin)
+    if a.anexos:
+        tl = linea_de_tiempo(a.trabajo, a.audio, a.solo, a.borrador, a.fin)
+        escribir_anexos(tl, salida)
+    else:
+        tl = ensamblar(a.trabajo, a.audio, salida, a.solo, a.borrador, a.fin)
     print(f"Video: {salida}  ·  duración {_marca(tl['total'])}  ·  {len(tl['segmentos'])} audios"
           + (f"  ·  {len(tl['faltantes'])} en silencio (borrador)" if tl["faltantes"] else ""))
     for aviso in tl["avisos"]:

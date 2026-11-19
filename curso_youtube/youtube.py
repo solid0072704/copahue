@@ -106,7 +106,7 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "## Lista de verificación antes de publicar", "",
          "- [ ] Reemplazar los tres enlaces entre [corchetes] (ebook, materiales y agenda).",
          "- [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.",
-         "- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final).",
+         *(["- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final)."] if estimados else []),
          "- [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).",
          "- [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.",
          "- [ ] Categoría: Educación. Idioma del video: español.",

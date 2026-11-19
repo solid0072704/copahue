@@ -1,6 +1,6 @@
 # Guion · Análisis de estados financieros con Claude
 
-108 láminas · 96 audios · 57.937 caracteres de narración · ≈ 59 minutos
+108 láminas · 96 audios · 57.936 caracteres de narración · ≈ 59 minutos
 
 Cada párrafo es un cambio en pantalla. Las cifras se escriben como se ven; la voz las recibe en palabras.
 Para cambiar el texto, edita los archivos de `contenido/` y vuelve a generar este documento.

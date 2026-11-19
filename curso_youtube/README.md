@@ -11,6 +11,7 @@ los subtítulos y los capítulos.
 | Caso práctico (Distribuidora Alerce, ficticia) | `caso.py` · todas las cifras se calculan y verifican aquí |
 | Material descargable para la audiencia | `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` |
 | Título, descripción, capítulos, etiquetas y miniatura | `youtube/publicacion.md` y `youtube/miniatura.png` |
+| Registro de la narración generada (qué audio corresponde a cada segmento) | `narracion.json` |
 
 ## Cómo se produce el video
 
@@ -30,10 +31,15 @@ python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los cap�
   para que la voz en español los pronuncie bien.
 - **Sincronía.** `ensamblar.py` reparte cada audio entre sus pasos según el largo del texto y ajusta cada cambio
   a una pausa real de la voz. También nivela el volumen (−16 LUFS) y genera subtítulos (`.srt`) y capítulos.
+- **Subtítulos.** Una frase por subtítulo, en dos líneas de hasta 42 caracteres, con las cifras como se ven en
+  pantalla. Cada cambio de frase se ajusta a la pausa real de la voz. `ensamblar … --anexos` los vuelve a
+  escribir (junto con los capítulos) sin renderizar el video otra vez.
 - **Borrador sin voz.** `ensamblar … --borrador` rellena con silencio los audios que falten, para revisar ritmo
   y duración antes de gastar créditos de voz.
 - **Cambiar el texto.** Edita el archivo del módulo, vuelve a generar la lámina y regenera solo el audio de ese
   segmento (`seg_XXX`).
+- **Audios.** No se guardan en el repositorio (pesan unos 54 MB). `narracion.json` anota la generación de
+  ElevenLabs que corresponde a cada segmento, para volver a descargarlos desde la cuenta sin gastar créditos.
 
 ## Requisitos
 
@@ -43,8 +49,9 @@ Fuentes: Inter, Inter Display y JetBrains Mono.
 ## Pruebas
 
 ```bash
-pytest tests/test_curso_voz.py tests/test_curso_deck.py -q
+pytest tests/test_curso_voz.py tests/test_curso_deck.py tests/test_curso_subtitulos.py -q
 ```
 
 Verifican que el caso cuadre (balance, flujo, patrimonio), que las cifras se lean bien en voz alta, que ningún
-elemento quede sin aparecer y que la duración estimada esté cerca de una hora.
+elemento quede sin aparecer, que la duración estimada esté cerca de una hora y que los subtítulos no partan
+cifras ni se traslapen.
