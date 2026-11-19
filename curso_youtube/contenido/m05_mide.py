@@ -130,7 +130,7 @@ LAMINAS = [
             _fila("Razón de caja", "Efectivo ÷ pasivos corrientes", _veces("razon_caja"), "r", p=3),
         ],
         notas=[
-            dict(p=1, t="Parece sana", d="1,65 pesos de activo corriente por cada peso que debe"),
+            dict(p=1, t="Parece sana", d="1,65 pesos de activo corriente por cada peso que debe a corto plazo"),
             dict(p=3, gr="3 de cada 100", tono="neg", t="pesos que debe pagar, en la cuenta", clase="rojo"),
             dict(p=4, t="La lección", d="La liquidez corriente esconde el problema cuando es puro crédito e inventario"),
         ],
@@ -138,7 +138,7 @@ LAMINAS = [
             "Partamos por la liquidez. La liquidez corriente, activos corrientes sobre pasivos corrientes, bajó de "
             "2 a 1,65.",
             "Si miras solo ese número, dirías que la empresa está sana: tiene 1,65 pesos de activos de corto plazo "
-            "por cada peso que debe. Pero ojo con lo que hay dentro de esos activos.",
+            "por cada peso que debe a corto plazo. Pero ojo con lo que hay dentro de esos activos.",
             "La prueba ácida, que saca los inventarios, cayó de 1,3 a 0,99.",
             "Y la razón de caja, que considera solo el efectivo, cayó de 0,39 a 0,03. Es decir, por cada 100 pesos "
             "que la empresa debe pagar en los próximos meses, tiene 3 en la cuenta.",
@@ -194,8 +194,8 @@ LAMINAS = [
         html=graficos.dupont_html(),
         pasos=[
             "DuPont descompone esa rentabilidad en tres factores: el margen neto, la rotación de activos y el "
-            "apalancamiento. En 2024, la rentabilidad venía de un margen de 4,7 %, una rotación de 2 veces y un "
-            "apalancamiento de 2.",
+            "apalancamiento. En 2024, la rentabilidad venía de un margen cercano a 4,7 %, una rotación de 2 veces y "
+            "un apalancamiento de 2.",
             "En 2025, el margen bajó, la rotación bajó, y lo único que subió fue el apalancamiento, a 2,19.",
             "En simple: el negocio rinde menos, y la rentabilidad se sostiene porque la empresa usa más deuda. Eso "
             "es una rentabilidad de peor calidad.",
@@ -224,15 +224,15 @@ LAMINAS = [
             dict(p=2, eti="1 día de inventario", val=m(V["inventario"]) + " <small>millones</small>", sub="de caja"),
             dict(p=3, eti="1 día de pago a proveedores", val=m(V["pago"]) + " <small>millones</small>", sub="de financiamiento"),
         ],
-        pie=dict(p=4, t="«Cada día que nos demoramos en cobrar nos cuesta 32 millones de caja»"),
+        pie=dict(p=4, t="«Cada día de demora en cobrar nos cuesta 32 millones de caja»"),
         pasos=[
             "Hay una forma de hacer que estos días le hablen a cualquier gerente: traducirlos a plata. Le pedí a "
             "Claude que calculara cuánto vale un día.",
             "En Alerce, un día de cobro equivale a 32 millones de pesos de caja.",
             "Un día de inventario, a 24 millones.",
             "Y cada día de plazo con proveedores, a otros 24 millones de financiamiento.",
-            "Con ese dato, la conversación con el equipo comercial cambia. Ya no es «tenemos que cobrar más rápido». "
-            "Es «cada día que nos demoramos en cobrar nos cuesta 32 millones de caja».",
+            "Con ese dato, la conversación con el equipo comercial cambia. Ya no le dices que hay que cobrar más "
+            "rápido. Le dices que cada día de demora en cobrar cuesta 32 millones de caja.",
         ],
     ),
     dict(
@@ -243,7 +243,7 @@ LAMINAS = [
             dict(p=2, eti="Deuda de corto plazo", val="59 %", sub="de la deuda bancaria · era 31 %", tono="neg"),
         ],
         pie=dict(p=3, t="Ninguno aparece en un informe de gestión típico."),
-        sub_pie=dict(p=4, t="Antes de presentar, revisa dos o tres fórmulas contra tu propio Excel"),
+        sub_pie=dict(p=4, icono="lupa", t="Antes de presentar, revisa dos o tres fórmulas contra tu propio Excel"),
         pasos=[
             "Los tres ratios que Claude marca en rojo: la razón de caja, en 0,03.",
             "+ El ciclo de conversión de efectivo, que aumentó 37 días.",

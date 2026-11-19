@@ -17,7 +17,7 @@ LAMINAS = [
         ],
     ),
     dict(
-        tipo="prompt", titulo="Prompt 9: ponerle número a las alternativas", numero=9, nombre="Palancas y escenarios", une=True,
+        tipo="prompt", titulo="Prompt 9: ponerles número a las alternativas", numero=9, nombre="Palancas y escenarios", une=True,
         alto=True,
         segs=[
             ("Con todo lo analizado, cuantifica el impacto de estas\n"
@@ -40,7 +40,7 @@ LAMINAS = [
             dict(p=4, t="Tú pones las metas", d="Claude hace la aritmética"),
         ],
         pasos=[
-            "Para decidir hay que ponerle número a las alternativas.",
+            "Para decidir hay que ponerles número a las alternativas.",
             "En este prompt le entrego cuatro palancas, que salen directamente del diagnóstico. Reducir los días de "
             "cobro a 60. Reducir los días de inventario a 60. Recuperar un punto de margen bruto. Y volver los "
             "fletes al porcentaje de ventas del año anterior.",
@@ -61,11 +61,11 @@ LAMINAS = [
         ],
         pie=dict(p=2, t=f"{m(E['caja_liberada'])} millones de caja: la deuda de corto plazo baja de {m(B25['deuda_cp'])} "
                         f"a {m(E['deuda_cp_despues'])}, y el ciclo, de 92 a 72 días"),
-        sub_pie=dict(p=4, t="La prioridad: cobrar mejor y comprar mejor, antes que vender más"),
+        sub_pie=dict(p=4, icono="bandera", t="La prioridad: cobrar mejor y comprar mejor, antes que vender más"),
         pasos=[
             "Estos son los resultados. Bajar los días de cobro de 72 a 60 libera 390 millones de caja.",
             "Bajar los días de inventario de 68 a 60 libera otros 195.",
-            "En conjunto, 585 millones. Con eso la deuda de corto plazo baja de 1.150 a 565 millones, casi a la "
+            "En conjunto, 585 millones. Con eso la deuda de corto plazo baja de 1.150 a 565 millones, a menos de la "
             "mitad, y la empresa se ahorra unos 63 millones al año en intereses. El ciclo de conversión de efectivo "
             "baja de 92 a 72 días.",
             "Las otras dos palancas van al resultado. Recuperar un punto de margen son 118 millones al año. Y "
@@ -90,7 +90,7 @@ LAMINAS = [
         pie=dict(p=3, t="Lo valioso no es acertar el número: es mostrar el rango y dejar por escrito los supuestos."),
         pasos=[
             "Y estos son los tres escenarios. En el conservador, la cobranza baja solo a 66 días y el inventario a "
-            "64: se liberan cerca de 300 millones, y la deuda de corto plazo queda en unos 850.",
+            "64: se liberan cerca de 300 millones, y la deuda de corto plazo queda cerca de 860.",
             "En el escenario base, con 60 y 60 días, se liberan 585 millones y la deuda baja a 565.",
             "Y en el optimista, con 55 días en ambos, se liberan casi 870 millones, y la deuda de corto plazo baja a "
             "menos de 300.",
@@ -199,7 +199,7 @@ LAMINAS = [
             "Las acciones, cada una con responsable y plazo.",
             "Y al final, lo que se le pide al directorio: suspender los dividendos hasta normalizar la caja, y "
             "aprobar la renegociación de la línea de crédito a un plazo mayor.",
-            "Ahora, una advertencia importante. Este borrador sale en un minuto, pero no lo envíes tal cual. Los "
+            "Ahora, una advertencia importante. Este borrador sale muy rápido, pero no lo envíes tal cual. Los "
             "responsables, los plazos y las decisiones que pides son tuyos. Claude te da la estructura y la "
             "redacción; el contenido lo validas tú.",
             "Ese es el equilibrio correcto: la máquina hace el trabajo pesado, y la persona pone el criterio.",
@@ -212,14 +212,14 @@ LAMINAS = [
             dict(p=1, t="Lleva respondidas las tres preguntas más difíciles", d="Las encuentras con el prompt del paso 7"),
             dict(p=2, t="Termina con lo que pides", d="Una decisión, un responsable y una fecha"),
         ],
-        lateral=[dict(p=3, clase="oro", frase="Un informe que no pide nada, no cambia nada.", ancho=500)],
+        lateral=[dict(p=3, clase="oro", frase="Un informe que no pide nada no cambia nada.", ancho=500)],
         pasos=[
             "Tres consejos para presentar el informe. Uno: empieza por el mensaje, no por la tabla. Si la primera "
             "frase no se sostiene sola, el informe todavía no está listo.",
             "Dos: lleva respondidas las tres preguntas más difíciles. Ya sabes cómo encontrarlas: con el prompt del "
             "paso 7.",
             "Y tres: termina con lo que pides. Una decisión, un responsable y una fecha.",
-            "Un informe que no pide nada, no cambia nada.",
+            "Un informe que no pide nada no cambia nada.",
         ],
     ),
     dict(

@@ -79,7 +79,7 @@ LAMINAS = [
             dict(p=1, eti="Caja en diciembre", val="65 <small>millones</small>", sub="Eran 620 a comienzos de año", tono="neg"),
         ],
         pie=dict(p=2, t="¿Cómo se puede vender más, ganar más y quedarse sin caja?"),
-        sub_pie=dict(p=3, t="Ebook y archivo del caso: enlaces en la descripción del video"),
+        sub_pie=dict(p=3, icono="descarga", t="Ebook y archivo del caso: enlaces en la descripción del video"),
         pasos=[
             "Y lo vamos a hacer con un caso práctico: Distribuidora Alerce, una empresa ficticia que en 2025 vendió "
             "18 % más que el año anterior y tuvo la mayor utilidad de su historia.",

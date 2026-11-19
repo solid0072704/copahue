@@ -107,10 +107,15 @@ def numeros_a_palabras(texto: str) -> str:
         siguiente = re.match(r"\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|%)", resto)
         palabra = siguiente.group(1).lower() if siguiente else ""
         if dec is not None:
-            return f"{entero_a_palabras(entero)} coma {_decimales_a_palabras(dec)}"
-        femenino = palabra in _FEMENINOS
-        es_sustantivo = bool(palabra) and palabra != "%" and palabra not in _NO_SUSTANTIVOS
-        return entero_a_palabras(entero, femenino=femenino, apocope=es_sustantivo and not femenino)
+            palabras = f"{entero_a_palabras(entero)} coma {_decimales_a_palabras(dec)}"
+        else:
+            femenino = palabra in _FEMENINOS
+            es_sustantivo = bool(palabra) and palabra != "%" and palabra not in _NO_SUSTANTIVOS
+            palabras = entero_a_palabras(entero, femenino=femenino, apocope=es_sustantivo and not femenino)
+        antes = texto[:m.start()]
+        if not antes.strip() or re.search(r"[.?!]\s+$", antes):  # la cifra abre la frase
+            palabras = palabras[0].upper() + palabras[1:]
+        return palabras
 
     return _NUMERO.sub(reemplazo, texto)
 

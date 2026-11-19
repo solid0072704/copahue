@@ -54,8 +54,8 @@ ANTIGUEDAD = {
 }
 # Segmentos 2025: dos cadenas nuevas frente al resto de los clientes
 SEGMENTOS_2025 = {
-    "Cadenas nuevas (2 clientes)": dict(ventas=2360, margen_pct=0.19, cxc=650),
-    "Clientes tradicionales": dict(ventas=9440, margen_pct=0.265, cxc=1680),
+    "Cadenas nuevas (2 clientes)": dict(ventas=1800, margen=350, cxc=495),
+    "Clientes tradicionales": dict(ventas=10000, margen=2600, cxc=1835),
 }
 
 ETIQUETAS = {
@@ -292,7 +292,7 @@ def proyeccion_13_semanas() -> dict:
 def segmentos() -> dict:
     s = {}
     for nombre, d in SEGMENTOS_2025.items():
-        s[nombre] = dict(d, margen=d["ventas"] * d["margen_pct"], dias_cobro=d["cxc"] / d["ventas"] * 365,
+        s[nombre] = dict(d, margen_pct=d["margen"] / d["ventas"], dias_cobro=d["cxc"] / d["ventas"] * 365,
                          pct_ventas=d["ventas"] / EERR["2025"]["ventas"], pct_cxc=d["cxc"] / BALANCE["2025"]["cxc"])
     return s
 
@@ -317,7 +317,10 @@ def verificar() -> None:
     s = segmentos()
     assert sum(d["ventas"] for d in s.values()) == EERR["2025"]["ventas"]
     assert sum(d["cxc"] for d in s.values()) == BALANCE["2025"]["cxc"]
-    assert abs(sum(d["margen"] for d in s.values()) - eerr("2025")["margen_bruto"]) < 0.5
+    assert sum(d["margen"] for d in s.values()) == eerr("2025")["margen_bruto"]
+    # el resto de los clientes repite las ventas y el margen de 2024: todo el crecimiento viene de las cadenas
+    assert s["Clientes tradicionales"]["ventas"] == EERR["2024"]["ventas"]
+    assert s["Clientes tradicionales"]["margen"] == eerr("2024")["margen_bruto"]
     d = desviaciones()
     assert abs(d["efecto_volumen"] + d["efecto_margen"] - d["margen_bruto"]["abs"]) < 0.5
     for p in ("2024", "2025"):
@@ -438,10 +441,8 @@ def exportar_excel(ruta: Path) -> Path:
              ("otros_gav", -1), ("depreciacion", -1), ("ebit", 1), ("gastos_fin", -1), ("rai", 1),
              ("impuesto", -1), ("utilidad", 1)]
     tot_r = {ETIQUETAS[k] for k in ("margen_bruto", "ebit", "rai", "utilidad")}
-    hoja("Estado de resultados", "Estado de resultados", ["2024", "2025"],
-         [(ETIQUETAS[k], [s * r24[k], s * r25[k]]) for k, s in orden], tot_r)
-    hoja("Presupuesto 2025", "Presupuesto 2025 y resultado real", ["Presupuesto 2025", "Real 2025"],
-         [(ETIQUETAS[k], [s * rp[k], s * r25[k]]) for k, s in orden], tot_r)
+    hoja("Estado de resultados", "Estado de resultados y presupuesto", ["2024", "2025", "Presupuesto 2025"],
+         [(ETIQUETAS[k], [s * r24[k], s * r25[k], s * rp[k]]) for k, s in orden], tot_r)
     b24, b25 = balance("2024"), balance("2025")
     claves_b = ["efectivo", "cxc", "inventarios", "otros_ac", "activo_corriente", "ppe", "activos",
                 "proveedores", "deuda_cp", "otros_pc", "pasivo_corriente", "deuda_lp", "pasivos",
@@ -475,14 +476,20 @@ def exportar_excel(ruta: Path) -> Path:
     hoja("Cuentas por cobrar", "Antigüedad de las cuentas por cobrar", ["2024", "2025"],
          [(k, [ANTIGUEDAD["2024"][k], ANTIGUEDAD["2025"][k]]) for k in ANTIGUEDAD["2025"]]
          + [("Total cuentas por cobrar", [b24["cxc"], b25["cxc"]])], {"Total cuentas por cobrar"})
+    seg = segmentos()
+    hoja("Clientes", "Ventas, margen y cuentas por cobrar por tipo de cliente (2025)",
+         ["Ventas", "Margen bruto", "Cuentas por cobrar"],
+         [(n, [d["ventas"], d["margen"], d["cxc"]]) for n, d in seg.items()]
+         + [("Total", [r25["ventas"], r25["margen_bruto"], b25["cxc"]])], {"Total"})
     ws = wb.add_worksheet("Notas")
     ws.set_column(0, 0, 110)
     notas = [
         f"{EMPRESA} es una empresa ficticia creada para este curso. Cualquier parecido con una empresa real es coincidencia.",
         f"Giro: {GIRO.lower()} para almacenes, restaurantes y hoteles. Cifras en {MONEDA}.",
-        "En 2025 la empresa incorporó dos cadenas como clientes: representan el 20 % de las ventas, "
-        "compran con descuento (margen bruto de 19 %) y pagan en torno a 100 días.",
-        "El resto de los clientes mantiene un margen bruto de 26,5 %.",
+        "En 2025 la empresa incorporó dos cadenas como clientes: explican todo el crecimiento de las ventas "
+        "(1.800), compran con descuento (margen bruto de 19,4 %) y pagan a unos 100 días.",
+        "El resto de los clientes repite las ventas y el margen bruto de 2024 (26 %), pero paga más lento que antes.",
+        "En 2024 todas las ventas fueron a clientes tradicionales.",
         "Para atender a las cadenas se amplió el surtido y el inventario, y aumentó el gasto en distribución y fletes.",
         "El crecimiento se financió con una línea de crédito bancaria de corto plazo.",
         "No existe provisión por deudores incobrables.",

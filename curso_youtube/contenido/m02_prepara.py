@@ -40,7 +40,7 @@ LAMINAS = [
         tipo="html", titulo="El formato importa: Excel antes que una foto",
         html=formato([
             dict(p=0, estrellas=3, t="Planilla Excel o archivo CSV", d="Una fila por cuenta y una columna por período"),
-            dict(p=1, estrellas=2, t="PDF generado por tu sistema contable", d="Texto real, que se lee sin errores"),
+            dict(p=1, estrellas=2, t="PDF generado por tu sistema contable", d="Texto real, que se lee con muchos menos errores"),
             dict(p=2, estrellas=1, t="PDF escaneado o foto", d="Claude interpreta la imagen y puede confundir un 3 con un 8"),
         ]),
         notas=[
@@ -206,7 +206,7 @@ LAMINAS = [
              "  la caja bajó de 620 a 65.", 2),
         ],
         notas=[
-            dict(p=0, t="Empresa, unidad y períodos", d="Tres líneas que evitan los errores más comunes"),
+            dict(p=0, t="Empresa, unidad y períodos", d="Lo básico, sin ambigüedades"),
             dict(p=1, t="Los hechos del año", d="Un minuto tuyo le ahorra a Claude suponer"),
             dict(p=2, t="La preocupación, en simple", d="Orienta todo el análisis"),
         ],

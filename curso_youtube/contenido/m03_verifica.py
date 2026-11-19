@@ -116,12 +116,12 @@ LAMINAS = [
             "¿Y qué pasa cuando algo no cuadra? Te doy un ejemplo. Supón que, al leer un PDF escaneado, Claude te "
             "dice que los activos suman 6.015, y que los pasivos más el patrimonio suman 6.105. Hay una diferencia "
             "de 90.",
-            "Primer paso: pide el detalle. Muéstrame qué partidas sumaste en cada lado.",
+            "Primer paso: pide el detalle. Pídele que te muestre qué partidas sumó en cada lado.",
             "Segundo: compara con tu archivo. Y ahí aparece: en inventarios leyó 1.560, y el archivo dice 1.650. Dos "
             "dígitos invertidos.",
             "Tercero: corrige y vuelve a verificar. Le indicas el valor correcto, y le pides que repita las "
             "cuadraturas.",
-            "Un dato de contador: cuando la diferencia es divisible por 9, casi siempre es un error de dígitos "
+            "Un dato de contador: cuando la diferencia es divisible por 9, suele ser un error de dígitos "
             "invertidos. Lo importante es que el error apareció aquí, en el paso 2, y no en la reunión de directorio.",
         ],
     ),
@@ -170,7 +170,7 @@ LAMINAS = [
         ],
     ),
     dict(
-        tipo="respuesta", titulo="La primera lectura: de tres archivos a una pregunta",
+        tipo="respuesta", titulo="La primera lectura: de tres estados a una pregunta",
         bloques=[
             dict(p=0, h="Tres cifras", html='<p>Ventas <b class="pos">+18 %</b> · Utilidad neta <b class="pos">+3,9 %</b> · '
                                             'Efectivo <b class="neg">−89,5 %</b></p>'),
@@ -180,17 +180,17 @@ LAMINAS = [
             dict(p=3, h="La pregunta", html="<p><b>¿En qué se transformó la utilidad, si no se transformó en caja?</b></p>"),
         ],
         notas=[
-            dict(p=4, t="De 3 archivos a 1 pregunta de negocio", d="El resto del curso es responderla"),
+            dict(p=4, t="De 3 estados financieros a 1 pregunta", d="El resto del curso es responderla"),
         ],
         pasos=[
             "Esta es la respuesta. Las tres cifras: ventas 18 % arriba, utilidad casi 4 % arriba, y el efectivo "
-            "89 % abajo.",
+            "casi 90 % abajo.",
             "Lo que mejoró: las ventas y el resultado operacional.",
             "Lo que empeoró: el margen bruto cayó un punto, de 26 a 25 %, y la deuda bancaria de corto plazo casi se "
             "triplicó, de 400 a 1.150 millones.",
             "Y la pregunta que propone: ¿en qué se transformó la utilidad, si no se transformó en caja?",
-            "Fíjate en lo que acaba de pasar. En pocos minutos pasamos de tres archivos a una pregunta de negocio "
-            "bien formulada. El resto del curso es responderla.",
+            "Fíjate en lo que acaba de pasar. En pocos minutos pasamos de tres estados financieros a una pregunta "
+            "de negocio bien formulada. El resto del curso es responderla.",
         ],
     ),
     dict(

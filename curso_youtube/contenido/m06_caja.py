@@ -23,7 +23,7 @@ LAMINAS = [
         tipo="puntos", titulo="Por qué la utilidad no es caja", une=True,
         items=[
             dict(p=0, t="Vendes hoy, cobras después", d="La venta ya está en el resultado; la plata aún no está en el banco"),
-            dict(p=1, t="Compras lo que todavía no vendes", d="La pagaste, pero no es costo hasta que la vendes"),
+            dict(p=1, t="Compras lo que todavía no vendes", d="Lo pagaste, pero no es costo hasta que lo vendes"),
             dict(p=2, t="Hay pagos que no pasan por el resultado", d="Inversiones, cuotas de créditos y dividendos"),
         ],
         lateral=[dict(p=3, clase="tinta", eti="El flujo de efectivo lo ordena en",
@@ -77,14 +77,14 @@ LAMINAS = [
         pasos=[
             "Este es el puente de Alerce. Partimos de la utilidad: 485 millones.",
             "Sumamos la depreciación, 170 millones, porque es un gasto que no significó salida de plata.",
-            "Y ahora el capital de trabajo. Las cuentas por cobrar aumentaron 960 millones: es plata que la empresa "
-            "ganó en el papel, pero que todavía tienen sus clientes.",
+            "Y ahora el capital de trabajo. Las cuentas por cobrar aumentaron 960 millones: son ventas ya "
+            "facturadas que todavía no se cobran. Esa plata la tienen los clientes.",
             "Los inventarios aumentaron 535 millones: plata que está en la bodega.",
             "Los proveedores financiaron una parte, 151 millones.",
             "Resultado: el flujo de la operación fue negativo en 685 millones. Una empresa que ganó 485 millones "
             "quemó 685 en su operación. El año anterior, la operación había generado 510.",
             "Sigamos. Invirtió 320 millones en activo fijo y pagó 200 millones en dividendos.",
-            "¿Cómo lo cubrió? Con 650 millones de deuda bancaria neta, y con su propia caja, que bajó en "
+            "¿Cómo lo cubrió? Con 650 millones de deuda bancaria adicional, y con su propia caja, que bajó en "
             "555 millones.",
         ],
     ),
@@ -111,7 +111,7 @@ LAMINAS = [
         bloques=[
             dict(p=0, h="La respuesta, en 5 líneas", html=(
                 "<ol>"
-                '<li data-p="0">La utilidad quedó atrapada en <b>capital de trabajo</b>, que creció 1.344 millones.</li>'
+                '<li data-p="0">La utilidad quedó atrapada en <b>capital de trabajo</b>: cuentas por cobrar e inventarios crecieron 1.495 millones, y los proveedores financiaron solo 151.</li>'
                 '<li data-p="1">La operación <b>consumió 685 millones</b>; en 2024 había generado 510.</li>'
                 '<li data-p="2">El flujo de caja libre fue de <b class="neg">−1.005 millones</b>.</li>'
                 '<li data-p="3">Se cubrió con deuda de corto plazo (+750) y con la caja (−555).</li>'
@@ -123,8 +123,8 @@ LAMINAS = [
             dict(p=5, t="La línea que incomoda", d="Es la que un buen analista pone sobre la mesa", clase="rojo"),
         ],
         pasos=[
-            "Y esta es la respuesta en cinco líneas. La utilidad quedó atrapada en capital de trabajo, que creció "
-            "1.344 millones.",
+            "Y esta es la respuesta en cinco líneas. La utilidad quedó atrapada en capital de trabajo: las cuentas "
+            "por cobrar y los inventarios crecieron 1.495 millones, y los proveedores financiaron solo 151.",
             "La operación consumió 685 millones, cuando el año anterior había generado 510.",
             "El flujo de caja libre, después de inversiones, fue negativo en 1.005 millones.",
             "Eso se cubrió con deuda de corto plazo y con la caja que había.",
@@ -137,17 +137,19 @@ LAMINAS = [
         tipo="cifras", titulo="Cuánta caja cuesta crecer", cols=3,
         tiles=[
             dict(p=0, eti="Ventas adicionales", val="+" + m(CC["var_ventas"]), sub="millones de pesos"),
-            dict(p=1, eti="Capital de trabajo extra", val="+" + m(CC["var_kt"]), sub="millones inmovilizados", tono="neg"),
+            dict(p=1, eti="Capital de trabajo extra", val="+" + m(CC["var_kt"]), sub="millones, neto de proveedores", tono="neg"),
             dict(p=2, eti="Por cada 100 de venta nueva", val=m(CC["por_cada_100"]) + " <small>pesos</small>", sub="de caja", tono="neg"),
         ],
-        pie=dict(p=4, t="Crecer no es gratis: con más plazo y más inventario, puede dejarte sin caja."),
+        pie=dict(p=3, t="Con un margen neto de 4,1 %, esa caja equivale a unas 18 veces la utilidad anual de la venta nueva."),
+        sub_pie=dict(p=4, t="Crecer no es gratis: con más plazo y más inventario, puede dejarte sin caja"),
         pasos=[
             "Con estos números se puede calcular algo que pocas empresas miden: cuánta caja cuesta crecer. En 2025, "
             "Alerce vendió 1.800 millones más que el año anterior.",
-            "Y para lograrlo, tuvo que inmovilizar 1.344 millones adicionales en capital de trabajo.",
+            "Y para lograrlo, tuvo que inmovilizar 1.344 millones adicionales en capital de trabajo, ya descontado "
+            "lo que financiaron los proveedores.",
             "Es decir, cada 100 pesos de venta nueva le exigieron 75 pesos de caja.",
-            "Esa misma venta, con un margen neto de 4 %, deja 4 pesos de utilidad al año. O sea: la caja que exige "
-            "el crecimiento equivale a unas 18 veces la utilidad anual que genera.",
+            "Esa misma venta, con un margen neto de 4,1 %, deja unos 4 pesos de utilidad al año. O sea: la caja que "
+            "exige el crecimiento equivale a unas 18 veces la utilidad anual que genera.",
             "Este es el concepto que quiero que te lleves del caso: crecer no es gratis. Y cuando el crecimiento "
             "viene con más plazo y más inventario, puede ser la forma más rápida de quedarse sin caja.",
         ],
@@ -169,11 +171,11 @@ LAMINAS = [
         pasos=[
             "Con Claude, cada respuesta abre la siguiente pregunta. Le subí el detalle de ventas y cuentas por "
             "cobrar por cliente, y le pedí que cruzara margen y plazo de cobro por tipo de cliente.",
-            "El resultado es muy claro. Las dos cadenas nuevas representan el 20 % de las ventas. Pero dejan un "
-            "margen de 19 %, contra 26,5 % del resto de los clientes.",
-            "Y pagan a 101 días, contra 65. O sea: el crecimiento vino de los clientes menos rentables y más lentos "
-            "para pagar.",
-            "Y un dato más: incluso los clientes tradicionales se están demorando más que antes, de 50 a 65 días. "
+            "El resultado es muy claro. Las dos cadenas nuevas explican todo el crecimiento del año: 1.800 "
+            "millones, el 15 % de las ventas. Pero dejan un margen de 19,4 %, contra 26 % del resto de los clientes.",
+            "Y pagan a 100 días, contra 67. O sea: todo el crecimiento vino de los clientes menos rentables y más "
+            "lentos para pagar.",
+            "Y un dato más: incluso los clientes tradicionales se están demorando más que antes, de 50 a 67 días. "
             "Hay un problema de cobranza que va más allá de las cadenas.",
             "Todo esto no significa que venderles a las cadenas sea un error. Significa que hay que saber cuánto "
             "cuesta, y decidir con ese número a la vista.",
@@ -189,7 +191,7 @@ LAMINAS = [
             dict(c=["Por vencer", m(A24["tramos"]["Por vencer"]), pc(A24["pct_al_dia"]), m(A25["tramos"]["Por vencer"]),
                     pc(A25["pct_al_dia"])], p=1, aparece=1),
             *[dict(c=[k, m(A24["tramos"][k]), pc(A24["tramos"][k] / A24["total"]), m(A25["tramos"][k]),
-                      pc(A25["tramos"][k] / A25["total"])], p=(3 if k in ("61 a 90 días", "Más de 90 días") else 2), aparece=1)
+                      pc(A25["tramos"][k] / A25["total"])], p=("2,3" if k in ("61 a 90 días", "Más de 90 días") else 2), aparece=1)
               for k in ("1 a 30 días", "31 a 60 días", "61 a 90 días", "Más de 90 días")],
             dict(c=["Total cuentas por cobrar", m(A24["total"]), "100 %", m(A25["total"]), "100 %"], cls="total", aparece=1),
         ],

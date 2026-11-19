@@ -224,7 +224,7 @@ def _respuesta(s: dict) -> str:
         bloques.append(f'<div class="bl"{_p(b)}>{h}{b["html"]}</div>')
     etiqueta = s.get("etiqueta", "Respuesta de Claude")
     return (f'<div class="resp {"ancha" if not s.get("notas") else ""}"><div class="ph">{ico("mensaje")}{esc(etiqueta)}'
-            f'<em>{esc(s.get("fuente", "con los datos del caso · extracto"))}</em></div>'
+            f'<em>{esc(s.get("fuente", "ejemplo ilustrativo · datos del caso"))}</em></div>'
             f'<div class="rb">{"".join(bloques)}</div></div>' + _notas(s.get("notas", [])))
 
 
@@ -239,7 +239,8 @@ def _cifras(s: dict) -> str:
     if s.get("pie"):
         pie = f'<div class="frase-pie"{_p(s["pie"])}>{rico(s["pie"]["t"])}</div>'
     if s.get("sub_pie"):
-        pie += f'<div class="sub-pie"{_p(s["sub_pie"])}>{ico("descarga")}{rico(s["sub_pie"]["t"])}</div>'
+        icono = ico(s["sub_pie"]["icono"]) if s["sub_pie"].get("icono") else ""
+        pie += f'<div class="sub-pie"{_p(s["sub_pie"])}>{icono}{rico(s["sub_pie"]["t"])}</div>'
     sobre = ""
     if s.get("sobre"):
         sobre = f'<div class="sobre-cifras"{_p(s["sobre"])}>{rico(s["sobre"]["t"])}</div>'

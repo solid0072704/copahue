@@ -30,15 +30,15 @@ LAMINAS = [
     dict(
         tipo="puntos", titulo="Lo que Claude hace bien con tus estados financieros", estilo="check", compacto=True,
         items=[
-            dict(p=0, t="Lee y ordena", d="Convierte un PDF de 40 páginas en una tabla limpia"),
+            dict(p=0, t="Lee y ordena", d="Convierte un PDF de muchas páginas en una tabla limpia"),
             dict(p=1, t="Calcula", d="Variaciones, porcentajes y ratios, sin armar las fórmulas"),
             dict(p=2, t="Explica", d="Propone causas y te dice qué dato necesita para confirmarlas"),
             dict(p=3, t="Cuestiona", d="Busca inconsistencias y hace de abogado del diablo"),
             dict(p=4, t="Redacta", d="El resumen para el directorio, el correo al banco o el informe mensual"),
         ],
         pasos=[
-            "Hay cinco cosas que hace muy bien. Primero, lee y ordena. En segundos convierte un PDF de 40 páginas "
-            "en una tabla limpia.",
+            "Hay cinco cosas que hace muy bien. Primero, lee y ordena. Convierte un PDF de muchas páginas en una "
+            "tabla limpia, en muy poco tiempo.",
             "Segundo, calcula. Variaciones, porcentajes, ratios: todo lo que harías en Excel, sin armar las fórmulas.",
             "Tercero, explica. No solo te dice que el margen cayó: te propone por qué, y te dice qué dato "
             "necesitaría para confirmarlo.",
@@ -75,11 +75,11 @@ LAMINAS = [
             dict(p=3, icono="lupa", t="Revisa su trabajo", d="Antes de presentarlo a nadie"),
         ],
         lateral=[dict(p=0, clase="tinta", eti="Así es Claude",
-                      frase="Sabe mucho de finanzas, trabaja en segundos y no se cansa.",
+                      frase="Sabe mucho de finanzas, trabaja muy rápido y no se cansa.",
                       ps=["Pero no conoce tu industria, tus clientes ni tu historia."], ancho=620)],
         pasos=[
             "El modelo mental que más me sirve es este: piensa en Claude como un analista muy rápido, que acaba de "
-            "llegar a tu empresa. Sabe mucho de finanzas, trabaja en segundos y no se cansa. Pero es su primer día: "
+            "llegar a tu empresa. Sabe mucho de finanzas, trabaja muy rápido y no se cansa. Pero es su primer día: "
             "no conoce tu industria, tus clientes ni tu historia.",
             "¿Qué harías con un analista así? Le darías contexto,",
             "+ le explicarías con precisión qué necesitas,",
@@ -103,8 +103,8 @@ LAMINAS = [
             "Tres, tarea: qué quieres exactamente que haga.",
             "Cuatro, formato: cómo quieres la respuesta, por ejemplo una tabla y tres conclusiones.",
             "Y cinco, verificación: pídele que muestre sus cálculos y que te diga qué supuso.",
-            "Compara: «analiza este balance», frente a un prompt con estas cinco partes. La diferencia en la "
-            "respuesta es enorme, y la vas a ver en cada paso.",
+            "Compara un prompt de tres palabras, «analiza este balance», con uno que tiene estas cinco partes. La "
+            "diferencia en la respuesta es enorme, y la vas a ver en cada paso.",
         ],
     ),
     dict(
@@ -114,7 +114,7 @@ LAMINAS = [
                 dict(t="«Los activos suman 6.105 y los pasivos 3.320…»", d="«Se recomienda monitorear la liquidez y el endeudamiento»"),
                 dict(t="Correcta, pero genérica", d="Describe lo que ya podías ver tú mismo", icono="flecha")]),
             dict(p=1, clase="verde", icono="check", titulo="Con contexto, tarea y formato", icono_item="mensaje", items=[
-                dict(t="«La caja cayó 89 % mientras las ventas crecían 18 %…»", d="«El crecimiento se financió con cuentas por cobrar y deuda de corto plazo»"),
+                dict(t="«La caja cayó casi 90 % mientras las ventas crecían 18 %…»", d="«El crecimiento quedó en cuentas por cobrar e inventario, financiado con deuda de corto plazo»"),
                 dict(t="Prioriza y explica", d="Y te dice por dónde empezar", icono="flecha")]),
         ],
         pie=dict(p=2, t="El mismo archivo y la misma herramienta. Lo único que cambió fue la pregunta."),
@@ -123,28 +123,28 @@ LAMINAS = [
             "«analiza este balance», la respuesta suele ser correcta, pero genérica: te describe los totales y te "
             "recomienda monitorear la liquidez y el endeudamiento. No hay nada que no pudieras ver tú mismo.",
             "En cambio, cuando le das contexto, una tarea precisa y un formato, la respuesta cambia de nivel. Te "
-            "dice que la caja cayó 89 % mientras las ventas crecían 18, que el crecimiento se financió con cuentas "
-            "por cobrar y con deuda de corto plazo, y por dónde empezar.",
+            "dice que la caja cayó casi 90 % mientras las ventas crecían 18, que el crecimiento quedó atrapado en "
+            "cuentas por cobrar e inventario, que se financió con deuda de corto plazo, y por dónde empezar.",
             "Es el mismo archivo y la misma herramienta. Lo único que cambió fue la pregunta.",
         ],
     ),
     dict(
         tipo="puntos", titulo="Qué necesitas para seguir el curso",
         items=[
-            dict(p=0, icono="persona", t="Una cuenta en claude.ai", d="Puedes empezar con el plan gratuito"),
-            dict(p=1, icono="ajustes", t="Análisis de archivos y ejecución de código",
-                 d="Revisa en la configuración que estén activados, si tu plan los incluye"),
-            dict(p=2, icono="porciento", t="Así Claude calcula, no adivina",
-                 d="Escribe y ejecuta un pequeño programa para hacer las cuentas"),
+            dict(p=0, icono="persona", t="Una cuenta en claude.ai", d="Puedes empezar con el plan gratuito, que tiene límites de uso"),
+            dict(p=1, icono="ajustes", t="Ejecución de código y creación de archivos",
+                 d="Revisa en la configuración que esta función esté activada"),
+            dict(p=2, icono="porciento", t="Así Claude puede calcular con código",
+                 d="Por eso se lo pedimos en cada prompt"),
             dict(p=3, icono="ojo", t="Y puedes ver cómo lo hizo", d="El detalle del cálculo queda a la vista"),
         ],
         pasos=[
-            "Para seguir el curso necesitas una cuenta en claude.ai. Puedes empezar con el plan gratuito, y ver "
-            "después si necesitas uno de pago.",
-            "En la configuración, revisa que estén activadas las funciones de análisis de archivos y ejecución de "
-            "código, si tu plan las incluye.",
-            "Es importante: con ellas, Claude no calcula de memoria. Escribe y ejecuta un pequeño programa para "
-            "hacer las cuentas, igual que tú usarías una calculadora.",
+            "Para seguir el curso necesitas una cuenta en claude.ai. Puedes empezar con el plan gratuito, que "
+            "tiene límites de uso, y ver después si necesitas uno de pago.",
+            "En la configuración, revisa que esté activada la función de ejecución de código y creación de "
+            "archivos. El nombre puede cambiar con el tiempo, así que búscala en la sección de capacidades.",
+            "Es importante: con ella, Claude puede escribir y ejecutar un pequeño programa para hacer las cuentas, "
+            "en vez de calcular de memoria. Por eso, en cada prompt le vamos a pedir que calcule con código.",
             "Y puedes abrir ese detalle para ver qué hizo, paso a paso. Esa transparencia es lo que te permite "
             "revisar su trabajo, en vez de tener que creerle.",
         ],

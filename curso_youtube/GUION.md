@@ -1,6 +1,6 @@
 # Guion · Análisis de estados financieros con Claude
 
-108 láminas · 96 audios · 57.266 caracteres de narración · ≈ 58 minutos
+108 láminas · 96 audios · 57.937 caracteres de narración · ≈ 59 minutos
 
 Cada párrafo es un cambio en pantalla. Las cifras se escriben como se ven; la voz las recibe en palabras.
 Para cambiar el texto, edita los archivos de `contenido/` y vuelve a generar este documento.
@@ -83,7 +83,7 @@ Y a partir de ahí lee, calcula, compara, explica y redacta.
 
 ### m01_s03 · Lo que Claude hace bien con tus estados financieros
 
-Hay cinco cosas que hace muy bien. Primero, lee y ordena. En segundos convierte un PDF de 40 páginas en una tabla limpia.
+Hay cinco cosas que hace muy bien. Primero, lee y ordena. Convierte un PDF de muchas páginas en una tabla limpia, en muy poco tiempo.
 
 Segundo, calcula. Variaciones, porcentajes, ratios: todo lo que harías en Excel, sin armar las fórmulas.
 
@@ -105,7 +105,7 @@ Y no audita. Trabaja con la información que le das. Si los datos de origen est�
 
 ### m01_s05 · El modelo mental: un analista muy rápido… en su primer día
 
-El modelo mental que más me sirve es este: piensa en Claude como un analista muy rápido, que acaba de llegar a tu empresa. Sabe mucho de finanzas, trabaja en segundos y no se cansa. Pero es su primer día: no conoce tu industria, tus clientes ni tu historia.
+El modelo mental que más me sirve es este: piensa en Claude como un analista muy rápido, que acaba de llegar a tu empresa. Sabe mucho de finanzas, trabaja muy rápido y no se cansa. Pero es su primer día: no conoce tu industria, tus clientes ni tu historia.
 
 ¿Qué harías con un analista así? Le darías contexto,
 
@@ -127,23 +127,23 @@ Cuatro, formato: cómo quieres la respuesta, por ejemplo una tabla y tres conclu
 
 Y cinco, verificación: pídele que muestre sus cálculos y que te diga qué supuso.
 
-Compara: «analiza este balance», frente a un prompt con estas cinco partes. La diferencia en la respuesta es enorme, y la vas a ver en cada paso.
+Compara un prompt de tres palabras, «analiza este balance», con uno que tiene estas cinco partes. La diferencia en la respuesta es enorme, y la vas a ver en cada paso.
 
 ### m01_s07 · El mismo balance, dos preguntas
 
 Te muestro la diferencia con el caso que vamos a usar. Si subes el balance y escribes solamente «analiza este balance», la respuesta suele ser correcta, pero genérica: te describe los totales y te recomienda monitorear la liquidez y el endeudamiento. No hay nada que no pudieras ver tú mismo.
 
-En cambio, cuando le das contexto, una tarea precisa y un formato, la respuesta cambia de nivel. Te dice que la caja cayó 89 % mientras las ventas crecían 18, que el crecimiento se financió con cuentas por cobrar y con deuda de corto plazo, y por dónde empezar.
+En cambio, cuando le das contexto, una tarea precisa y un formato, la respuesta cambia de nivel. Te dice que la caja cayó casi 90 % mientras las ventas crecían 18, que el crecimiento quedó atrapado en cuentas por cobrar e inventario, que se financió con deuda de corto plazo, y por dónde empezar.
 
 Es el mismo archivo y la misma herramienta. Lo único que cambió fue la pregunta.
 
 ### m01_s08 · Qué necesitas para seguir el curso
 
-Para seguir el curso necesitas una cuenta en claude.ai. Puedes empezar con el plan gratuito, y ver después si necesitas uno de pago.
+Para seguir el curso necesitas una cuenta en claude.ai. Puedes empezar con el plan gratuito, que tiene límites de uso, y ver después si necesitas uno de pago.
 
-En la configuración, revisa que estén activadas las funciones de análisis de archivos y ejecución de código, si tu plan las incluye.
+En la configuración, revisa que esté activada la función de ejecución de código y creación de archivos. El nombre puede cambiar con el tiempo, así que búscala en la sección de capacidades.
 
-Es importante: con ellas, Claude no calcula de memoria. Escribe y ejecuta un pequeño programa para hacer las cuentas, igual que tú usarías una calculadora.
+Es importante: con ella, Claude puede escribir y ejecutar un pequeño programa para hacer las cuentas, en vez de calcular de memoria. Por eso, en cada prompt le vamos a pedir que calcule con código.
 
 Y puedes abrir ese detalle para ver qué hizo, paso a paso. Esa transparencia es lo que te permite revisar su trabajo, en vez de tener que creerle.
 
@@ -321,13 +321,13 @@ Todavía no analizamos nada, y ya tenemos dos temas para conversar.
 
 ¿Y qué pasa cuando algo no cuadra? Te doy un ejemplo. Supón que, al leer un PDF escaneado, Claude te dice que los activos suman 6.015, y que los pasivos más el patrimonio suman 6.105. Hay una diferencia de 90.
 
-Primer paso: pide el detalle. Muéstrame qué partidas sumaste en cada lado.
+Primer paso: pide el detalle. Pídele que te muestre qué partidas sumó en cada lado.
 
 Segundo: compara con tu archivo. Y ahí aparece: en inventarios leyó 1.560, y el archivo dice 1.650. Dos dígitos invertidos.
 
 Tercero: corrige y vuelve a verificar. Le indicas el valor correcto, y le pides que repita las cuadraturas.
 
-Un dato de contador: cuando la diferencia es divisible por 9, casi siempre es un error de dígitos invertidos. Lo importante es que el error apareció aquí, en el paso 2, y no en la reunión de directorio.
+Un dato de contador: cuando la diferencia es divisible por 9, suele ser un error de dígitos invertidos. Lo importante es que el error apareció aquí, en el paso 2, y no en la reunión de directorio.
 
 ### m03_s06 · Tres chequeos de 30 segundos, para cualquier respuesta
 
@@ -349,9 +349,9 @@ Tres cifras que resuman el año, qué mejoró, qué empeoró, y la pregunta más
 
 Y le indico para quién escribe: un directorio que no es experto en contabilidad. Ese detalle cambia por completo el tono de la respuesta.
 
-### m03_s08 · La primera lectura: de tres archivos a una pregunta
+### m03_s08 · La primera lectura: de tres estados a una pregunta
 
-Esta es la respuesta. Las tres cifras: ventas 18 % arriba, utilidad casi 4 % arriba, y el efectivo 89 % abajo.
+Esta es la respuesta. Las tres cifras: ventas 18 % arriba, utilidad casi 4 % arriba, y el efectivo casi 90 % abajo.
 
 Lo que mejoró: las ventas y el resultado operacional.
 
@@ -359,7 +359,7 @@ Lo que empeoró: el margen bruto cayó un punto, de 26 a 25 %, y la deuda bancar
 
 Y la pregunta que propone: ¿en qué se transformó la utilidad, si no se transformó en caja?
 
-Fíjate en lo que acaba de pasar. En pocos minutos pasamos de tres archivos a una pregunta de negocio bien formulada. El resto del curso es responderla.
+Fíjate en lo que acaba de pasar. En pocos minutos pasamos de tres estados financieros a una pregunta de negocio bien formulada. El resto del curso es responderla.
 
 ### m03_s09 · Paso 2 en resumen
 
@@ -382,7 +382,7 @@ Un repaso rápido. El análisis vertical mira la estructura. En el estado de res
 
 El análisis horizontal mira la tendencia: cuánto cambió cada cuenta de un período a otro, en monto y en porcentaje.
 
-Por separado dicen poco. Juntos responden una pregunta muy útil: qué creció más rápido que las ventas. Porque lo que crece más rápido que las ventas, se está comiendo el margen o la caja.
+Por separado dicen poco. Juntos responden una pregunta muy útil: qué creció más rápido que las ventas. Porque lo que crece más rápido que las ventas se está comiendo el margen o la caja.
 
 ### m04_s03 · Prompt 4: análisis vertical y horizontal
 
@@ -428,7 +428,7 @@ Los inventarios crecieron 48 %.
 
 Y la caja pagó el resto: de ser el 12 % de los activos, hoy es el 1 %.
 
-Mira también la última fila. El patrimonio pasó de financiar el 50 % de los activos, al 46 %. La empresa depende cada vez más de recursos de terceros.
+Mira también la última fila. El patrimonio pasó de financiar el 50 % de los activos a financiar el 46 %. La empresa depende cada vez más de recursos de terceros.
 
 ### m04_s07 · Los 3 hallazgos, ordenados por impacto
 
@@ -503,7 +503,7 @@ Ese criterio es suyo, y es razonable. Pero el tuyo puede ser otro. Si tu empresa
 
 Partamos por la liquidez. La liquidez corriente, activos corrientes sobre pasivos corrientes, bajó de 2 a 1,65.
 
-Si miras solo ese número, dirías que la empresa está sana: tiene 1,65 pesos de activos de corto plazo por cada peso que debe. Pero ojo con lo que hay dentro de esos activos.
+Si miras solo ese número, dirías que la empresa está sana: tiene 1,65 pesos de activos de corto plazo por cada peso que debe a corto plazo. Pero ojo con lo que hay dentro de esos activos.
 
 La prueba ácida, que saca los inventarios, cayó de 1,3 a 0,99.
 
@@ -529,7 +529,7 @@ La rentabilidad sobre el patrimonio bajó de 18,7 a 17,4 %. Sigue siendo una bue
 
 ### m05_s09 · DuPont: de dónde viene la rentabilidad
 
-DuPont descompone esa rentabilidad en tres factores: el margen neto, la rotación de activos y el apalancamiento. En 2024, la rentabilidad venía de un margen de 4,7 %, una rotación de 2 veces y un apalancamiento de 2.
+DuPont descompone esa rentabilidad en tres factores: el margen neto, la rotación de activos y el apalancamiento. En 2024, la rentabilidad venía de un margen cercano a 4,7 %, una rotación de 2 veces y un apalancamiento de 2.
 
 En 2025, el margen bajó, la rotación bajó, y lo único que subió fue el apalancamiento, a 2,19.
 
@@ -557,7 +557,7 @@ Un día de inventario, a 24 millones.
 
 Y cada día de plazo con proveedores, a otros 24 millones de financiamiento.
 
-Con ese dato, la conversación con el equipo comercial cambia. Ya no es «tenemos que cobrar más rápido». Es «cada día que nos demoramos en cobrar nos cuesta 32 millones de caja».
+Con ese dato, la conversación con el equipo comercial cambia. Ya no le dices que hay que cobrar más rápido. Le dices que cada día de demora en cobrar cuesta 32 millones de caja.
 
 ### m05_s12 · Los 3 ratios en rojo
 
@@ -616,7 +616,7 @@ Este es el puente de Alerce. Partimos de la utilidad: 485 millones.
 
 Sumamos la depreciación, 170 millones, porque es un gasto que no significó salida de plata.
 
-Y ahora el capital de trabajo. Las cuentas por cobrar aumentaron 960 millones: es plata que la empresa ganó en el papel, pero que todavía tienen sus clientes.
+Y ahora el capital de trabajo. Las cuentas por cobrar aumentaron 960 millones: son ventas ya facturadas que todavía no se cobran. Esa plata la tienen los clientes.
 
 Los inventarios aumentaron 535 millones: plata que está en la bodega.
 
@@ -626,7 +626,7 @@ Resultado: el flujo de la operación fue negativo en 685 millones. Una empresa q
 
 Sigamos. Invirtió 320 millones en activo fijo y pagó 200 millones en dividendos.
 
-¿Cómo lo cubrió? Con 650 millones de deuda bancaria neta, y con su propia caja, que bajó en 555 millones.
+¿Cómo lo cubrió? Con 650 millones de deuda bancaria adicional, y con su propia caja, que bajó en 555 millones.
 
 ### m06_s05 · Flujo de caja libre: lo que realmente queda disponible
 
@@ -640,7 +640,7 @@ No había nada que repartir. Y aun así se repartieron 200 millones, financiados
 
 ### m06_s06 · ¿Por qué la utilidad no se transformó en caja?
 
-Y esta es la respuesta en cinco líneas. La utilidad quedó atrapada en capital de trabajo, que creció 1.344 millones.
+Y esta es la respuesta en cinco líneas. La utilidad quedó atrapada en capital de trabajo: las cuentas por cobrar y los inventarios crecieron 1.495 millones, y los proveedores financiaron solo 151.
 
 La operación consumió 685 millones, cuando el año anterior había generado 510.
 
@@ -656,11 +656,11 @@ Esa última línea es la que más incomoda, y es exactamente el tipo de frase qu
 
 Con estos números se puede calcular algo que pocas empresas miden: cuánta caja cuesta crecer. En 2025, Alerce vendió 1.800 millones más que el año anterior.
 
-Y para lograrlo, tuvo que inmovilizar 1.344 millones adicionales en capital de trabajo.
+Y para lograrlo, tuvo que inmovilizar 1.344 millones adicionales en capital de trabajo, ya descontado lo que financiaron los proveedores.
 
 Es decir, cada 100 pesos de venta nueva le exigieron 75 pesos de caja.
 
-Esa misma venta, con un margen neto de 4 %, deja 4 pesos de utilidad al año. O sea: la caja que exige el crecimiento equivale a unas 18 veces la utilidad anual que genera.
+Esa misma venta, con un margen neto de 4,1 %, deja unos 4 pesos de utilidad al año. O sea: la caja que exige el crecimiento equivale a unas 18 veces la utilidad anual que genera.
 
 Este es el concepto que quiero que te lleves del caso: crecer no es gratis. Y cuando el crecimiento viene con más plazo y más inventario, puede ser la forma más rápida de quedarse sin caja.
 
@@ -668,11 +668,11 @@ Este es el concepto que quiero que te lleves del caso: crecer no es gratis. Y cu
 
 Con Claude, cada respuesta abre la siguiente pregunta. Le subí el detalle de ventas y cuentas por cobrar por cliente, y le pedí que cruzara margen y plazo de cobro por tipo de cliente.
 
-El resultado es muy claro. Las dos cadenas nuevas representan el 20 % de las ventas. Pero dejan un margen de 19 %, contra 26,5 % del resto de los clientes.
+El resultado es muy claro. Las dos cadenas nuevas explican todo el crecimiento del año: 1.800 millones, el 15 % de las ventas. Pero dejan un margen de 19,4 %, contra 26 % del resto de los clientes.
 
-Y pagan a 101 días, contra 65. O sea: el crecimiento vino de los clientes menos rentables y más lentos para pagar.
+Y pagan a 100 días, contra 67. O sea: todo el crecimiento vino de los clientes menos rentables y más lentos para pagar.
 
-Y un dato más: incluso los clientes tradicionales se están demorando más que antes, de 50 a 65 días. Hay un problema de cobranza que va más allá de las cadenas.
+Y un dato más: incluso los clientes tradicionales se están demorando más que antes, de 50 a 67 días. Hay un problema de cobranza que va más allá de las cadenas.
 
 Todo esto no significa que venderles a las cadenas sea un error. Significa que hay que saber cuánto cuesta, y decidir con ese número a la vista.
 
@@ -755,9 +755,9 @@ El efecto volumen: si esos 600 millones adicionales se hubieran vendido con el m
 
 El efecto margen: como toda la venta se hizo con un punto menos de margen, se perdieron 118 millones.
 
-156 menos 118: los 38 que vimos. Dicho de otra forma, tres cuartas partes del beneficio de vender más se fueron en vender más barato.
+Son 156 menos 118: los 38 que vimos. Dicho de otra forma, tres cuartas partes del beneficio de vender más se fueron en vender más barato.
 
-Este cálculo, que a mano toma un buen rato y en el que es fácil equivocarse, Claude lo entrega en segundos y con la fórmula a la vista.
+Este cálculo, que a mano toma un buen rato y en el que es fácil equivocarse, Claude lo entrega en un momento, y con la fórmula a la vista.
 
 ### m07_s06 · Las dos fórmulas, por si quieres revisarlas
 
@@ -783,7 +783,7 @@ Tres consejos para sacarle más partido a este paso. Uno: compara mes a mes, y t
 
 Dos: pídele una proyección de cierre. Con lo que va del año, y con lo que queda del presupuesto, ¿cómo terminaríamos? Es la pregunta que más le interesa a un directorio a mitad de año.
 
-Y tres: guarda las explicaciones. Las causas que identificaste este mes son el contexto del mes siguiente. Si las dejas en tu proyecto, Claude las va a tener presentes en el próximo cierre.
+Y tres: guarda las explicaciones. Las causas que identificaste este mes son el contexto del mes siguiente. Si las guardas como un archivo en tu proyecto, Claude las va a tener presentes en el próximo cierre.
 
 ### m07_s09 · Paso 6 en resumen
 
@@ -820,7 +820,7 @@ La segunda, dependencia de la deuda de corto plazo: 1.150 millones que vencen de
 
 Luego, tres importantes. La cartera vencida: el 45 % de las cuentas por cobrar está vencido, contra 27 % el año anterior. Y lo vencido a más de 90 días pasó de 10 a 90 millones, sin ninguna provisión. Si parte de eso no se cobra, la utilidad del año está sobrestimada.
 
-La concentración: dos clientes explican el 20 % de las ventas y el 28 % de las cuentas por cobrar.
+La concentración: dos clientes explican el 15 % de las ventas y el 21 % de las cuentas por cobrar.
 
 Y los dividendos: se repartieron 200 millones en un año en que la operación consumió caja.
 
@@ -846,13 +846,15 @@ Para la cartera vencida, el detalle por cliente y el registro de la gestión de 
 
 Para la concentración, los contratos y las condiciones comerciales con las cadenas.
 
+Para los dividendos, la política de dividendos y las actas del directorio.
+
 Y para los inventarios, la rotación por producto y las mermas.
 
 Con esto, las alertas dejan de ser una lista de preocupaciones, y se convierten en una lista de tareas.
 
 ### m08_s06 · Los supuestos optimistas que detecta
 
-También le pedimos los supuestos optimistas de la administración. Identifica tres. Que las cadenas van a pagar a tiempo, cuando hoy pagan a 101 días y la cartera vencida crece.
+También le pedimos los supuestos optimistas de la administración. Identifica tres. Que las cadenas van a pagar a tiempo, cuando hoy pagan a 100 días y la cartera vencida crece.
 
 Que el banco va a renovar la línea de crédito, cuando 1.150 millones dependen de esa decisión.
 
@@ -899,9 +901,9 @@ Y úsalo antes de ir al directorio o al banco.
 
 Paso 8: decidir. Todo lo anterior no sirve de nada si se queda en un diagnóstico. El último paso es convertir el análisis en decisiones: qué vamos a hacer, quién, cuándo, y cuánto vale.
 
-### m09_s02 · Prompt 9: ponerle número a las alternativas
+### m09_s02 · Prompt 9: ponerles número a las alternativas
 
-Para decidir hay que ponerle número a las alternativas.
+Para decidir hay que ponerles número a las alternativas.
 
 En este prompt le entrego cuatro palancas, que salen directamente del diagnóstico. Reducir los días de cobro a 60. Reducir los días de inventario a 60. Recuperar un punto de margen bruto. Y volver los fletes al porcentaje de ventas del año anterior.
 
@@ -917,7 +919,7 @@ Estos son los resultados. Bajar los días de cobro de 72 a 60 libera 390 millone
 
 Bajar los días de inventario de 68 a 60 libera otros 195.
 
-En conjunto, 585 millones. Con eso la deuda de corto plazo baja de 1.150 a 565 millones, casi a la mitad, y la empresa se ahorra unos 63 millones al año en intereses. El ciclo de conversión de efectivo baja de 92 a 72 días.
+En conjunto, 585 millones. Con eso la deuda de corto plazo baja de 1.150 a 565 millones, a menos de la mitad, y la empresa se ahorra unos 63 millones al año en intereses. El ciclo de conversión de efectivo baja de 92 a 72 días.
 
 Las otras dos palancas van al resultado. Recuperar un punto de margen son 118 millones al año. Y volver los fletes a 4,3 % de las ventas, 53 millones más.
 
@@ -925,7 +927,7 @@ Fíjate en el orden de magnitud. Las palancas de caja valen 585 millones; las de
 
 ### m09_s04 · Tres escenarios, para mostrar un rango
 
-Y estos son los tres escenarios. En el conservador, la cobranza baja solo a 66 días y el inventario a 64: se liberan cerca de 300 millones, y la deuda de corto plazo queda en unos 850.
+Y estos son los tres escenarios. En el conservador, la cobranza baja solo a 66 días y el inventario a 64: se liberan cerca de 300 millones, y la deuda de corto plazo queda cerca de 860.
 
 En el escenario base, con 60 y 60 días, se liberan 585 millones y la deuda baja a 565.
 
@@ -973,7 +975,7 @@ Las acciones, cada una con responsable y plazo.
 
 Y al final, lo que se le pide al directorio: suspender los dividendos hasta normalizar la caja, y aprobar la renegociación de la línea de crédito a un plazo mayor.
 
-Ahora, una advertencia importante. Este borrador sale en un minuto, pero no lo envíes tal cual. Los responsables, los plazos y las decisiones que pides son tuyos. Claude te da la estructura y la redacción; el contenido lo validas tú.
+Ahora, una advertencia importante. Este borrador sale muy rápido, pero no lo envíes tal cual. Los responsables, los plazos y las decisiones que pides son tuyos. Claude te da la estructura y la redacción; el contenido lo validas tú.
 
 Ese es el equilibrio correcto: la máquina hace el trabajo pesado, y la persona pone el criterio.
 
@@ -985,7 +987,7 @@ Dos: lleva respondidas las tres preguntas más difíciles. Ya sabes cómo encont
 
 Y tres: termina con lo que pides. Una decisión, un responsable y una fecha.
 
-Un informe que no pide nada, no cambia nada.
+Un informe que no pide nada no cambia nada.
 
 ### m09_s10 · Paso 8 en resumen
 
@@ -1032,19 +1034,19 @@ Para que la rutina funcione, deja bien armadas las instrucciones de tu proyecto.
 
 ### m10_s04 · Cinco repreguntas que siempre sirven
 
-Si tuviera que resumir el curso en una habilidad, sería repreguntar. Estas son las cinco repreguntas que uso todos los días. Por qué: pide hipótesis, y el dato para confirmarlas.
+Si tuviera que resumir el curso en una habilidad, sería repreguntar. Estas son las cinco repreguntas que uso todos los días. La primera: ¿por qué? Pide hipótesis, y el dato para confirmarlas.
 
-Cómo lo calculaste: que muestre la fórmula y las cifras.
+La segunda: ¿cómo lo calculaste? Que muestre la fórmula y las cifras.
 
-Qué supusiste: los supuestos escondidos son el mayor riesgo de cualquier análisis.
+La tercera: ¿qué supusiste? Los supuestos escondidos son el mayor riesgo de cualquier análisis.
 
-Qué dato te falta: te dice exactamente qué ir a buscar.
+La cuarta: ¿qué dato te falta? Te dice exactamente qué ir a buscar.
 
-Y qué pasaría si: para abrir escenarios y medir sensibilidad. Con estas cinco preguntas, una respuesta regular se convierte en un buen análisis.
+Y la quinta: ¿qué pasaría si cambia un supuesto? Sirve para abrir escenarios y medir sensibilidad. Con estas cinco preguntas, una respuesta regular se convierte en un buen análisis.
 
 ### m10_s05 · Los 6 errores más comunes
 
-Y antes de cerrar, los seis errores que más veo. Uno: pedir sin contexto. «Analiza este balance» entrega un análisis genérico, que podría ser de cualquier empresa.
+Y antes de cerrar, los seis errores que más veo. Uno: pedir sin contexto. Si solo escribes «analiza este balance», recibes un análisis genérico, que podría ser de cualquier empresa.
 
 Dos: creerle sin verificar. Revisa siempre las cifras de origen y algunas fórmulas.
 
@@ -1086,7 +1088,7 @@ Antes de terminar, cuatro preguntas que me hacen siempre. ¿Puedo confiar en los
 
 ### m10_s09 · Preguntas que me hacen siempre (2 de 2)
 
-¿Sirve para una empresa pequeña? Sí. Mientras tengas un balance y un estado de resultados, el método funciona igual. De hecho, es donde más ayuda, porque normalmente no hay un equipo de análisis.
+¿Sirve para una empresa pequeña? Sí. Mientras tengas dos balances y un estado de resultados, el método funciona igual. De hecho, es donde más ayuda, porque normalmente no hay un equipo de análisis.
 
 ¿Y reemplaza a mi contador o a mi analista? No. Les quita el trabajo mecánico, y les deja más tiempo para lo que realmente vale: entender el negocio y recomendar qué hacer.
 
@@ -1111,7 +1113,7 @@ Antes de despedirnos, las cuatro lecciones que deja el caso de Alerce. Uno: la u
 
 Dos: un buen ratio puede esconder un problema. Una liquidez corriente de 1,65, con una razón de caja de 0,03.
 
-Tres: crecer cuesta caja. 75 pesos por cada 100 de venta nueva.
+Tres: crecer cuesta caja. Son 75 pesos por cada 100 de venta nueva.
 
 Y cuatro: las desviaciones suelen tener un mismo origen. Aquí, la forma en que la empresa creció. Si te llevas estas cuatro ideas, ya vas a leer tus propios estados financieros con otros ojos.
 
@@ -1139,7 +1141,7 @@ Ninguno de esos pasos requiere ser experto en inteligencia artificial. Requiere 
 
 ### m11_s03 · Tres formas de seguir
 
-Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el ebook y el archivo del caso. El enlace está en la descripción. Repite cada prompt con los mismos números, y después hazlo con los tuyos.
+Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el ebook, el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos números, y después hazlo con los tuyos.
 
 La segunda: si prefieres hacerlo acompañado, en Hyperion Advisory ofrecemos un diagnóstico financiero sin costo, de 30 minutos. Revisamos juntos cómo están hoy tus reportes, y te llevas dos o tres mejoras concretas. También encuentras el enlace en la descripción.
 

@@ -351,3 +351,4 @@ table.tabla { font-size: 31px; }
 .notas .nt .gr { color: var(--tinta); }
 .notas .nt .gr.pos { color: var(--verde); } .notas .nt .gr.neg { color: var(--rojo); } .notas .nt .gr.amb { color: var(--ambar); }
 .tarjeta .gr.pos { color: var(--verde); } .tarjeta .gr.neg { color: var(--rojo); } .tarjeta .gr.amb { color: var(--ambar); }
+.dfila .fa b { font-size: 60px; white-space: nowrap; gap: 10px; } .dfila .fa b em { font-size: 28px; }

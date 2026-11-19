@@ -48,7 +48,7 @@ LAMINAS = [
             "El análisis horizontal mira la tendencia: cuánto cambió cada cuenta de un período a otro, en monto y "
             "en porcentaje.",
             "Por separado dicen poco. Juntos responden una pregunta muy útil: qué creció más rápido que las ventas. "
-            "Porque lo que crece más rápido que las ventas, se está comiendo el margen o la caja.",
+            "Porque lo que crece más rápido que las ventas se está comiendo el margen o la caja.",
         ],
     ),
     dict(
@@ -93,6 +93,7 @@ LAMINAS = [
             _er("depreciacion"),
             _er("ebit", cls="total", p=4),
             _er("gastos_fin", p=3, tono="neg"),
+            _er("impuesto"),
             _er("utilidad", cls="total", p=4, tono="amb"),
         ],
         notas=[
@@ -151,10 +152,12 @@ LAMINAS = [
             _bal("efectivo", p=4, tono="neg"),
             _bal("cxc", p=1, tono="neg"),
             _bal("inventarios", p=2, tono="neg"),
+            _bal("otros_ac"),
             _bal("ppe", etq="Activo fijo"),
             _bal("activos", cls="total"),
             _bal("proveedores", p=3),
             _bal("deuda_cp", etq="Deuda bancaria de corto plazo", p=3, tono="neg"),
+            _bal("otros_pc"),
             _bal("deuda_lp", etq="Deuda bancaria de largo plazo"),
             _bal("patrimonio", etq="Patrimonio", p=5),
         ],
@@ -164,7 +167,6 @@ LAMINAS = [
             dict(p=3, gr="×2,9", tono="neg", t="Deuda de corto plazo", d="Los proveedores, solo +15 %"),
             dict(p=4, gr="12 % → 1 %", tono="neg", t="Caja sobre activos"),
         ],
-        notas_compactas=True,
         pasos=[
             "Ahora el balance, que es donde está la historia. Recuerda: las ventas crecieron 18 %.",
             "Las cuentas por cobrar crecieron 70 %. Pasaron de 1.370 a 2.330 millones, y hoy son el 38 % de todos "
@@ -173,14 +175,14 @@ LAMINAS = [
             "¿Y cómo se financió ese crecimiento? Los proveedores aumentaron solo 15 %. La diferencia la puso el "
             "banco: la deuda de corto plazo pasó de 400 a 1.150 millones, casi el triple.",
             "Y la caja pagó el resto: de ser el 12 % de los activos, hoy es el 1 %.",
-            "Mira también la última fila. El patrimonio pasó de financiar el 50 % de los activos, al 46 %. La "
-            "empresa depende cada vez más de recursos de terceros.",
+            "Mira también la última fila. El patrimonio pasó de financiar el 50 % de los activos a financiar el "
+            "46 %. La empresa depende cada vez más de recursos de terceros.",
         ],
     ),
     dict(
         tipo="html", titulo="Los 3 hallazgos, ordenados por impacto",
         html=rank([
-            dict(p=0, n=1, t="Capital de trabajo", d="Cuentas por cobrar +960 e inventarios +535", v="1.495", unidad="millones"),
+            dict(p=0, n=1, t="Cuentas por cobrar e inventarios", d="Capital de trabajo inmovilizado: +960 y +535", v="1.495", unidad="millones"),
             dict(p=1, n=2, t="Financiamiento", d="Deuda de corto plazo +750 · gastos financieros +59 %", v="750", unidad="millones"),
             dict(p=2, n=3, t="Margen y fletes", d="1 punto menos de margen bruto (118) · fletes +130", v="248", unidad="millones"),
         ]),

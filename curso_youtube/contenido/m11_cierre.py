@@ -14,7 +14,7 @@ LAMINAS = [
             "empresa ganó 485 millones, y su operación consumió 685.",
             "Dos: un buen ratio puede esconder un problema. Una liquidez corriente de 1,65, con una razón de caja "
             "de 0,03.",
-            "Tres: crecer cuesta caja. 75 pesos por cada 100 de venta nueva.",
+            "Tres: crecer cuesta caja. Son 75 pesos por cada 100 de venta nueva.",
             "Y cuatro: las desviaciones suelen tener un mismo origen. Aquí, la forma en que la empresa creció. Si te "
             "llevas estas cuatro ideas, ya vas a leer tus propios estados financieros con otros ojos.",
         ],
@@ -40,7 +40,7 @@ LAMINAS = [
     dict(
         tipo="cierre", titulo="Tres formas de seguir",
         opciones=[
-            dict(p=0, n="01", icono="descarga", t="Descarga el ebook y el archivo del caso",
+            dict(p=0, n="01", icono="descarga", t="Descarga el ebook, el caso y los prompts",
                  d="Repite cada prompt con los mismos números, y después con los tuyos. Enlace en la descripción."),
             dict(p=1, n="02", icono="calendario", t="Diagnóstico financiero sin costo",
                  d="30 minutos con Hyperion Advisory: revisamos tus reportes y te llevas 2 o 3 mejoras concretas."),
@@ -50,7 +50,7 @@ LAMINAS = [
         gracias=dict(p=3, html="Gracias por acompañarme. <em>Nos vemos en el próximo video.</em>"),
         pasos=[
             "Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el "
-            "ebook y el archivo del caso. El enlace está en la descripción. Repite cada prompt con los mismos "
+            "ebook, el archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos "
             "números, y después hazlo con los tuyos.",
             "La segunda: si prefieres hacerlo acompañado, en Hyperion Advisory ofrecemos un diagnóstico financiero "
             "sin costo, de 30 minutos. Revisamos juntos cómo están hoy tus reportes, y te llevas dos o tres mejoras "

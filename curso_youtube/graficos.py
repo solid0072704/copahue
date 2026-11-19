@@ -184,13 +184,9 @@ def ciclo_caja() -> str:
         out.append(barra(inv, cob, yb, TINTA3, "Cobro a clientes", cob, 1))
         out.append(barra(0, pag, yb + 98, GRIS, "Pago a proveedores", pag, 2))
         out.append(barra(pag, inv + cob - pag, yb + 98, ORO, "Ciclo de conversión de efectivo", cic, 3, color_texto=TINTA))
-    x_fin_24 = x0 + (55 + 50) * escala
-    x_fin_25 = x0 + (68 + 72) * escala
-    out.append(f'<g data-p="4"><line x1="{x_fin_24:.0f}" y1="262" x2="{x_fin_24:.0f}" y2="334" stroke="{ROJO}" stroke-width="3" stroke-dasharray="7 7"/>'
-               f'<line x1="{x_fin_24:.0f}" y1="298" x2="{x_fin_25 - 8:.0f}" y2="298" stroke="{ROJO}" stroke-width="4"/>'
-               f'<polygon points="{x_fin_25 - 8:.0f},298 {x_fin_25 - 26:.0f},288 {x_fin_25 - 26:.0f},308" fill="{ROJO}"/>'
-               f'<text x="{(x_fin_24 + x_fin_25) / 2:.0f}" y="284" text-anchor="middle" font-size="30" font-weight="780" fill="{ROJO}">'
-               f'+37 días que financiar</text></g>')
+    out.append(f'<g data-p="4"><rect x="{ancho - 600}" y="262" width="570" height="70" rx="14" fill="#FBE5E1" stroke="#F0C3BB" stroke-width="2"/>'
+               f'<text x="{ancho - 315}" y="308" text-anchor="middle" font-size="31" font-weight="780" fill="{ROJO}">'
+               f'De 55 a 92: +37 días que financiar</text></g>')
     out.append("</svg>")
     return "".join(out)
 
@@ -201,7 +197,7 @@ def dupont_html() -> str:
     def fila(anio, x, p, flechas=None):
         f = flechas or ["", "", "", ""]
         celdas = [
-            ("Margen neto", caso.pct(x["margen_neto"]), f[0]),
+            ("Margen neto", caso.pct(x["margen_neto"], 2), f[0]),
             ("Rotación de activos", caso.miles(x["rotacion_activos"], 2), f[1]),
             ("Apalancamiento", caso.miles(x["multiplicador"], 2), f[2]),
         ]

@@ -117,10 +117,10 @@ LAMINAS = [
             "El efecto volumen: si esos 600 millones adicionales se hubieran vendido con el margen presupuestado, "
             "de 26 %, habrían aportado 156 millones.",
             "El efecto margen: como toda la venta se hizo con un punto menos de margen, se perdieron 118 millones.",
-            "156 menos 118: los 38 que vimos. Dicho de otra forma, tres cuartas partes del beneficio de vender más "
-            "se fueron en vender más barato.",
-            "Este cálculo, que a mano toma un buen rato y en el que es fácil equivocarse, Claude lo entrega en "
-            "segundos y con la fórmula a la vista.",
+            "Son 156 menos 118: los 38 que vimos. Dicho de otra forma, tres cuartas partes del beneficio de vender "
+            "más se fueron en vender más barato.",
+            "Este cálculo, que a mano toma un buen rato y en el que es fácil equivocarse, Claude lo entrega en un "
+            "momento, y con la fórmula a la vista.",
         ],
     ),
     dict(
@@ -147,7 +147,7 @@ LAMINAS = [
         html=rank([
             dict(p=0, n=1, t="Margen", d="Causa probable: descuentos a las cadenas · Confirmar con: margen por cliente",
                  v="−118", unidad="millones"),
-            dict(p=1, n=2, t="Distribución y fletes", d="Causa probable: más despachos y más lejanos · Confirmar con: costo por ruta",
+            dict(p=1, n=2, t="Distribución y fletes", d="Causa probable: más despachos y más lejanos · Confirmar con: costo por despacho y por ruta",
                  v="−90", unidad="millones"),
             dict(p=2, n=3, t="Gastos financieros", d="Causa probable: uso de la línea de crédito · Confirmar con: saldo promedio y tasa",
                  v="−55", unidad="millones"),
@@ -180,7 +180,8 @@ LAMINAS = [
             "Dos: pídele una proyección de cierre. Con lo que va del año, y con lo que queda del presupuesto, ¿cómo "
             "terminaríamos? Es la pregunta que más le interesa a un directorio a mitad de año.",
             "Y tres: guarda las explicaciones. Las causas que identificaste este mes son el contexto del mes "
-            "siguiente. Si las dejas en tu proyecto, Claude las va a tener presentes en el próximo cierre.",
+            "siguiente. Si las guardas como un archivo en tu proyecto, Claude las va a tener presentes en el próximo "
+            "cierre.",
         ],
     ),
     dict(

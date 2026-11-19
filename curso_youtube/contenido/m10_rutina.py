@@ -63,12 +63,12 @@ LAMINAS = [
         ],
         pasos=[
             "Si tuviera que resumir el curso en una habilidad, sería repreguntar. Estas son las cinco repreguntas "
-            "que uso todos los días. Por qué: pide hipótesis, y el dato para confirmarlas.",
-            "Cómo lo calculaste: que muestre la fórmula y las cifras.",
-            "Qué supusiste: los supuestos escondidos son el mayor riesgo de cualquier análisis.",
-            "Qué dato te falta: te dice exactamente qué ir a buscar.",
-            "Y qué pasaría si: para abrir escenarios y medir sensibilidad. Con estas cinco preguntas, una respuesta "
-            "regular se convierte en un buen análisis.",
+            "que uso todos los días. La primera: ¿por qué? Pide hipótesis, y el dato para confirmarlas.",
+            "La segunda: ¿cómo lo calculaste? Que muestre la fórmula y las cifras.",
+            "La tercera: ¿qué supusiste? Los supuestos escondidos son el mayor riesgo de cualquier análisis.",
+            "La cuarta: ¿qué dato te falta? Te dice exactamente qué ir a buscar.",
+            "Y la quinta: ¿qué pasaría si cambia un supuesto? Sirve para abrir escenarios y medir sensibilidad. Con "
+            "estas cinco preguntas, una respuesta regular se convierte en un buen análisis.",
         ],
     ),
     dict(
@@ -82,8 +82,8 @@ LAMINAS = [
             dict(p=5, t="Delegar la conclusión", d="El análisis puede ser de Claude; la decisión es tuya"),
         ],
         pasos=[
-            "Y antes de cerrar, los seis errores que más veo. Uno: pedir sin contexto. «Analiza este balance» "
-            "entrega un análisis genérico, que podría ser de cualquier empresa.",
+            "Y antes de cerrar, los seis errores que más veo. Uno: pedir sin contexto. Si solo escribes «analiza "
+            "este balance», recibes un análisis genérico, que podría ser de cualquier empresa.",
             "Dos: creerle sin verificar. Revisa siempre las cifras de origen y algunas fórmulas.",
             "Tres: pedir todo en un solo prompt. Es mucho mejor avanzar por pasos, y revisar cada respuesta antes "
             "de seguir.",
@@ -150,12 +150,12 @@ LAMINAS = [
         tipo="puntos", titulo="Preguntas que me hacen siempre (2 de 2)",
         items=[
             dict(p=0, icono="duda", t="¿Sirve para una empresa pequeña?",
-                 d="Sí: basta con un balance y un estado de resultados."),
+                 d="Sí: basta con dos balances y un estado de resultados."),
             dict(p=1, icono="duda", t="¿Reemplaza a mi contador o a mi analista?",
                  d="No. Les quita el trabajo mecánico y les deja más tiempo para el negocio."),
         ],
         pasos=[
-            "¿Sirve para una empresa pequeña? Sí. Mientras tengas un balance y un estado de resultados, el método "
+            "¿Sirve para una empresa pequeña? Sí. Mientras tengas dos balances y un estado de resultados, el método "
             "funciona igual. De hecho, es donde más ayuda, porque normalmente no hay un equipo de análisis.",
             "¿Y reemplaza a mi contador o a mi analista? No. Les quita el trabajo mecánico, y les deja más tiempo "
             "para lo que realmente vale: entender el negocio y recomendar qué hacer.",

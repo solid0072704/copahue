@@ -52,7 +52,7 @@ LAMINAS = [
             dict(p=0, nivel="cr", t="Utilidad sin caja", d="Utilidad de 485 millones, con un flujo operacional de −685"),
             dict(p=1, nivel="cr", t="Dependencia de la deuda de corto plazo", d="1.150 millones que vencen en un año, con 65 en caja"),
             dict(p=2, nivel="im", t="Cartera vencida y sin provisión", d="45 % vencido (era 27 %) · a más de 90 días: de 10 a 90 millones"),
-            dict(p=3, nivel="im", t="Concentración de clientes", d="2 clientes: 20 % de las ventas y 28 % de las cuentas por cobrar"),
+            dict(p=3, nivel="im", t="Concentración de clientes", d="2 clientes: 15 % de las ventas y 21 % de las cuentas por cobrar"),
             dict(p=4, nivel="im", t="Dividendos con flujo negativo", d="200 millones repartidos mientras la operación consumía caja"),
             dict(p=5, nivel="ob", t="Inventarios", d="+48 % con ventas +18 %: ¿hay productos de baja rotación?"),
         ],
@@ -64,7 +64,7 @@ LAMINAS = [
             "Luego, tres importantes. La cartera vencida: el 45 % de las cuentas por cobrar está vencido, contra "
             "27 % el año anterior. Y lo vencido a más de 90 días pasó de 10 a 90 millones, sin ninguna provisión. Si "
             "parte de eso no se cobra, la utilidad del año está sobrestimada.",
-            "La concentración: dos clientes explican el 20 % de las ventas y el 28 % de las cuentas por cobrar.",
+            "La concentración: dos clientes explican el 15 % de las ventas y el 21 % de las cuentas por cobrar.",
             "Y los dividendos: se repartieron 200 millones en un año en que la operación consumió caja.",
             "Por último, una alerta a observar: los inventarios crecieron 48 %, con ventas que crecieron 18. Claude "
             "pide el detalle por producto, para ver si hay mercadería de baja rotación.",
@@ -95,15 +95,17 @@ LAMINAS = [
             dict(c=["Deuda de corto plazo", "Contratos de crédito: tasas, vencimientos y garantías"], p=1, aparece=1),
             dict(c=["Cartera vencida", "Detalle por cliente y registro de la gestión de cobranza"], p=2, aparece=2),
             dict(c=["Concentración de clientes", "Contratos y condiciones comerciales con las cadenas"], p=3, aparece=3),
-            dict(c=["Inventarios", "Rotación por producto y mermas"], p=4, aparece=4),
+            dict(c=["Dividendos", "Política de dividendos y actas del directorio"], p=4, aparece=4),
+            dict(c=["Inventarios", "Rotación por producto y mermas"], p=5, aparece=5),
         ],
-        pie=dict(p=5, t="Las alertas dejan de ser preocupaciones y se convierten en una lista de tareas."),
+        pie=dict(p=6, t="Las alertas dejan de ser preocupaciones y se convierten en una lista de tareas."),
         pasos=[
             "Y esta es la otra mitad de la respuesta: qué documento pedir para cada alerta. Para la utilidad sin "
             "caja, el flujo de caja mensual y una proyección a 13 semanas.",
             "Para la deuda de corto plazo, los contratos de crédito, con sus tasas, vencimientos y garantías.",
             "Para la cartera vencida, el detalle por cliente y el registro de la gestión de cobranza.",
             "Para la concentración, los contratos y las condiciones comerciales con las cadenas.",
+            "Para los dividendos, la política de dividendos y las actas del directorio.",
             "Y para los inventarios, la rotación por producto y las mermas.",
             "Con esto, las alertas dejan de ser una lista de preocupaciones, y se convierten en una lista de tareas.",
         ],
@@ -111,13 +113,13 @@ LAMINAS = [
     dict(
         tipo="puntos", titulo="Los supuestos optimistas que detecta",
         items=[
-            dict(p=0, icono="personas", t="Que las cadenas van a pagar a tiempo", d="Hoy pagan a 101 días, y la cartera vencida crece"),
+            dict(p=0, icono="personas", t="Que las cadenas van a pagar a tiempo", d="Hoy pagan a 100 días, y la cartera vencida crece"),
             dict(p=1, icono="banco", t="Que el banco va a renovar la línea", d="1.150 millones dependen de esa decisión"),
             dict(p=2, icono="caja", t="Que el inventario se va a vender sin descuentos", d="Creció 48 %, con ventas que crecieron 18 %"),
         ],
         pasos=[
             "También le pedimos los supuestos optimistas de la administración. Identifica tres. Que las cadenas van "
-            "a pagar a tiempo, cuando hoy pagan a 101 días y la cartera vencida crece.",
+            "a pagar a tiempo, cuando hoy pagan a 100 días y la cartera vencida crece.",
             "Que el banco va a renovar la línea de crédito, cuando 1.150 millones dependen de esa decisión.",
             "Y que el inventario adicional se va a vender sin descuentos. Ninguno de estos supuestos está escrito "
             "en los estados financieros, pero los tres están implícitos en ellos. Ponerlos por escrito es la mitad "

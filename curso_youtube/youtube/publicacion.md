@@ -21,16 +21,16 @@ Aprende a analizar estados financieros con Claude, paso a paso: verificación, a
 CAPÍTULOS
 00:00 Introducción
 02:15 Qué puede y qué no puede hacer Claude
-06:15 Paso 1: preparar los datos y el contexto
-12:21 Paso 2: verificar que todo cuadre
-17:01 Paso 3: análisis vertical y horizontal
-21:56 Paso 4: ratios financieros
-29:07 Paso 5: flujo de efectivo y capital de trabajo
-35:48 Paso 6: desviaciones contra el presupuesto
-40:40 Paso 7: señales de alerta
-45:44 Paso 8: escenarios, plan de acción e informe
-51:48 Tu rutina mensual y los errores más comunes
-56:32 Resumen y próximos pasos
+06:26 Paso 1: preparar los datos y el contexto
+12:31 Paso 2: verificar que todo cuadre
+17:12 Paso 3: análisis vertical y horizontal
+22:08 Paso 4: ratios financieros
+29:20 Paso 5: flujo de efectivo y capital de trabajo
+36:15 Paso 6: desviaciones contra el presupuesto
+41:09 Paso 7: señales de alerta
+46:17 Paso 8: escenarios, plan de acción e informe
+52:20 Tu rutina mensual y los errores más comunes
+57:11 Resumen y próximos pasos
 
 LO QUE VAS A APRENDER
 • Preparar tus estados financieros y darle contexto a Claude (y qué cuidar en confidencialidad).
