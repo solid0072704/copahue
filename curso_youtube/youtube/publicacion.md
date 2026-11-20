@@ -78,15 +78,13 @@ Descárgalos junto con el archivo del caso: https://drive.google.com/drive/folde
 
 ## Estado
 
-El video está subido al canal como «No listado»: https://youtu.be/ioX_gRnrr60
-Para editarlo o publicarlo: https://studio.youtube.com/video/ioX_gRnrr60/edit
+El video está publicado en el canal: https://youtu.be/ioX_gRnrr60
+Para editarlo: https://studio.youtube.com/video/ioX_gRnrr60/edit
 
-Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría Educación, idioma español, miniatura y subtítulos en español.
+Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría Educación, idioma español, miniatura y subtítulos en español. El enlace de los materiales se comprobó desde fuera, sin iniciar sesión: la carpeta se abre y los dos archivos se descargan.
 
 ## Lo que queda por hacer, en YouTube Studio
 
-- [ ] Ver el video completo y abrir el enlace de los materiales en una ventana privada (deben verse el Excel del caso y los prompts en PDF).
-- [ ] Cambiar la visibilidad de «No listado» a «Público».
 - [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).
 - [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.
 

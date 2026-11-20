@@ -49,8 +49,8 @@ PRECIOS_URL = "https://claude.com/pricing"
 # Carpeta pública («cualquier persona con el enlace puede ver») en el Google Drive del autor, con el Excel del
 # caso y los prompts en PDF. Si se regeneran los archivos de `material/`, hay que volver a subirlos ahí.
 MATERIALES_URL = "https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-"
-# El video en el canal del autor. Se subió como «No listado», con título, descripción, etiquetas, categoría
-# Educación, miniatura y subtítulos en español; hacerlo público es decisión del autor, en YouTube Studio.
+# El video en el canal del autor: público desde el 20 de noviembre de 2026, con título, descripción, etiquetas,
+# categoría Educación, miniatura y subtítulos en español.
 VIDEO_URL = "https://youtu.be/ioX_gRnrr60"
 ESTUDIO_URL = "https://studio.youtube.com/video/ioX_gRnrr60/edit"
 
@@ -138,14 +138,12 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.",
          "```", "",
          "## Estado", "",
-         f"El video está subido al canal como «No listado»: {VIDEO_URL}",
-         f"Para editarlo o publicarlo: {ESTUDIO_URL}", "",
+         f"El video está publicado en el canal: {VIDEO_URL}",
+         f"Para editarlo: {ESTUDIO_URL}", "",
          "Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría "
-         "Educación, idioma español, miniatura y subtítulos en español.", "",
+         "Educación, idioma español, miniatura y subtítulos en español. El enlace de los materiales se comprobó desde "
+         "fuera, sin iniciar sesión: la carpeta se abre y los dos archivos se descargan.", "",
          "## Lo que queda por hacer, en YouTube Studio", "",
-         "- [ ] Ver el video completo y abrir el enlace de los materiales en una ventana privada (deben verse el Excel "
-         "del caso y los prompts en PDF).",
-         "- [ ] Cambiar la visibilidad de «No listado» a «Público».",
          "- [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).",
          "- [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.",
          "",
