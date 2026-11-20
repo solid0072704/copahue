@@ -83,6 +83,30 @@ Para editarlo: https://studio.youtube.com/video/ioX_gRnrr60/edit
 
 Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría Educación, idioma español, miniatura y subtítulos en español. El enlace de los materiales se comprobó desde fuera, sin iniciar sesión: la carpeta se abre y los dos archivos se descargan.
 
+## Anuncio en LinkedIn
+
+Publicado en el perfil del autor, visible para todos: https://www.linkedin.com/feed/update/urn:li:share:7529630511879655428
+
+```
+Publiqué un curso gratuito en YouTube: Análisis de estados financieros con Claude.
+
+En una hora muestro, paso a paso, cómo usar inteligencia artificial para pasar de los números a las decisiones.
+
+Qué incluye:
+▪️ Un método de 8 pasos: preparar los datos, verificar que todo cuadre, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta y plan de acción.
+▪️ Un caso práctico completo: una empresa que vende 18 % más, logra la mayor utilidad de su historia y casi se queda sin caja.
+▪️ Los 10 prompts que uso y el archivo del caso en Excel, para descargar gratis desde la descripción del video.
+▪️ Cómo descargar Claude y qué plan elegir, para quienes parten de cero.
+
+Lo pensé para gerentes de finanzas, controllers, contadores, analistas y dueños de empresa que quieren entender mejor sus números y dedicar menos tiempo a armar tablas.
+
+🎥 Míralo aquí: https://www.youtube.com/watch?v=ioX_gRnrr60
+
+Si tienes dudas, o quieres implementar IA en el área de finanzas de tu empresa, escríbeme por aquí.
+
+#Finanzas #InteligenciaArtificial #EstadosFinancieros #ControlDeGestión #Claude
+```
+
 ## Lo que queda por hacer, en YouTube Studio
 
 - [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).

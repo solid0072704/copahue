@@ -53,6 +53,31 @@ MATERIALES_URL = "https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c3
 # categoría Educación, miniatura y subtítulos en español.
 VIDEO_URL = "https://youtu.be/ioX_gRnrr60"
 ESTUDIO_URL = "https://studio.youtube.com/video/ioX_gRnrr60/edit"
+VIDEO_LARGO_URL = "https://www.youtube.com/watch?v=ioX_gRnrr60"
+# El anuncio del curso en el perfil de LinkedIn del autor (publicado el 20 de noviembre de 2026, visible para todos)
+LINKEDIN_POST_URL = "https://www.linkedin.com/feed/update/urn:li:share:7529630511879655428"
+ANUNCIO_LINKEDIN = [
+    "Publiqué un curso gratuito en YouTube: Análisis de estados financieros con Claude.",
+    "",
+    "En una hora muestro, paso a paso, cómo usar inteligencia artificial para pasar de los números a las decisiones.",
+    "",
+    "Qué incluye:",
+    "▪️ Un método de 8 pasos: preparar los datos, verificar que todo cuadre, análisis vertical y horizontal, ratios, "
+    "flujo de caja, desviaciones contra el presupuesto, señales de alerta y plan de acción.",
+    "▪️ Un caso práctico completo: una empresa que vende 18 % más, logra la mayor utilidad de su historia y casi se "
+    "queda sin caja.",
+    "▪️ Los 10 prompts que uso y el archivo del caso en Excel, para descargar gratis desde la descripción del video.",
+    "▪️ Cómo descargar Claude y qué plan elegir, para quienes parten de cero.",
+    "",
+    "Lo pensé para gerentes de finanzas, controllers, contadores, analistas y dueños de empresa que quieren entender "
+    "mejor sus números y dedicar menos tiempo a armar tablas.",
+    "",
+    f"🎥 Míralo aquí: {VIDEO_LARGO_URL}",
+    "",
+    "Si tienes dudas, o quieres implementar IA en el área de finanzas de tu empresa, escríbeme por aquí.",
+    "",
+    "#Finanzas #InteligenciaArtificial #EstadosFinancieros #ControlDeGestión #Claude",
+]
 
 APRENDIZAJES = [
     "Descargar Claude (web, escritorio y teléfono) y elegir tu plan: Free, Pro, Max, Ultra, Team o Enterprise.",
@@ -143,6 +168,9 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría "
          "Educación, idioma español, miniatura y subtítulos en español. El enlace de los materiales se comprobó desde "
          "fuera, sin iniciar sesión: la carpeta se abre y los dos archivos se descargan.", "",
+         "## Anuncio en LinkedIn", "",
+         f"Publicado en el perfil del autor, visible para todos: {LINKEDIN_POST_URL}", "",
+         "```", *ANUNCIO_LINKEDIN, "```", "",
          "## Lo que queda por hacer, en YouTube Studio", "",
          "- [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).",
          "- [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.",
