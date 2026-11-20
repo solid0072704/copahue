@@ -118,37 +118,44 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
 
 
 MINIATURA_HTML = """<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
+@font-face{font-family:"Montserrat";src:url("__FUENTES__/montserrat.woff2") format("woff2");font-weight:100 900}
+@font-face{font-family:"Source Sans 3";src:url("__FUENTES__/source-sans-3.woff2") format("woff2");font-weight:200 900}
+@font-face{font-family:"Newsreader";src:url("__FUENTES__/newsreader-italic.woff2") format("woff2");font-weight:200 800;font-style:italic}
+@font-face{font-family:"Geist Mono";src:url("__FUENTES__/geist-mono.woff2") format("woff2");font-weight:100 900}
 *{box-sizing:border-box;margin:0;padding:0}
-body{width:1280px;height:720px;overflow:hidden;font-family:"Inter Display","Inter",sans-serif;color:#fff;
- background:radial-gradient(900px 560px at 86% 8%,#1F4468 0%,rgba(31,68,104,0) 62%),radial-gradient(700px 480px at 0% 100%,rgba(227,167,43,.28) 0%,rgba(227,167,43,0) 62%),#0B1B2B}
-.iz{position:absolute;left:64px;top:56px;width:760px}
-.sello{display:inline-block;background:#E3A72B;color:#0B1B2B;font-weight:800;font-size:30px;letter-spacing:.1em;padding:10px 22px;border-radius:999px}
-h1{font-size:104px;line-height:.98;font-weight:800;letter-spacing:-.04em;margin-top:30px}
-h1 em{font-style:normal;color:#E3A72B}
-.sub{margin-top:30px;font-family:"Inter",sans-serif;font-size:40px;font-weight:650;color:#D5DEE8}
-.marca{position:absolute;left:64px;bottom:40px;display:flex;align-items:center;gap:16px;font-family:"Inter",sans-serif;font-size:24px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#C9D3DE}
-.marca svg{width:40px;height:40px;flex:none}
-.gr{position:absolute;right:56px;top:86px;width:400px;height:520px;background:linear-gradient(180deg,#17334F,#10263C);border:3px solid #2A4A6B;border-radius:34px;padding:34px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
-.gr .t{font-family:"Inter",sans-serif;font-size:25px;font-weight:700;letter-spacing:.12em;color:#8FB4DA;text-transform:uppercase}
-.gr .n{font-size:108px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-top:10px;color:#F0705C}
-.gr .d{font-family:"Inter",sans-serif;font-size:30px;font-weight:650;color:#D5DEE8;margin-top:4px}
-.gr svg{position:absolute;left:34px;right:34px;bottom:34px;width:332px;height:230px}
+body{width:1280px;height:720px;overflow:hidden;position:relative;font-family:"Montserrat",sans-serif;color:#F2EADB;
+ background:radial-gradient(900px 600px at 0% 110%,rgba(63,98,148,.42),transparent 62%),#101C2C}
+.foto{position:absolute;right:0;top:0;bottom:0;width:600px;background:url("__IMAGENES__/heroe_gestion.jpg") 58% 50%/cover;
+ -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.6) 30%,#000 62%);mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.6) 30%,#000 62%)}
+.foto::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(16,28,44,.1),rgba(16,28,44,0) 40%,rgba(16,28,44,.78))}
+.iz{position:absolute;left:64px;top:60px;width:800px}
+.sello{display:flex;align-items:center;gap:18px;font-family:"Geist Mono",monospace;font-size:27px;font-weight:600;letter-spacing:.16em;color:#E3A62F}
+.sello::before{content:"";width:56px;height:3px;background:#E3A62F}
+h1{font-size:112px;line-height:.97;font-weight:800;letter-spacing:-.045em;margin-top:28px}
+h1 em{font-family:"Newsreader",serif;font-style:italic;font-weight:500;letter-spacing:-.02em;color:#E3A62F;font-size:1.12em;line-height:.8}
+.sub{margin-top:30px;font-family:"Source Sans 3",sans-serif;font-size:42px;font-weight:600;color:#B4BEC6}
+.marca{position:absolute;left:64px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:"Geist Mono",monospace;font-size:24px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#F2EADB}
+.marca svg{width:42px;height:42px;flex:none}
+.dato{position:absolute;right:54px;bottom:46px;width:372px;background:#F2EADB;color:#101C2C;border-radius:8px;padding:24px 30px 26px;box-shadow:0 34px 70px -24px rgba(0,0,0,.75);border-top:6px solid #E3A62F}
+.dato .t{font-family:"Geist Mono",monospace;font-size:21px;font-weight:600;letter-spacing:.16em;color:#77695A}
+.dato .n{font-size:104px;font-weight:800;letter-spacing:-.05em;line-height:1;margin-top:6px;color:#D2402B}
+.dato .d{font-family:"Source Sans 3",sans-serif;font-size:31px;font-weight:600;margin-top:6px}
 </style></head><body>
+<div class="foto"></div>
 <div class="iz"><span class="sello">CURSO COMPLETO · 1 HORA</span>
 <h1>Estados financieros con <em>Claude</em></h1>
 <div class="sub">8 pasos · 10 prompts · 1 caso práctico</div></div>
 <div class="marca">__LOGO____MARCA__</div>
-<div class="gr"><div class="t">Caja</div><div class="n">−90 %</div><div class="d">con ventas +18 %</div>
-<svg viewBox="0 0 332 230"><line x1="0" y1="60" x2="332" y2="60" stroke="#5B7895" stroke-width="3"/>
-<rect x="6" y="14" width="46" height="46" rx="6" fill="#8FB4DA"/><rect x="62" y="0" width="46" height="14" rx="5" fill="#2FA36B"/>
-<rect x="118" y="0" width="46" height="112" rx="6" fill="#E0563F"/><rect x="174" y="112" width="46" height="64" rx="6" fill="#E0563F"/>
-<rect x="230" y="158" width="46" height="18" rx="5" fill="#2FA36B"/><rect x="286" y="60" width="46" height="98" rx="6" fill="#B33A28"/></svg></div>
+<div class="dato"><div class="t">CAJA DEL AÑO</div><div class="n">−90 %</div><div class="d">con ventas +18 %</div></div>
 </body></html>"""
 
 
 def miniatura(destino: Path) -> None:
+    aqui = Path(__file__).parent.resolve()
     html = destino.with_suffix(".html")
-    html.write_text(MINIATURA_HTML.replace("__LOGO__", LINKEDIN).replace("__MARCA__", MARCA), encoding="utf-8")
+    html.write_text(MINIATURA_HTML.replace("__LOGO__", LINKEDIN).replace("__MARCA__", MARCA)
+                    .replace("__FUENTES__", (aqui / "fuentes").as_uri()).replace("__IMAGENES__", (aqui / "imagenes").as_uri()),
+                    encoding="utf-8")
     script = ("const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();"
               "const c=await b.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1});const p=await c.newPage();"
               f"await p.goto('file://{html.resolve()}');await p.evaluate(()=>document.fonts.ready);"

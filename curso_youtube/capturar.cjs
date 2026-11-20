@@ -33,12 +33,14 @@ const dos = (n, largo = 2) => String(n).padStart(largo, '0');
   const duraciones = archivoTiempos ? JSON.parse(fs.readFileSync(archivoTiempos, 'utf8')) : {};
   fs.mkdirSync(outDir, { recursive: true });
 
-  // Todo lo que decide cómo se ve una lámina: su HTML, la hoja de estilos, el motor de movimiento y sus tiempos.
+  // Todo lo que decide cómo se ve una lámina: su HTML, sus imágenes, la hoja de estilos, el motor de movimiento y sus tiempos.
   const comunes = ['estilo.css', 'movimiento.js'].map((f) => fs.readFileSync(path.join(__dirname, f)));
   const firmaDe = (s) => {
     const h = crypto.createHash('sha1');
-    h.update(fs.readFileSync(path.join(htmlDir, s.id + '.html')));
+    const html = fs.readFileSync(path.join(htmlDir, s.id + '.html'), 'utf8');
+    h.update(html);
     comunes.forEach((c) => h.update(c));
+    for (const m of html.matchAll(/imagenes\/([\w.-]+)/g)) h.update(fs.readFileSync(path.join(__dirname, 'imagenes', m[1])));
     h.update(JSON.stringify([animar, FPS, CALIDAD, s.continua, Array.from({ length: s.pasos }, (_, k) => duraciones[`${s.id}_p${dos(k)}`])]));
     return h.digest('hex');
   };
