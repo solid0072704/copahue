@@ -14,6 +14,8 @@ _Tiempos exactos del render final._
 Aprende a analizar estados financieros con Claude, paso a paso: verificación, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para el directorio. Con un caso práctico completo y 10 prompts listos para usar.
 
 📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]
+⬇️ Descarga oficial de Claude: https://claude.com/download
+💳 Planes y precios vigentes: https://claude.com/pricing
 💼 LinkedIn de Rodrigo Barceló: https://www.linkedin.com/in/rodrigobarcelo
 
 ASESORÍA
@@ -21,20 +23,22 @@ ASESORÍA
 
 CAPÍTULOS
 00:00 Introducción
-02:10 Qué puede y qué no puede hacer Claude
-06:21 Paso 1: preparar los datos y el contexto
-12:21 Paso 2: verificar que todo cuadre
-16:54 Paso 3: análisis vertical y horizontal
-21:43 Paso 4: ratios financieros
-28:46 Paso 5: flujo de efectivo y capital de trabajo
-35:21 Paso 6: desviaciones contra el presupuesto
-40:08 Paso 7: señales de alerta
-45:03 Paso 8: escenarios, plan de acción e informe
-50:56 Tu rutina mensual y los errores más comunes
-55:50 Artefactos, conectores y plugins de Claude
-58:40 Resumen y próximos pasos
+02:49 Cómo descargar Claude y qué plan elegir
+05:47 Qué puede y qué no puede hacer Claude
+09:58 Paso 1: preparar los datos y el contexto
+15:59 Paso 2: verificar que todo cuadre
+20:32 Paso 3: análisis vertical y horizontal
+25:21 Paso 4: ratios financieros
+32:23 Paso 5: flujo de efectivo y capital de trabajo
+38:58 Paso 6: desviaciones contra el presupuesto
+43:46 Paso 7: señales de alerta
+48:41 Paso 8: escenarios, plan de acción e informe
+54:34 Tu rutina mensual y los errores más comunes
+59:28 Artefactos, conectores y plugins de Claude
+1:02:18 Resumen y próximos pasos
 
 LO QUE VAS A APRENDER
+• Descargar Claude (web, escritorio y teléfono) y elegir tu plan: Free, Pro, Max, Ultra, Team o Enterprise.
 • Preparar tus estados financieros y darle contexto a Claude (y qué cuidar en confidencialidad).
 • Verificar que el balance, el estado de resultados y el flujo de efectivo cuadren antes de analizar.
 • Hacer análisis vertical y horizontal y encontrar qué crece más rápido que las ventas.
@@ -49,14 +53,14 @@ SOBRE EL CASO
 Distribuidora Alerce es una empresa ficticia creada para este curso. En 2025 vendió 18 % más y tuvo la mayor utilidad de su historia, pero su caja bajó de 620 a 65 millones. El curso muestra, con Claude, por qué pasó y qué hacer.
 
 AVISO
-Contenido educativo; no constituye asesoría financiera, contable ni tributaria. Verifica siempre los resultados antes de tomar decisiones. Claude es un producto de Anthropic; este canal no tiene afiliación con Anthropic. La narración usa una versión sintetizada de la voz del autor.
+Contenido educativo; no constituye asesoría financiera, contable ni tributaria. Verifica siempre los resultados antes de tomar decisiones. Claude es un producto de Anthropic; este canal no tiene afiliación con Anthropic. Los planes y precios de Claude que se muestran son de referencia (noviembre de 2026) y pueden cambiar: confírmalos en la página oficial. La narración usa una versión sintetizada de la voz del autor.
 
 #finanzas #inteligenciaartificial #estadosfinancieros
 ```
 
 ## Etiquetas
 
-análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, informe al directorio, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, artefactos de Claude, conectores de Claude, plugins de Claude, Claude skills, Rodrigo Barceló
+análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, artefactos de Claude, conectores de Claude, plugins de Claude, cómo descargar Claude, planes de Claude, Rodrigo Barceló
 
 ## Comentario fijado (sugerido)
 
