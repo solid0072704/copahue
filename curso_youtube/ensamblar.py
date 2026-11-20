@@ -275,10 +275,74 @@ def secuencia(tl: dict, trabajo: Path) -> list[tuple[Path, int, str]]:
 
 # Las imágenes son JPEG (BT.601, rango completo): se pasan por RGB para llegar bien a BT.709 de rango de video.
 # La conversión va antes de `fps`, así se hace una vez por imagen y no una por cada cuadro que dura en pantalla.
-FILTRO_VIDEO = ("scale=1920:1080:in_color_matrix=bt601:in_range=pc,format=gbrp,"
-                f"scale=1920:1080:out_color_matrix=bt709:out_range=tv,format=yuv420p,fps={FPS}")
-CODIFICACION = ["-c:v", "libx264", "-preset", "medium", "-crf", "18", "-g", str(FPS * 10), "-bf", "2",
-                "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
+FILTRO_COLOR = ("scale=1920:1080:in_color_matrix=bt601:in_range=pc,format=gbrp,"
+                "scale=1920:1080:out_color_matrix=bt709:out_range=tv,format=yuv420p")
+FILTRO_VIDEO = f"{FILTRO_COLOR},fps={FPS}"
+_COLOR = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
+CODIFICACION = ["-c:v", "libx264", "-preset", "medium", "-crf", "18", "-g", str(FPS * 10), "-bf", "2", *_COLOR]
+# Con movimiento continuo cada escena se codifica mientras se captura (un codificador por navegador).
+CODIFICACION_CONTINUA = ["-vf", f"{FILTRO_COLOR},noise=c0s=3:c0f=u", "-c:v", "libx264", "-preset", "fast", "-crf", "23", "-g", str(FPS * 10),
+                         "-bf", "2", "-threads", "2", *_COLOR]
+
+
+def plan_de_escenas(tl: dict) -> dict:
+    """Reparte el video en escenas, una por lámina.
+
+    De cada una dice en qué cuadro empieza y cuántos dura, y lo que el motor de movimiento necesita para
+    reproducirla de corrido: cuánto dura cada paso, cómo entra y cómo sale (las portadas de capítulo, con un telón
+    que cruza la pantalla; las demás, dejando ir lo anterior) y cuándo empieza y termina su capítulo.
+    """
+    por_id = {s["id"]: s for s in deck.cargar()}
+    total = int(round(tl["total"] * FPS))
+    grupos: list[list[tuple[str, float]]] = []
+    for e in tl["eventos"]:
+        lamina = e["frame"].rsplit("_p", 1)[0]
+        if not grupos or grupos[-1][0][0] != lamina:
+            grupos.append([])
+        grupos[-1].append((lamina, e["t"]))
+    cortes = [0] + [int(round(g[0][1] * FPS)) for g in grupos[1:]] + [total]
+    escenas = []
+    for i, g in enumerate(grupos):
+        cuadro0, cuadros = cortes[i], cortes[i + 1] - cortes[i]
+        inicio = cuadro0 / FPS
+        comienzos = [0.0] + [max(0.0, t - inicio) for _, t in g[1:]]
+        duraciones = [round(b - a, 4) for a, b in zip(comienzos, comienzos[1:] + [cuadros / FPS])]
+        s = por_id[g[0][0]]
+        escenas.append(dict(id=s["id"], tipo=s["tipo"], modulo=s["modulo"], cuadro0=cuadro0, cuadros=cuadros,
+                            inicio=round(inicio, 4), duraciones=duraciones))
+    for i, e in enumerate(escenas):
+        e["entra"] = "barrido" if i and e["tipo"] in ABREN_CON_BARRIDO else ""
+    for i, e in enumerate(escenas):
+        e["sale"] = "" if i + 1 == len(escenas) else "barrido" if escenas[i + 1]["entra"] else "fundido"
+        del_capitulo = [x for x in escenas if x["modulo"] == e["modulo"]]
+        e["modIni"] = del_capitulo[0]["inicio"]
+        e["modFin"] = round((del_capitulo[-1]["cuadro0"] + del_capitulo[-1]["cuadros"]) / FPS, 4)
+    return dict(fps=FPS, total=total, codificacion=CODIFICACION_CONTINUA, escenas=escenas)
+
+
+def _unir_escenas(tl: dict, trabajo: Path, destino: Path) -> bool:
+    """Une los videos de las escenas (`construir --continuo`). Devuelve False si no se capturó así."""
+    carpeta = trabajo / "escenas"
+    if not (carpeta / "plan.json").exists():
+        return False
+    plan = plan_de_escenas(tl)
+    faltan = []
+    for e in plan["escenas"]:
+        marca, video = carpeta / f"{e['id']}.listo", carpeta / f"{e['id']}.mp4"
+        hecha = json.loads(marca.read_text()) if marca.exists() and video.exists() else {}
+        if hecha.get("cuadros") != e["cuadros"] or hecha.get("cuadro0") != e["cuadro0"]:
+            faltan.append(e["id"])
+    if faltan:
+        raise RuntimeError(f"Faltan {len(faltan)} escenas o no calzan con el audio ({', '.join(faltan[:8])}…): "
+                           "vuelve a ejecutar `construir --continuo --reanudar` con la misma carpeta de audio.")
+    lista = carpeta / "escenas.txt"
+    lista.write_text("".join(f"file '{carpeta / (e['id'] + '.mp4')}'\n" for e in plan["escenas"]), encoding="utf-8")
+    _ffmpeg("-f", "concat", "-safe", "0", "-i", str(lista), "-c", "copy", str(destino))
+    cuadros = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=nb_frames",
+                              "-of", "csv=p=0", str(destino)], capture_output=True, text=True).stdout.strip()
+    if cuadros != str(plan["total"]):
+        raise RuntimeError(f"El video unido tiene {cuadros} cuadros y deberían ser {plan['total']}.")
+    return True
 
 
 def _codificar(lista: list[tuple[Path, int]], destino: Path) -> None:
@@ -299,7 +363,10 @@ def escribir_video(tl: dict, trabajo: Path, destino: Path) -> None:
     """Codifica el video por tramos (uno por módulo) y los une sin recodificar.
 
     Un tramo ya codificado con las mismas imágenes no se repite: si el proceso se interrumpe, se retoma donde quedó.
+    Si las láminas se capturaron con movimiento continuo (`construir --continuo`), solo se unen sus escenas.
     """
+    if _unir_escenas(tl, trabajo, destino):
+        return
     seq = secuencia(tl, trabajo)
     tramos_dir = trabajo / "tramos"
     tramos_dir.mkdir(exist_ok=True)

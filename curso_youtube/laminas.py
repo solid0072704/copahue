@@ -423,7 +423,7 @@ def _ondas(modulo: int) -> str:
             y = centro + ancho * math.sin(1.9 * math.pi * u + fase + i * 0.075)
             puntos.append(f"{'M' if j == 0 else 'L'}{1920 * u:.0f} {y:.1f}")
         lineas.append(f'<path d="{" ".join(puntos)}"/>')
-    return ('<svg class="ondas" viewBox="0 0 1920 1080" aria-hidden="true"><defs>'
+    return (f'<svg class="ondas" viewBox="0 0 1920 1080" aria-hidden="true" data-fase="{fase:.4f}"><defs>'
             '<linearGradient id="ondas-g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1920" y2="0">'
             '<stop offset=".2" stop-color="#E3A62F" stop-opacity="0"/><stop offset=".62" stop-color="#E3A62F" stop-opacity=".5"/>'
             '<stop offset="1" stop-color="#F2D9A0" stop-opacity="1"/></linearGradient></defs>'

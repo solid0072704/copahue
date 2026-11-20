@@ -33,17 +33,33 @@
 html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--papel); }
 body { font-family: "Source Sans 3", "Inter", sans-serif; color: var(--tinta); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums lining-nums; }
 .lienzo { position: relative; width: 1920px; height: 1080px; overflow: hidden;
-  background: radial-gradient(1500px 900px at 104% 112%, rgba(63, 98, 148, .30), transparent 62%),
-              radial-gradient(1100px 700px at -6% -18%, rgba(46, 72, 110, .34), transparent 64%), var(--papel); }
-/* Cinta de líneas finas al fondo de las láminas de contenido */
-.ondas { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: .2; pointer-events: none; }
+  background: radial-gradient(1500px 900px at 104% 112%, rgba(63, 98, 148, .34), transparent 62%),
+              radial-gradient(1100px 700px at -6% -18%, rgba(46, 72, 110, .40), transparent 64%), var(--papel); }
+/* Fondo vivo: la cinta de líneas finas que ondula y unas motas que suben. Las dibuja movimiento.js en un lienzo,
+   con el reloj del video, de modo que no saltan al cambiar de lámina. Sin el motor queda la cinta fija (.ondas). */
+.ambiente { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.ambiente canvas { position: absolute; }
+.ondas { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: .24; pointer-events: none; }
+body.vivo .ondas { display: none; }
+body.continuo .lienzo::after { display: none; }      /* en el video el grano lo pone el codificador: aquí es lo más lento de pintar */
+/* Capas que van sobre el contenido: la luz que recorre lo que se está explicando, el puntero que envía el prompt
+   y el telón que cruza la pantalla al abrir un capítulo */
+.capa-fija { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 7; }
+.luz { position: absolute; left: 0; top: 0; width: 280px; height: 3px; opacity: 0; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(227, 166, 47, 0), #F6CF7A 50%, rgba(227, 166, 47, 0)); box-shadow: 0 0 22px 3px rgba(227, 166, 47, .42); }
+.puntero { position: absolute; left: -6px; top: -4px; width: 46px; height: 46px; opacity: 0; fill: #F2EADB; stroke: #101C2C; stroke-width: 1.4; stroke-linejoin: round;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); transform-origin: 6px 4px; }
+.telon { position: absolute; inset: 0 -8px; opacity: 0; background: linear-gradient(90deg, #1B2E48, #16263A 50%, #1B2E48);
+  box-shadow: inset 8px 0 0 var(--acento), inset -8px 0 0 var(--acento); }
+/* Texto que se va revelando: lo que falta ocupa su lugar sin verse */
+.rv-o { opacity: 0; }
 .lienzo::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: soft-light; z-index: 9;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/></filter><rect width='320' height='320' filter='url(%23n)'/></svg>"); }
 b, strong { font-weight: 700; }
 mark { background: linear-gradient(var(--acento-claro), var(--acento-claro)) no-repeat 0 86% / calc(var(--r, 1) * 100%) 52%; color: inherit; padding: 0 4px; margin: 0 -4px; }
 .pos { color: var(--verde); } .neg { color: var(--rojo); } .amb { color: var(--ambar); } .tenue { color: var(--tinta-3); }
 .pl { display: inline-block; overflow: hidden; vertical-align: top; padding: .06em .04em .16em; margin: -.06em -.04em -.16em; }   /* palabra con máscara */
-.pl > i { display: inline-block; font-style: inherit; will-change: transform; }
+.pl > x-p { display: inline-block; will-change: transform; }
 
 /* Pasos: lo que aparece (data-p) y lo que se enfoca (data-foco) */
 [data-p] { opacity: 0; }
@@ -137,7 +153,8 @@ h1 em, .seccion h2 em, .pregunta em, .titulo-curso h2 em, .chips-tit em, .gracia
 .prompt .pb .adj .ico { font-size: 22px; }
 .prompt .pb .env { width: 46px; height: 46px; border-radius: 50%; background: var(--tinta); color: var(--papel-2); display: grid; place-items: center; }
 .prompt .pb .env .ico { font-size: 25px; stroke-width: 2.6; }
-.cursor { display: inline-block; width: 3px; height: 1.05em; background: var(--acento); vertical-align: -.18em; margin-left: 2px; }
+.cursor { display: inline-block; position: relative; width: 0; height: 1.05em; vertical-align: -.18em; }   /* no ocupa ancho: no mueve el texto */
+.cursor::after { content: ""; position: absolute; left: 2px; top: 0; bottom: 0; width: 3px; background: var(--acento); }
 
 /* Notas al margen */
 .notas { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 30px; }
