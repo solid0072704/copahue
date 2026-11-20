@@ -30,11 +30,18 @@ TITULOS = [
 ETIQUETAS = [
     "análisis de estados financieros", "estados financieros", "análisis financiero", "Claude", "Claude AI",
     "inteligencia artificial en finanzas", "IA para finanzas", "ratios financieros", "flujo de caja",
-    "capital de trabajo", "análisis vertical y horizontal", "desviaciones presupuesto", "control de gestión",
+    "capital de trabajo", "análisis vertical y horizontal", "control de gestión",
     "prompts para finanzas", "CFO", "gerente de finanzas", "pymes", "contabilidad",
     "curso de finanzas", "artefactos de Claude", "conectores de Claude", "plugins de Claude",
     "cómo descargar Claude", "planes de Claude", MARCA,
 ]
+
+
+
+def largo_de_etiquetas(etiquetas: list[str]) -> int:
+    """Caracteres que YouTube cuenta en las etiquetas: las que llevan espacios van entre comillas, y una coma entre cada una."""
+    return sum(len(e) + (2 if " " in e else 0) for e in etiquetas) + max(0, len(etiquetas) - 1)
+
 
 # Páginas oficiales que el capítulo de primeros pasos muestra en pantalla
 DESCARGA_URL = "https://claude.com/download"
@@ -42,6 +49,10 @@ PRECIOS_URL = "https://claude.com/pricing"
 # Carpeta pública («cualquier persona con el enlace puede ver») en el Google Drive del autor, con el Excel del
 # caso y los prompts en PDF. Si se regeneran los archivos de `material/`, hay que volver a subirlos ahí.
 MATERIALES_URL = "https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-"
+# El video en el canal del autor. Se subió como «No listado», con título, descripción, etiquetas, categoría
+# Educación, miniatura y subtítulos en español; hacerlo público es decisión del autor, en YouTube Studio.
+VIDEO_URL = "https://youtu.be/ioX_gRnrr60"
+ESTUDIO_URL = "https://studio.youtube.com/video/ioX_gRnrr60/edit"
 
 APRENDIZAJES = [
     "Descargar Claude (web, escritorio y teléfono) y elegir tu plan: Free, Pro, Max, Ultra, Team o Enterprise.",
@@ -126,16 +137,21 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          f"¿Dudas? Escríbeme a {CORREO} o por LinkedIn: {LINKEDIN_URL}",
          "¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.",
          "```", "",
-         "## Lista de verificación antes de publicar", "",
-         "- [ ] Abrir el enlace de los materiales en una ventana privada y comprobar que se ven los dos archivos "
-         "(el Excel del caso y los prompts en PDF).",
-         *(["- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final)."] if estimados else []),
-         "- [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).",
-         "- [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.",
-         "- [ ] Categoría: Educación. Idioma del video: español.",
-         "- [ ] Revisar la declaración de «contenido alterado o sintético» de YouTube: la narración usa tu voz clonada.",
+         "## Estado", "",
+         f"El video está subido al canal como «No listado»: {VIDEO_URL}",
+         f"Para editarlo o publicarlo: {ESTUDIO_URL}", "",
+         "Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría "
+         "Educación, idioma español, miniatura y subtítulos en español.", "",
+         "## Lo que queda por hacer, en YouTube Studio", "",
+         "- [ ] Ver el video completo y abrir el enlace de los materiales en una ventana privada (deben verse el Excel "
+         "del caso y los prompts en PDF).",
+         "- [ ] Cambiar la visibilidad de «No listado» a «Público».",
+         "- [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).",
          "- [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.",
-         "- [ ] Publicar primero como «No listado», revisarlo completo y recién después hacerlo público.",
+         "",
+         "No hace falta declarar «contenido alterado o sintético»: clonar la propia voz para la narración está entre los "
+         "casos que YouTube exime (https://support.google.com/youtube/answer/14328491). La descripción ya lo menciona.",
+         *(["", "_Los capítulos de la descripción son estimados: reemplázalos por los del render final._"] if estimados else []),
          ""]
     return "\n".join(L)
 

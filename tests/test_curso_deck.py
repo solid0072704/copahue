@@ -139,6 +139,12 @@ def test_la_ficha_no_deja_enlaces_por_completar():
     assert not re.search(r"\[ENLACE[^\]]*\]", ficha)
 
 
+def test_las_etiquetas_caben_en_el_maximo_de_youtube():
+    from curso_youtube import youtube
+    assert youtube.largo_de_etiquetas(youtube.ETIQUETAS) <= 500
+    assert len(youtube.TITULOS[0]) <= 100
+
+
 def test_los_prompts_para_descargar_salen_del_curso():
     """El documento que se comparte trae los 10 prompts, tal como se muestran en el video."""
     from curso_youtube import guion

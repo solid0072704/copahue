@@ -65,7 +65,7 @@ Contenido educativo; no constituye asesoría financiera, contable ni tributaria.
 
 ## Etiquetas
 
-análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, desviaciones presupuesto, control de gestión, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, artefactos de Claude, conectores de Claude, plugins de Claude, cómo descargar Claude, planes de Claude, Rodrigo Barceló
+análisis de estados financieros, estados financieros, análisis financiero, Claude, Claude AI, inteligencia artificial en finanzas, IA para finanzas, ratios financieros, flujo de caja, capital de trabajo, análisis vertical y horizontal, control de gestión, prompts para finanzas, CFO, gerente de finanzas, pymes, contabilidad, curso de finanzas, artefactos de Claude, conectores de Claude, plugins de Claude, cómo descargar Claude, planes de Claude, Rodrigo Barceló
 
 ## Comentario fijado (sugerido)
 
@@ -76,12 +76,18 @@ Descárgalos junto con el archivo del caso: https://drive.google.com/drive/folde
 ¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.
 ```
 
-## Lista de verificación antes de publicar
+## Estado
 
-- [ ] Abrir el enlace de los materiales en una ventana privada y comprobar que se ven los dos archivos (el Excel del caso y los prompts en PDF).
-- [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).
-- [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.
-- [ ] Categoría: Educación. Idioma del video: español.
-- [ ] Revisar la declaración de «contenido alterado o sintético» de YouTube: la narración usa tu voz clonada.
+El video está subido al canal como «No listado»: https://youtu.be/ioX_gRnrr60
+Para editarlo o publicarlo: https://studio.youtube.com/video/ioX_gRnrr60/edit
+
+Ya quedó puesto: título, descripción (con la descarga de los materiales y el contacto), etiquetas, categoría Educación, idioma español, miniatura y subtítulos en español.
+
+## Lo que queda por hacer, en YouTube Studio
+
+- [ ] Ver el video completo y abrir el enlace de los materiales en una ventana privada (deben verse el Excel del caso y los prompts en PDF).
+- [ ] Cambiar la visibilidad de «No listado» a «Público».
+- [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).
 - [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.
-- [ ] Publicar primero como «No listado», revisarlo completo y recién después hacerlo público.
+
+No hace falta declarar «contenido alterado o sintético»: clonar la propia voz para la narración está entre los casos que YouTube exime (https://support.google.com/youtube/answer/14328491). La descripción ya lo menciona.
