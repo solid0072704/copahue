@@ -54,12 +54,14 @@ MATERIALES_URL = "https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c3
 VIDEO_URL = "https://youtu.be/ioX_gRnrr60"
 ESTUDIO_URL = "https://studio.youtube.com/video/ioX_gRnrr60/edit"
 VIDEO_LARGO_URL = "https://www.youtube.com/watch?v=ioX_gRnrr60"
-# El anuncio del curso en el perfil de LinkedIn del autor (publicado el 20 de noviembre de 2026, visible para todos)
-LINKEDIN_POST_URL = "https://www.linkedin.com/feed/update/urn:li:share:7529630511879655428"
+# El anuncio del curso en el perfil de LinkedIn del autor (20 de noviembre de 2026, visible para todos). Lleva, como
+# video nativo, la muestra que arma `muestra.py`; reemplazó a un primer anuncio que solo tenía el enlace.
+LINKEDIN_POST_URL = "https://www.linkedin.com/feed/update/urn:li:ugcPost:7529662233996423168"
 ANUNCIO_LINKEDIN = [
     "Publiqué un curso gratuito en YouTube: Análisis de estados financieros con Claude.",
     "",
-    "En una hora muestro, paso a paso, cómo usar inteligencia artificial para pasar de los números a las decisiones.",
+    "En el video va una muestra. El curso completo dura una hora y enseña, paso a paso, cómo usar inteligencia "
+    "artificial para pasar de los números a las decisiones.",
     "",
     "Qué incluye:",
     "▪️ Un método de 8 pasos: preparar los datos, verificar que todo cuadre, análisis vertical y horizontal, ratios, "
@@ -72,12 +74,21 @@ ANUNCIO_LINKEDIN = [
     "Lo pensé para gerentes de finanzas, controllers, contadores, analistas y dueños de empresa que quieren entender "
     "mejor sus números y dedicar menos tiempo a armar tablas.",
     "",
-    f"🎥 Míralo aquí: {VIDEO_LARGO_URL}",
+    f"🎥 Curso completo: {VIDEO_LARGO_URL}",
     "",
     "Si tienes dudas, o quieres implementar IA en el área de finanzas de tu empresa, escríbeme por aquí.",
     "",
     "#Finanzas #InteligenciaArtificial #EstadosFinancieros #ControlDeGestión #Claude",
 ]
+# Signos que el formato de texto de las publicaciones de LinkedIn reserva para menciones y enlaces: el anuncio no usa
+# ninguno, y el guion bajo del enlace viaja como %5F (YouTube lo resuelve igual y LinkedIn acorta el enlace).
+RESERVADOS_LINKEDIN = frozenset("()[]{}<>@|~_*\\")
+
+
+def anuncio_para_linkedin() -> str:
+    """El anuncio tal como se envía a la API de LinkedIn, sin signos reservados."""
+    return "\n".join(ANUNCIO_LINKEDIN).replace(VIDEO_LARGO_URL, VIDEO_LARGO_URL.replace("_", "%5F"))
+
 
 APRENDIZAJES = [
     "Descargar Claude (web, escritorio y teléfono) y elegir tu plan: Free, Pro, Max, Ultra, Team o Enterprise.",
@@ -169,8 +180,10 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "Educación, idioma español, miniatura y subtítulos en español. El enlace de los materiales se comprobó desde "
          "fuera, sin iniciar sesión: la carpeta se abre y los dos archivos se descargan.", "",
          "## Anuncio en LinkedIn", "",
-         f"Publicado en el perfil del autor, visible para todos: {LINKEDIN_POST_URL}", "",
+         f"Publicado en el perfil del autor, visible para todos, con el video de muestra del curso: {LINKEDIN_POST_URL}", "",
          "```", *ANUNCIO_LINKEDIN, "```", "",
+         "El video es la muestra de 1:42 que arma `python -m curso_youtube.muestra` (vertical, con subtítulos), subida a "
+         "LinkedIn como video nativo. Reemplazó a un primer anuncio que solo llevaba el enlace.", "",
          "## Lo que queda por hacer, en YouTube Studio", "",
          "- [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).",
          "- [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.",

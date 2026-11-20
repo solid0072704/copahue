@@ -80,6 +80,9 @@ gancho, el método, el caso, un prompt con la respuesta de Claude y una lámina 
 completo. Corta en cambios de paso (donde la voz hace una pausa) y lleva los subtítulos quemados en grande, porque
 en las redes casi todos miran sin sonido. `cierre.mp3` es la frase final (`CIERRE["texto"]`), con la misma voz.
 
+Se publicó en LinkedIn como video nativo, junto con el anuncio del curso: el texto es `ANUNCIO_LINKEDIN`
+(`youtube.anuncio_para_linkedin()` lo entrega como lo recibe la API) y el enlace queda en `LINKEDIN_POST_URL`.
+
 ## Requisitos
 
 Python 3.11+, `numpy`, `Pillow`, `xlsxwriter`, `ffmpeg` y Node con Playwright (Chromium) para capturar las láminas.

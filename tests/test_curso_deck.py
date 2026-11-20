@@ -145,6 +145,17 @@ def test_las_etiquetas_caben_en_el_maximo_de_youtube():
     assert len(youtube.TITULOS[0]) <= 100
 
 
+def test_el_anuncio_de_linkedin_lleva_al_curso_sin_signos_reservados():
+    """El anuncio acompaña al video de muestra, enlaza al curso completo y no usa signos que LinkedIn reserva."""
+    from curso_youtube import youtube
+    texto = youtube.anuncio_para_linkedin()
+    assert "En el video va una muestra" in texto and "https://www.youtube.com/watch?v=ioX%5FgRnrr60" in texto
+    assert not set(texto) & youtube.RESERVADOS_LINKEDIN
+    assert len(texto) <= 3000                                    # el máximo de una publicación
+    ficha = youtube.publicacion(["00:00 Introducción"], estimados=False)
+    assert youtube.LINKEDIN_POST_URL in ficha and youtube.ANUNCIO_LINKEDIN[0] in ficha
+
+
 def test_los_prompts_para_descargar_salen_del_curso():
     """El documento que se comparte trae los 10 prompts, tal como se muestran en el video."""
     from curso_youtube import guion

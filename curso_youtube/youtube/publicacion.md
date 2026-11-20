@@ -85,12 +85,12 @@ Ya quedó puesto: título, descripción (con la descarga de los materiales y el 
 
 ## Anuncio en LinkedIn
 
-Publicado en el perfil del autor, visible para todos: https://www.linkedin.com/feed/update/urn:li:share:7529630511879655428
+Publicado en el perfil del autor, visible para todos, con el video de muestra del curso: https://www.linkedin.com/feed/update/urn:li:ugcPost:7529662233996423168
 
 ```
 Publiqué un curso gratuito en YouTube: Análisis de estados financieros con Claude.
 
-En una hora muestro, paso a paso, cómo usar inteligencia artificial para pasar de los números a las decisiones.
+En el video va una muestra. El curso completo dura una hora y enseña, paso a paso, cómo usar inteligencia artificial para pasar de los números a las decisiones.
 
 Qué incluye:
 ▪️ Un método de 8 pasos: preparar los datos, verificar que todo cuadre, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta y plan de acción.
@@ -100,12 +100,14 @@ Qué incluye:
 
 Lo pensé para gerentes de finanzas, controllers, contadores, analistas y dueños de empresa que quieren entender mejor sus números y dedicar menos tiempo a armar tablas.
 
-🎥 Míralo aquí: https://www.youtube.com/watch?v=ioX_gRnrr60
+🎥 Curso completo: https://www.youtube.com/watch?v=ioX_gRnrr60
 
 Si tienes dudas, o quieres implementar IA en el área de finanzas de tu empresa, escríbeme por aquí.
 
 #Finanzas #InteligenciaArtificial #EstadosFinancieros #ControlDeGestión #Claude
 ```
+
+El video es la muestra de 1:42 que arma `python -m curso_youtube.muestra` (vertical, con subtítulos), subida a LinkedIn como video nativo. Reemplazó a un primer anuncio que solo llevaba el enlace.
 
 ## Lo que queda por hacer, en YouTube Studio
 
