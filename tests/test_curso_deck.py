@@ -89,3 +89,14 @@ def test_el_cierre_ofrece_asesoria_con_los_datos_de_contacto():
     descripcion = youtube.publicacion(["00:00 Introducción"], estimados=False)
     assert LINKEDIN_URL in descripcion and CORREO in descripcion
     assert "[ENLACE A TU PERFIL DE LINKEDIN]" not in descripcion
+
+
+def test_la_miniatura_usa_el_retrato_del_autor_y_archivos_que_existen():
+    import re
+    from pathlib import Path
+    from curso_youtube import youtube
+    raiz = Path(youtube.__file__).parent
+    assert "__IMAGENES__/autor.png" in youtube.MINIATURA_HTML
+    for carpeta, marca in (("imagenes", "__IMAGENES__"), ("fuentes", "__FUENTES__")):
+        for archivo in re.findall(re.escape(marca) + r"/([\w.-]+)", youtube.MINIATURA_HTML):
+            assert (raiz / carpeta / archivo).exists(), f"{carpeta}/{archivo}"

@@ -11,6 +11,7 @@ los subtítulos y los capítulos.
 | Caso práctico (Distribuidora Alerce, ficticia) | `caso.py` · todas las cifras se calculan y verifican aquí |
 | Material descargable para la audiencia | `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` |
 | Título, descripción, capítulos, etiquetas y miniatura | `youtube/publicacion.md` y `youtube/miniatura.png` |
+| Retrato del autor para la miniatura (viene de su flyer en Canva, exportado con fondo transparente) | `imagenes/autor.png` |
 | Registro de la narración generada (qué audio corresponde a cada segmento) | `narracion.json` |
 
 ## Cómo se produce el video

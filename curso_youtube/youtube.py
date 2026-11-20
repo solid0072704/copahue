@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import deck
 from .ensamblar import ENTRADA, _marca
-from .laminas import CORREO, LINKEDIN, LINKEDIN_URL, MARCA
+from .laminas import CORREO, LINKEDIN, LINKEDIN_URL, MARCA, _ondas
 
 AQUI = Path(__file__).parent
 SALIDA = AQUI / "youtube"
@@ -128,41 +128,55 @@ MINIATURA_HTML = """<!doctype html><html lang="es"><head><meta charset="utf-8"><
 @font-face{font-family:"Geist Mono";src:url("__FUENTES__/geist-mono.woff2") format("woff2");font-weight:100 900}
 *{box-sizing:border-box;margin:0;padding:0}
 body{width:1280px;height:720px;overflow:hidden;position:relative;font-family:"Montserrat",sans-serif;color:#F2EADB;
- background:radial-gradient(900px 600px at 0% 110%,rgba(63,98,148,.42),transparent 62%),#101C2C}
-.foto{position:absolute;right:0;top:0;bottom:0;width:600px;background:url("__IMAGENES__/heroe_gestion.jpg") 58% 50%/cover;
- -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.6) 30%,#000 62%);mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.6) 30%,#000 62%)}
-.foto::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(16,28,44,.1),rgba(16,28,44,0) 40%,rgba(16,28,44,.78))}
-.iz{position:absolute;left:64px;top:60px;width:800px}
-.sello{display:flex;align-items:center;gap:18px;font-family:"Geist Mono",monospace;font-size:27px;font-weight:600;letter-spacing:.16em;color:#E3A62F}
-.sello::before{content:"";width:56px;height:3px;background:#E3A62F}
-h1{font-size:112px;line-height:.97;font-weight:800;letter-spacing:-.045em;margin-top:28px}
-h1 em{font-family:"Newsreader",serif;font-style:italic;font-weight:500;letter-spacing:-.02em;color:#E3A62F;font-size:1.12em;line-height:.8}
-.sub{margin-top:30px;font-family:"Source Sans 3",sans-serif;font-size:42px;font-weight:600;color:#B4BEC6}
-.marca{position:absolute;left:64px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:"Geist Mono",monospace;font-size:24px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#F2EADB}
-.marca svg{width:42px;height:42px;flex:none}
-.dato{position:absolute;right:54px;bottom:46px;width:372px;background:#F2EADB;color:#101C2C;border-radius:8px;padding:24px 30px 26px;box-shadow:0 34px 70px -24px rgba(0,0,0,.75);border-top:6px solid #E3A62F}
-.dato .t{font-family:"Geist Mono",monospace;font-size:21px;font-weight:600;letter-spacing:.16em;color:#77695A}
-.dato .n{font-size:104px;font-weight:800;letter-spacing:-.05em;line-height:1;margin-top:6px;color:#D2402B}
-.dato .d{font-family:"Source Sans 3",sans-serif;font-size:31px;font-weight:600;margin-top:6px}
+ background:radial-gradient(900px 620px at -4% 112%,rgba(63,98,148,.46),transparent 62%),radial-gradient(700px 500px at 30% -30%,rgba(46,72,110,.5),transparent 64%),#101C2C}
+.ondas{position:absolute;inset:0;width:1280px;height:720px;opacity:.26}
+/* el autor, sobre un aro de luz que lo separa del fondo */
+.aro{position:absolute;left:676px;top:74px;width:620px;height:620px;border-radius:50%;
+ background:radial-gradient(circle at 46% 38%,#3A66A0 0%,#27456F 46%,#1A2E4B 100%);box-shadow:0 0 0 3px #E3A62F,0 0 110px 10px rgba(79,125,184,.32)}
+.aro::after{content:"";position:absolute;inset:-34px;border-radius:50%;border:1.5px solid rgba(227,166,47,.45)}
+.autor{position:absolute;left:704px;top:22px;height:838px;filter:drop-shadow(0 18px 36px rgba(4,8,14,.6))}
+.velo{position:absolute;left:560px;right:0;bottom:0;height:300px;background:linear-gradient(180deg,rgba(16,28,44,0),rgba(16,28,44,.8) 52%,#101C2C 96%)}
+.placa{position:absolute;right:44px;bottom:84px;display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.placa .n{display:flex;align-items:center;gap:14px;font-family:"Geist Mono",monospace;font-size:25px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#F2EADB}
+.placa .n svg{width:38px;height:38px;flex:none}
+.placa .c{font-family:"Source Sans 3",sans-serif;font-size:22px;font-weight:600;color:#B4BEC6;border-top:2px solid #E3A62F;padding-top:7px}
+.iz{position:absolute;left:60px;top:54px;width:660px}
+.sello{display:flex;align-items:center;gap:18px;font-family:"Geist Mono",monospace;font-size:26px;font-weight:600;letter-spacing:.16em;color:#E3A62F}
+.sello::before{content:"";width:54px;height:3px;background:#E3A62F}
+h1{font-size:100px;line-height:.98;font-weight:800;letter-spacing:-.045em;margin-top:24px}
+h1 em{font-family:"Newsreader",serif;font-style:italic;font-weight:500;letter-spacing:-.02em;color:#E3A62F;font-size:1.13em;line-height:.8}
+.abajo{position:absolute;left:60px;bottom:42px;display:flex;align-items:stretch;gap:30px}
+.dato{width:330px;background:#F2EADB;color:#101C2C;border-radius:8px;padding:16px 26px 18px;box-shadow:0 30px 60px -24px rgba(0,0,0,.75);border-top:6px solid #E3A62F}
+.dato .t{font-family:"Geist Mono",monospace;font-size:18px;font-weight:600;letter-spacing:.16em;color:#77695A}
+.dato .n{font-size:84px;font-weight:800;letter-spacing:-.05em;line-height:1;margin-top:2px;color:#D2402B;white-space:nowrap}
+.dato .d{font-family:"Source Sans 3",sans-serif;font-size:27px;font-weight:600;margin-top:2px}
+.lista{display:flex;flex-direction:column;justify-content:center;gap:8px;font-family:"Source Sans 3",sans-serif;font-size:31px;font-weight:600;color:#B4BEC6;white-space:nowrap}
+.lista b{font-family:"Montserrat",sans-serif;font-weight:800;color:#F2EADB;letter-spacing:-.02em}
 </style></head><body>
-<div class="foto"></div>
+__ONDAS__
+<div class="aro"></div>
+<img class="autor" src="__IMAGENES__/autor.png" alt="">
+<div class="velo"></div>
 <div class="iz"><span class="sello">CURSO COMPLETO · 1 HORA</span>
-<h1>Estados financieros con <em>Claude</em></h1>
-<div class="sub">8 pasos · 10 prompts · 1 caso práctico</div></div>
-<div class="marca">__LOGO____MARCA__</div>
-<div class="dato"><div class="t">CAJA DEL AÑO</div><div class="n">−90 %</div><div class="d">con ventas +18 %</div></div>
+<h1>Estados financieros con <em>Claude</em></h1></div>
+<div class="abajo"><div class="dato"><div class="t">CAJA DEL AÑO</div><div class="n">−90 %</div><div class="d">con ventas +18 %</div></div>
+<div class="lista"><span><b>8</b> pasos</span><span><b>10</b> prompts</span><span><b>1</b> caso práctico</span></div></div>
+<div class="placa"><div class="n">__LOGO____MARCA__</div><div class="c">Contador auditor · Magíster en gestión financiera</div></div>
 </body></html>"""
 
 
 def miniatura(destino: Path) -> None:
+    """Miniatura de 1280 x 720 con el retrato del autor (imagenes/autor.png)."""
     aqui = Path(__file__).parent.resolve()
     html = destino.with_suffix(".html")
     html.write_text(MINIATURA_HTML.replace("__LOGO__", LINKEDIN).replace("__MARCA__", MARCA)
+                    .replace("__ONDAS__", _ondas(0).replace('viewBox="0 0 1920 1080"', 'viewBox="0 0 1920 1080" preserveAspectRatio="none"'))
                     .replace("__FUENTES__", (aqui / "fuentes").as_uri()).replace("__IMAGENES__", (aqui / "imagenes").as_uri()),
                     encoding="utf-8")
     script = ("const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();"
               "const c=await b.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1});const p=await c.newPage();"
               f"await p.goto('file://{html.resolve()}');await p.evaluate(()=>document.fonts.ready);"
+              "await p.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));"
               f"await p.screenshot({{path:'{destino.resolve()}'}});await b.close();}})();")
     subprocess.run(["node", "-e", script], check=True)
     html.unlink()
