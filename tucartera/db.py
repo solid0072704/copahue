@@ -29,7 +29,25 @@ CREATE TABLE IF NOT EXISTS usuarios (
     rol TEXT DEFAULT 'contador',
     cargo TEXT DEFAULT '',
     color TEXT DEFAULT '',
+    clave_definida INTEGER DEFAULT 1,
     creado TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS identidades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    proveedor TEXT NOT NULL,
+    sub TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    creado TEXT NOT NULL,
+    UNIQUE (proveedor, sub)
+);
+CREATE TABLE IF NOT EXISTS oauth_estados (
+    state TEXT PRIMARY KEY,
+    proveedor TEXT NOT NULL,
+    nonce TEXT NOT NULL,
+    modo TEXT NOT NULL,
+    usuario_id INTEGER,
+    expira TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS sesiones (
     token_hash TEXT PRIMARY KEY,
@@ -206,6 +224,7 @@ MIGRACIONES = [
     ("estudios", "estado_suscripcion", "TEXT DEFAULT 'prueba'"),
     ("estudios", "prueba_hasta", "TEXT"),
     ("estudios", "pagado_hasta", "TEXT"),
+    ("usuarios", "clave_definida", "INTEGER DEFAULT 1"),
 ]
 
 

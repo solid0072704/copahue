@@ -700,6 +700,9 @@ button.fila { width: 100%; border: 0; background: none; text-align: left; font: 
 .ingreso .boton.grande { width: 100%; margin-top: 6px; }
 .ingreso-separador { display: flex; align-items: center; gap: 12px; color: var(--text-3); font-size: 12.5px; margin: 22px 0; }
 .ingreso-separador::before, .ingreso-separador::after { content: ""; flex: 1; border-top: 0.5px solid var(--sep-2); }
+.proveedores { display: grid; gap: 10px; }
+.boton.proveedor { width: 100%; background: var(--bg-elev); color: var(--text); box-shadow: inset 0 0 0 1px var(--sep-2); gap: 10px; font-weight: 500; }
+.boton.proveedor:hover { background: var(--bg-elev-2); }
 .ingreso-pie { margin-top: 26px; font-size: 13px; color: var(--text-2); }
 .error-form { color: var(--rojo); font-size: 13px; min-height: 18px; }
 .ingreso-rasgos { display: grid; gap: 14px; margin-top: 40px; text-align: left; }

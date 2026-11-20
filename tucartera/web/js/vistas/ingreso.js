@@ -1,5 +1,9 @@
 import { api } from "../api.js";
-import { LOGO, icono } from "../ui.js";
+import { LOGO, MARCAS, esc, icono } from "../ui.js";
+
+// Mensaje que deja el servidor al volver de Google o Microsoft (se lee una sola vez).
+let errorInicial = new URLSearchParams(location.search).get("error_acceso") || "";
+if (errorInicial) history.replaceState(null, "", location.pathname + location.hash);
 
 export function render(raiz, alEntrar) {
   let modo = "ingresar";
@@ -10,16 +14,20 @@ export function render(raiz, alEntrar) {
       <h1>${registro ? "Crea la cuenta de tu estudio" : "Tu Cartera"}</h1>
       <p class="subtitulo">${registro ? "Empieza con tu cartera en minutos. Puedes invitar a tu equipo después."
         : "La cartera de tu estudio contable, siempre al día. Vencimientos, documentos y cobranza que avanzan solos."}</p>
+      <div class="proveedores">
+        <a class="boton grande proveedor" href="/api/auth/google/iniciar">${MARCAS.google}Continuar con Google</a>
+        <a class="boton grande proveedor" href="/api/auth/microsoft/iniciar">${MARCAS.microsoft}Continuar con Microsoft</a>
+      </div>
+      <div class="ingreso-separador">o con tu correo</div>
       <form novalidate>
         ${registro ? `<input class="entrada" name="estudio" placeholder="Nombre del estudio" autocomplete="organization" required>
         <input class="entrada" name="nombre" placeholder="Tu nombre" autocomplete="name" required>` : ""}
         <input class="entrada" name="email" type="email" placeholder="Correo electrónico" autocomplete="email" required>
         <input class="entrada" name="clave" type="password" placeholder="${registro ? "Contraseña (mínimo 8 caracteres)" : "Contraseña"}" autocomplete="${registro ? "new-password" : "current-password"}" required>
-        <div class="error-form" role="alert"></div>
+        <div class="error-form" role="alert">${esc(errorInicial)}</div>
         <button class="boton primario grande" type="submit">${registro ? "Crear cuenta · 14 días gratis" : "Iniciar sesión"}</button>
       </form>
-      <div class="ingreso-separador">o</div>
-      <button class="boton grande" data-demo style="width:100%">Explorar con un estudio de ejemplo</button>
+      <button class="boton grande fantasma" data-demo style="width:100%;margin-top:14px">Explorar con un estudio de ejemplo</button>
       <p class="ingreso-pie">${registro ? `¿Ya tienes cuenta? <a href="#" data-cambiar>Inicia sesión</a>` : `¿Primera vez? <a href="#" data-cambiar>Crea la cuenta de tu estudio</a>`}</p>
       ${registro ? "" : `<div class="ingreso-rasgos">
         <div><span class="icono-cuadro">${icono("calendario")}</span><span><strong>Calendario tributario propio</strong>F29, Previred, LRE y F22 de cada cliente, con días hábiles y feriados.</span></div>
@@ -37,6 +45,7 @@ export function render(raiz, alEntrar) {
       if (!datos.email || !datos.clave) { error.textContent = "Completa tu correo y contraseña."; return; }
       if (registro && datos.clave.length < 8) { error.textContent = "La contraseña debe tener al menos 8 caracteres."; return; }
       boton.disabled = true;
+      errorInicial = "";
       try {
         await api.post(registro ? "/api/auth/registro" : "/api/auth/ingresar", datos);
         alEntrar();

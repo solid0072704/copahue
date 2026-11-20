@@ -1,6 +1,6 @@
 // Ajustes del estudio, equipo, conexiones y apariencia.
 import { api } from "../api.js";
-import { avatar, aviso, cargando, esc, hoja, icono } from "../ui.js";
+import { MARCAS, avatar, aviso, cargando, esc, hoja, icono } from "../ui.js";
 
 const TEMAS = [["auto", "Automático"], ["light", "Claro"], ["dark", "Oscuro"]];
 
@@ -42,6 +42,22 @@ export async function render(el, _params, app) {
           <span>La firma va al final de cada correo, después del nombre del responsable.</span>
           <button class="boton primario pequeno">Guardar</button></div>
       </form>
+
+      <div class="bloque-form">
+        <div class="grupo-titulo">Inicio de sesión</div>
+        <div class="grupo">
+          <div class="campo"><span class="icono-cuadro gris">${icono("sobre")}</span>
+            <span style="flex:1;font-size:14px">Correo y contraseña<div class="t2 pequeno">${esc(app.sesion.usuario.email.replace(/\+[^@]+@/, "@"))}${d.clave_definida ? "" : " · sin contraseña"}</div></span></div>
+          ${Object.entries(d.proveedores).map(([clave, p]) => {
+            const ident = d.identidades.find((i) => i.proveedor === clave);
+            return `<div class="campo"><span class="icono-cuadro" style="background:var(--bg-elev);box-shadow:inset 0 0 0 1px var(--sep)">${MARCAS[clave]}</span>
+              <span style="flex:1;font-size:14px">${esc(p.nombre)}<div class="t2 pequeno">${ident ? `Conectada como ${esc(ident.email)}` : "Ingresa con tu cuenta de " + esc(p.nombre)}</div></span>
+              ${ident ? `<button class="boton pequeno" data-desconectar="${ident.id}" data-nombre="${esc(p.nombre)}">Desconectar</button>`
+                : `<a class="boton pequeno tinte" href="/api/auth/${clave}/iniciar?modo=conectar">Conectar</a>`}</div>`;
+          }).join("")}
+        </div>
+        <div class="grupo-pie">Solo usamos tu nombre y correo para que ingreses. Tu Cartera no lee tus correos ni tus archivos.</div>
+      </div>
 
       <div class="bloque-form">
         <div class="grupo-titulo" style="display:flex;justify-content:space-between;align-items:center">Equipo
@@ -104,6 +120,13 @@ export async function render(el, _params, app) {
     await app.instalacion.userChoice;
     app.instalacion = null;
     render(el, _params, app);
+  });
+  el.querySelectorAll("[data-desconectar]").forEach((b) => b.onclick = async () => {
+    try {
+      await api.post(`/api/cuenta/identidades/${b.dataset.desconectar}/desconectar`);
+      aviso(`Cuenta de ${b.dataset.nombre} desconectada`);
+      render(el, _params, app);
+    } catch (err) { aviso(err.message, { error: true }); }
   });
   el.querySelector("[data-salir]").onclick = async () => { await api.post("/api/auth/salir"); location.hash = ""; location.reload(); };
   el.querySelector("[data-reiniciar]")?.addEventListener("click", async (ev) => {

@@ -54,6 +54,14 @@ class Config:
     # En los estudios de ejemplo la IA queda apagada para no consumir tokens pagados.
     demo_ia: bool = False
 
+    # Inicio de sesión con Google y Microsoft (OpenID Connect). Vacío = botón visible pero inactivo.
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    microsoft_client_id: str = ""
+    microsoft_client_secret: str = ""
+    # Dirección pública del servicio (https://app.tucartera.cl); se usa para las direcciones de retorno.
+    url_publica: str = ""
+
     # Suscripciones
     dolar_clp: int = 950  # para reportes de costo en pesos
     ventas_email: str = ""  # a dónde llegan las solicitudes de plan y paquetes
@@ -91,6 +99,11 @@ def cargar():
         anthropic_api_key=_env("ANTHROPIC_API_KEY"),
         demo_ia=_env_bool("TUCARTERA_DEMO_IA", False),
         dolar_clp=_env_int("TUCARTERA_DOLAR_CLP", 950),
+        google_client_id=_env("GOOGLE_CLIENT_ID"),
+        google_client_secret=_env("GOOGLE_CLIENT_SECRET"),
+        microsoft_client_id=_env("MICROSOFT_CLIENT_ID"),
+        microsoft_client_secret=_env("MICROSOFT_CLIENT_SECRET"),
+        url_publica=_env("TUCARTERA_URL_PUBLICA").rstrip("/"),
         ventas_email=_env("TUCARTERA_VENTAS_EMAIL"),
         intervalo_min=_env_int("TUCARTERA_INTERVALO_MIN", 30),
         demo=_env_bool("TUCARTERA_DEMO", True),

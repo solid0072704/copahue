@@ -84,6 +84,14 @@ Todo va en `.env` (ver `.env.example`):
 
 - **Correo saliente**: `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CLAVE`, `SMTP_REMITENTE`. Sin SMTP, lo aprobado queda registrado sin enviarse.
 - **Redacción asistida (opcional)**: con `ANTHROPIC_API_KEY`, Claude pule los borradores conservando cifras, fechas y firma, y la barra ⌘K entiende pedidos abiertos usando herramientas que leen la cartera. Todo lo que propone pasa por **Para revisar**; nunca envía por su cuenta. Sin clave, funciona con plantillas y reglas. En los estudios de ejemplo queda apagada (`TUCARTERA_DEMO_IA=0`) para no gastar tokens.
+- **Ingresar con Google o Microsoft**: el ingreso muestra «Continuar con Google» y «Continuar con Microsoft», y en
+  Ajustes → Inicio de sesión cada persona conecta o desconecta sus cuentas. Para activarlos crea las credenciales
+  OAuth (Google Cloud Console y Microsoft Entra), registra como dirección de retorno
+  `https://TU-DOMINIO/api/auth/google/retorno` y `.../api/auth/microsoft/retorno`, y completa
+  `TUCARTERA_URL_PUBLICA`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MICROSOFT_CLIENT_ID` y `MICROSOFT_CLIENT_SECRET`.
+  Solo se pide nombre y correo. La primera vez se crea el estudio con su prueba gratis; si el correo de Google ya
+  tiene cuenta, entra a ella. Con Microsoft, una cuenta existente solo se conecta desde Ajustes, porque Microsoft
+  no garantiza que el correo esté verificado.
 - **Ventas**: `TUCARTERA_VENTAS_EMAIL` recibe las solicitudes de plan y de paquetes que se hacen desde la app.
 - **Producción**: sirve detrás de HTTPS (necesario para instalarla como app) con `TUCARTERA_COOKIE_SEGURA=1` y `python -m tucartera servir --host 0.0.0.0`.
 
@@ -97,6 +105,7 @@ tucartera/
   calendario.py     días hábiles, feriados y reglas de F29, Previred, LRE y F22
   salud.py          puntaje de salud de cada cliente
   planes.py         planes, prueba gratis, cuota de tokens por usuario y modelo fijo
+  oauth.py          ingreso con Google y Microsoft (OpenID Connect)
   agentes/          las seis automatizaciones y la ejecución de propuestas aprobadas
   asistente.py      barra de instrucciones (reglas o Claude)
   llm.py            redacción asistida y herramientas para Claude

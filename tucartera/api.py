@@ -6,15 +6,16 @@ import os
 import re
 import threading
 import unicodedata
+from urllib.parse import quote
 import time as _time
 from datetime import date, datetime, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import agentes, asistente, demo, llm, planes
+from . import agentes, asistente, demo, llm, oauth, planes
 from . import calendario as cal
 from .agentes.acciones import AccionError, descartar_propuesta, ejecutar_propuesta
 from .agentes.documentos import asegurar_documentos
@@ -28,6 +29,7 @@ log = logging.getLogger(__name__)
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 WEB = os.path.join(os.path.dirname(__file__), "web")
 COOKIE = "tucartera_sesion"
+COOKIE_OAUTH = "tucartera_oauth"
 COLORES = ["#0a84ff", "#ff9f0a", "#30d158", "#ff375f", "#64d2ff", "#ac8e68", "#5e5ce6", "#ffd60a"]
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -149,6 +151,120 @@ def crear_app(cfg=None):
         if token:
             conn.execute("DELETE FROM sesiones WHERE token_hash = ?", (hash_token(token),))
         respuesta.delete_cookie(COOKIE, path="/")
+        return {"ok": True}
+
+    # --- Google y Microsoft ------------------------------------------------------------------
+    def usuario_de_cookie(request, conn):
+        token = request.cookies.get(COOKIE)
+        if not token:
+            return None
+        u = fila(conn, """SELECT u.* FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id
+                          WHERE s.token_hash = ? AND s.expira >= ?""", hash_token(token), cal.ahora(cfg.tz))
+        return u
+
+    def retorno_de(request, proveedor):
+        base = cfg.url_publica or str(request.base_url).rstrip("/")
+        return f"{base}/api/auth/{proveedor}/retorno"
+
+    def volver(destino, aviso="", error=False):
+        """Redirige a la app; el mensaje se muestra como aviso (o como error en la pantalla de ingreso)."""
+        consulta = f"?{'error_acceso' if error else 'aviso'}={quote(aviso)}" if aviso else ""
+        r = RedirectResponse(f"/{consulta}{destino}", status_code=303)
+        r.delete_cookie(COOKIE_OAUTH, path="/api/auth")
+        return r
+
+    @app.get("/api/auth/proveedores")
+    def proveedores():
+        return {p: {"nombre": d["nombre"], "activo": oauth.configurado(cfg, p)} for p, d in oauth.PROVEEDORES.items()}
+
+    @app.get("/api/auth/{proveedor}/iniciar")
+    def oauth_iniciar(proveedor: str, request: Request, modo: str = "ingresar", conn=DB):
+        if proveedor not in oauth.PROVEEDORES:
+            raise HTTPException(404, "Proveedor desconocido.")
+        nombre = oauth.PROVEEDORES[proveedor]["nombre"]
+        conectar = modo == "conectar"
+        if not oauth.configurado(cfg, proveedor):
+            return volver("#/ajustes" if conectar else "", f"El acceso con {nombre} aún no está activado en este servidor.",
+                          error=not conectar)
+        usuario = usuario_de_cookie(request, conn) if conectar else None
+        if conectar and not usuario:
+            return volver("", "Inicia sesión para conectar tu cuenta.", error=True)
+        if conectar and fila(conn, "SELECT demo FROM estudios WHERE id = ?", usuario["estudio_id"])["demo"]:
+            return volver("#/ajustes", "En el estudio de ejemplo no se conectan cuentas reales. Crea tu cuenta para hacerlo.")
+        state, nonce = nuevo_token(), nuevo_token()
+        conn.execute("DELETE FROM oauth_estados WHERE expira < ?", (cal.ahora(cfg.tz),))
+        conn.execute("INSERT INTO oauth_estados (state, proveedor, nonce, modo, usuario_id, expira) VALUES (?, ?, ?, ?, ?, ?)",
+                     (state, proveedor, nonce, "conectar" if conectar else "ingresar", usuario["id"] if usuario else None,
+                      (datetime.now(cfg.tz) + timedelta(minutes=10)).isoformat(timespec="seconds")))
+        r = RedirectResponse(oauth.url_autorizacion(cfg, proveedor, retorno_de(request, proveedor), state, nonce), status_code=303)
+        r.set_cookie(COOKIE_OAUTH, state, max_age=600, httponly=True, samesite="lax", secure=cfg.cookie_segura, path="/api/auth")
+        return r
+
+    @app.get("/api/auth/{proveedor}/retorno")
+    def oauth_retorno(proveedor: str, request: Request, code: str = "", state: str = "", error: str = "", conn=DB):
+        if proveedor not in oauth.PROVEEDORES:
+            raise HTTPException(404, "Proveedor desconocido.")
+        nombre = oauth.PROVEEDORES[proveedor]["nombre"]
+        pendiente = fila(conn, "SELECT * FROM oauth_estados WHERE state = ? AND proveedor = ?", state, proveedor) if state else None
+        if pendiente:
+            conn.execute("DELETE FROM oauth_estados WHERE state = ?", (state,))
+        conectar = bool(pendiente and pendiente["modo"] == "conectar")
+        destino_error = "#/ajustes" if conectar else ""
+        if error:
+            return volver(destino_error, f"No se completó el acceso con {nombre}.", error=not conectar)
+        if (not pendiente or pendiente["expira"] < cal.ahora(cfg.tz) or request.cookies.get(COOKIE_OAUTH) != state):
+            return volver("", "La solicitud de acceso expiró o no es válida. Inténtalo de nuevo.", error=True)
+        try:
+            claims = oauth.canjear_codigo(cfg, proveedor, code, retorno_de(request, proveedor))
+            datos = oauth.perfil(cfg, proveedor, claims, pendiente["nonce"])
+        except oauth.ErrorOAuth as e:
+            return volver(destino_error, str(e), error=not conectar)
+        ahora = cal.ahora(cfg.tz)
+        vinculada = fila(conn, "SELECT * FROM identidades WHERE proveedor = ? AND sub = ?", proveedor, datos["sub"])
+
+        if conectar:
+            if vinculada and vinculada["usuario_id"] != pendiente["usuario_id"]:
+                return volver("#/ajustes", f"Esa cuenta de {nombre} ya está conectada a otro usuario.")
+            if not vinculada:
+                conn.execute("DELETE FROM identidades WHERE usuario_id = ? AND proveedor = ?", (pendiente["usuario_id"], proveedor))
+                insertar(conn, "identidades", {"usuario_id": pendiente["usuario_id"], "proveedor": proveedor,
+                                               "sub": datos["sub"], "email": datos["email"], "creado": ahora})
+            return volver("#/ajustes", f"Cuenta de {nombre} conectada: {datos['email']}")
+
+        usuario_id = vinculada["usuario_id"] if vinculada else None
+        if not usuario_id:
+            existente = fila(conn, "SELECT id FROM usuarios WHERE email = ?", datos["email"])
+            if existente and not datos["email_verificado"]:
+                return volver("", f"Ya existe una cuenta con {datos['email']}. Ingresa con tu contraseña y conecta "
+                                  f"{nombre} desde Ajustes.", error=True)
+            if existente:
+                usuario_id = existente["id"]
+            else:  # primera vez: se crea el estudio con su prueba gratis
+                primer_nombre = datos["nombre"].split(" ")[0]
+                eid = insertar(conn, "estudios", {"nombre": f"Estudio de {primer_nombre}", "email": datos["email"],
+                                                  "creado": ahora, **planes.iniciar_prueba(hoy())})
+                usuario_id = insertar(conn, "usuarios", {
+                    "estudio_id": eid, "nombre": datos["nombre"], "email": datos["email"],
+                    "clave_hash": hash_clave(nuevo_token()), "clave_definida": 0, "rol": "socio", "cargo": "Socio",
+                    "color": COLORES[0], "creado": ahora,
+                })
+                agentes.asegurar_configuracion(conn, eid)
+            insertar(conn, "identidades", {"usuario_id": usuario_id, "proveedor": proveedor, "sub": datos["sub"],
+                                           "email": datos["email"], "creado": ahora})
+        r = volver("#/hoy")
+        abrir_sesion(conn, r, usuario_id)
+        return r
+
+    @app.post("/api/cuenta/identidades/{iid}/desconectar")
+    def desconectar_identidad(iid: int, s=Depends(sesion)):
+        conn, u = s["conn"], s["usuario"]
+        ident = fila(conn, "SELECT * FROM identidades WHERE id = ? AND usuario_id = ?", iid, u["id"])
+        if not ident:
+            raise HTTPException(404, "No encontramos esa conexión.")
+        otras = valor(conn, "SELECT COUNT(*) FROM identidades WHERE usuario_id = ? AND id != ?", u["id"], iid)
+        if not u["clave_definida"] and not otras:
+            raise HTTPException(409, "Es tu única forma de ingresar. Conecta otra cuenta antes de desconectar esta.")
+        conn.execute("DELETE FROM identidades WHERE id = ?", (iid,))
         return {"ok": True}
 
     # --- Utilidades de presentación ----------------------------------------------------------
@@ -765,6 +881,10 @@ def crear_app(cfg=None):
             "equipo": filas(conn, """SELECT u.id, u.nombre, u.email, u.cargo, u.rol, u.color,
                 (SELECT COUNT(*) FROM clientes c WHERE c.responsable_id = u.id) AS clientes
                 FROM usuarios u WHERE u.estudio_id = ? ORDER BY u.id""", eid),
+            "identidades": filas(conn, "SELECT id, proveedor, email, creado FROM identidades WHERE usuario_id = ? ORDER BY id",
+                                 s["usuario"]["id"]),
+            "proveedores": {p: {"nombre": d["nombre"], "activo": oauth.configurado(cfg, p)} for p, d in oauth.PROVEEDORES.items()},
+            "clave_definida": bool(s["usuario"]["clave_definida"]),
             "integraciones": {"correo": cfg.smtp_configurado, "redaccion": ia_para(s["estudio"]) is not None,
                               "remitente": cfg.smtp_remitente or cfg.smtp_usuario, "modelo": planes.MODELO},
         }

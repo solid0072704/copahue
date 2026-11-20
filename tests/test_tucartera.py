@@ -327,3 +327,125 @@ def test_uso_de_respuesta_de_la_api():
     respuesta = SimpleNamespace(usage=SimpleNamespace(input_tokens=100, output_tokens=50,
                                                       cache_read_input_tokens=None, cache_creation_input_tokens=20))
     assert uso_de(respuesta) == {"entrada": 100, "salida": 50, "cache_lectura": 0, "cache_escritura": 20}
+
+
+# --- Acceso con Google y Microsoft --------------------------------------------------------------
+import time
+from urllib.parse import parse_qs, urlparse
+
+from tucartera import oauth
+
+
+@pytest.fixture
+def cfg_oauth(tmp_path):
+    return Config(db=str(tmp_path / "o.db"), hoy_fijo=HOY.isoformat(), intervalo_min=0,
+                  google_client_id="gid", google_client_secret="gsecreto",
+                  microsoft_client_id="mid", microsoft_client_secret="msecreto")
+
+
+def _claims(proveedor, nonce, sub="sub-1", email="ana.perez@gmail.com", verificado=True):
+    if proveedor == "google":
+        return {"iss": "https://accounts.google.com", "aud": "gid", "exp": time.time() + 600, "nonce": nonce,
+                "sub": sub, "email": email, "email_verified": verificado, "name": "Ana Pérez"}
+    return {"iss": "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0", "aud": "mid",
+            "exp": time.time() + 600, "nonce": nonce, "sub": sub, "preferred_username": email, "name": "Ana Pérez"}
+
+
+def _acceder(c, monkeypatch, proveedor, modo="ingresar", **kw):
+    r = c.get(f"/api/auth/{proveedor}/iniciar?modo={modo}", follow_redirects=False)
+    assert r.status_code == 303
+    q = parse_qs(urlparse(r.headers["location"]).query)
+    monkeypatch.setattr(oauth, "canjear_codigo", lambda *a: _claims(proveedor, q["nonce"][0], **kw))
+    return c.get(f"/api/auth/{proveedor}/retorno?code=abc&state={q['state'][0]}", follow_redirects=False)
+
+
+def test_proveedor_sin_configurar_avisa(cliente_web):
+    r = cliente_web.get("/api/auth/google/iniciar", follow_redirects=False)
+    assert r.status_code == 303 and "error_acceso=" in r.headers["location"]
+    assert cliente_web.get("/api/auth/proveedores").json()["google"]["activo"] is False
+
+
+def test_redireccion_a_google_con_parametros(cfg_oauth):
+    c = TestClient(crear_app(cfg_oauth))
+    r = c.get("/api/auth/google/iniciar", follow_redirects=False)
+    destino = urlparse(r.headers["location"])
+    q = parse_qs(destino.query)
+    assert destino.netloc == "accounts.google.com"
+    assert q["client_id"] == ["gid"] and q["scope"] == ["openid email profile"] and q["response_type"] == ["code"]
+    assert q["redirect_uri"][0].endswith("/api/auth/google/retorno")
+    assert "tucartera_oauth" in r.headers["set-cookie"]
+
+
+def test_primer_ingreso_con_google_crea_estudio_en_prueba(cfg_oauth, monkeypatch):
+    c = TestClient(crear_app(cfg_oauth))
+    r = _acceder(c, monkeypatch, "google")
+    assert r.status_code == 303 and r.headers["location"] == "/#/hoy"
+    sesion = c.get("/api/sesion").json()
+    assert sesion["estudio"]["nombre"] == "Estudio de Ana" and sesion["suscripcion"]["estado"] == "prueba"
+    c.post("/api/auth/salir", headers=H)
+    _acceder(c, monkeypatch, "google")  # segunda vez: mismo usuario, sin estudio nuevo
+    with conectar(cfg_oauth.db) as conn:
+        assert fila(conn, "SELECT COUNT(*) AS n FROM estudios")["n"] == 1
+        assert fila(conn, "SELECT COUNT(*) AS n FROM identidades")["n"] == 1
+
+
+def test_estado_invalido_no_abre_sesion(cfg_oauth, monkeypatch):
+    c = TestClient(crear_app(cfg_oauth))
+    c.get("/api/auth/google/iniciar", follow_redirects=False)
+    monkeypatch.setattr(oauth, "canjear_codigo", lambda *a: _claims("google", "x"))
+    r = c.get("/api/auth/google/retorno?code=abc&state=falso", follow_redirects=False)
+    assert "error_acceso=" in r.headers["location"]
+    assert c.get("/api/sesion").status_code == 401
+
+
+def test_google_verificado_entra_a_la_cuenta_existente(cfg_oauth, monkeypatch):
+    c = TestClient(crear_app(cfg_oauth))
+    c.post("/api/auth/registro", json={"estudio": "Estudio Paz", "nombre": "Ana Paz", "email": "ana.perez@gmail.com",
+                                       "clave": "secreta123"}, headers=H)
+    c.post("/api/auth/salir", headers=H)
+    _acceder(c, monkeypatch, "google")
+    assert c.get("/api/sesion").json()["estudio"]["nombre"] == "Estudio Paz"
+
+
+def test_microsoft_no_toma_una_cuenta_existente_por_correo(cfg_oauth, monkeypatch):
+    c = TestClient(crear_app(cfg_oauth))
+    c.post("/api/auth/registro", json={"estudio": "Estudio Paz", "nombre": "Ana Paz", "email": "ana@estudio.example",
+                                       "clave": "secreta123"}, headers=H)
+    c.post("/api/auth/salir", headers=H)
+    r = _acceder(c, monkeypatch, "microsoft", email="ana@estudio.example")
+    assert "error_acceso=" in r.headers["location"]
+    assert c.get("/api/sesion").status_code == 401
+
+
+def test_conectar_y_desconectar_desde_ajustes(cfg_oauth, monkeypatch):
+    c = TestClient(crear_app(cfg_oauth))
+    c.post("/api/auth/registro", json={"estudio": "Estudio Paz", "nombre": "Ana Paz", "email": "ana@estudio.example",
+                                       "clave": "secreta123"}, headers=H)
+    r = _acceder(c, monkeypatch, "microsoft", modo="conectar", email="ana@estudio.example")
+    assert r.headers["location"].endswith("#/ajustes") and "aviso=" in r.headers["location"]
+    ident = c.get("/api/ajustes").json()["identidades"]
+    assert [i["proveedor"] for i in ident] == ["microsoft"]
+    assert c.post(f"/api/cuenta/identidades/{ident[0]['id']}/desconectar", headers=H).status_code == 200
+
+
+def test_unica_forma_de_ingreso_no_se_desconecta(cfg_oauth, monkeypatch):
+    c = TestClient(crear_app(cfg_oauth))
+    _acceder(c, monkeypatch, "google", email="solo.google@gmail.com")
+    ident = c.get("/api/ajustes").json()["identidades"][0]
+    assert c.post(f"/api/cuenta/identidades/{ident['id']}/desconectar", headers=H).status_code == 409
+
+
+def test_validacion_del_token(cfg_oauth):
+    base = _claims("google", "n1")
+    assert oauth.perfil(cfg_oauth, "google", base, "n1")["email_verificado"] is True
+    for cambio in ({"aud": "otra-app"}, {"iss": "https://malicioso.example"}, {"exp": time.time() - 3600}, {"nonce": "otro"}):
+        with pytest.raises(oauth.ErrorOAuth):
+            oauth.perfil(cfg_oauth, "google", {**base, **cambio}, "n1")
+    ms = oauth.perfil(cfg_oauth, "microsoft", _claims("microsoft", "n2"), "n2")
+    assert ms["email_verificado"] is False
+
+
+def test_estudio_de_ejemplo_no_conecta_cuentas(cfg_oauth):
+    c = entrar_demo(TestClient(crear_app(cfg_oauth)))
+    r = c.get("/api/auth/google/iniciar?modo=conectar", follow_redirects=False)
+    assert r.headers["location"].endswith("#/ajustes") and "aviso=" in r.headers["location"]

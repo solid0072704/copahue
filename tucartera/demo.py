@@ -336,5 +336,6 @@ def eliminar_estudio(conn, eid):
     conn.execute("DELETE FROM indicadores WHERE cliente_id IN (SELECT id FROM clientes WHERE estudio_id = ?)", (eid,))
     conn.execute("DELETE FROM clientes WHERE estudio_id = ?", (eid,))
     conn.execute("DELETE FROM sesiones WHERE usuario_id IN (SELECT id FROM usuarios WHERE estudio_id = ?)", (eid,))
+    conn.execute("DELETE FROM identidades WHERE usuario_id IN (SELECT id FROM usuarios WHERE estudio_id = ?)", (eid,))
     conn.execute("DELETE FROM usuarios WHERE estudio_id = ?", (eid,))
     conn.execute("DELETE FROM estudios WHERE id = ?", (eid,))

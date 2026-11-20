@@ -1,6 +1,6 @@
 // Arranque, estructura de la aplicación, navegación y barra de instrucciones (⌘K).
 import { api, configurar } from "./api.js";
-import { LOGO, avatar, esc, icono } from "./ui.js";
+import { LOGO, avatar, aviso, esc, icono } from "./ui.js";
 
 const RUTAS = {
   hoy: () => import("./vistas/hoy.js"),
@@ -49,7 +49,7 @@ try {
 } catch { /* sin almacenamiento */ }
 
 async function iniciar() {
-  configurar({ sesionExpirada: () => { app.sesion = null; mostrarIngreso(); } });
+  configurar({ sesionExpirada: () => { if (!app.sesion) return; app.sesion = null; mostrarIngreso(); } });
   try {
     app.sesion = await api.get("/api/sesion");
   } catch {
@@ -82,8 +82,18 @@ function textoIA(s) {
   return `IA: ${ia.porcentaje}% de tu cuota usada`;
 }
 
+function mostrarAvisoDeUrl() {
+  const parametros = new URLSearchParams(location.search);
+  const texto = parametros.get("aviso");
+  if (texto) {
+    history.replaceState(null, "", location.pathname + location.hash);
+    setTimeout(() => aviso(texto, { duracion: 5000 }), 300);
+  }
+}
+
 function montar() {
   const s = app.sesion;
+  mostrarAvisoDeUrl();
   const enlaces = NAV.map(([grupo, items]) => `${grupo ? `<div class="nav-grupo">${grupo}</div>` : ""}` + items.map(([ruta, nombre, ico]) =>
     `<a href="#/${ruta}" data-ruta="${ruta}">${icono(ico)}<span>${nombre}</span>${ruta === "revisar"
       ? `<span class="insignia acento ${s.para_revisar ? "" : "oculto"}" data-insignia>${s.para_revisar || ""}</span>` : ""}</a>`).join("")).join("");
