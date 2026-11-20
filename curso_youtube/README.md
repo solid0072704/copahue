@@ -23,7 +23,7 @@ python -m curso_youtube.construir <trabajo>        # láminas en HTML y PNG de 1
 python -m curso_youtube.guion --voz <trabajo>/voz  # un .txt por audio: el texto exacto que recibe la voz
 #   opcional: --tono "[calm] [professional]" antepone una indicación de tono (ElevenLabs v4 no la lee en voz alta)
 #   … generar cada audio con la voz clonada y guardarlo como <audio>/seg_XXX.mp3 …
-python -m curso_youtube.construir <trabajo> --animar --audio <audio> --hilos 4 --reanudar   # animación cuadro a cuadro
+python -m curso_youtube.construir <trabajo> --continuo --audio <audio> --hilos 4 --reanudar  # el video de cada lámina
 python -m curso_youtube.ensamblar <trabajo> <audio> --salida curso.mp4 --fin 20
 python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los capítulos exactos
 ```
@@ -32,15 +32,22 @@ python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los cap�
   títulos, Source Sans 3 para texto, Newsreader cursiva para el énfasis y Geist Mono para etiquetas (todas en
   `fuentes/`). Las portadas y aperturas de capítulo usan las imágenes de `imagenes/`; las láminas de contenido
   llevan al fondo una cinta de líneas finas que cambia levemente en cada capítulo.
-- **Movimiento.** `movimiento.js` define cómo entra cada elemento: los títulos suben palabra por palabra, los
-  filetes se dibujan, las cifras cuentan desde cero, los prompts se escriben, las barras y líneas de los gráficos
-  crecen y el foco se desplaza por tablas y prompts. Es determinista (el mismo paso y el mismo instante dan
-  siempre la misma imagen), así que `construir --animar` lo captura cuadro a cuadro a 30 fps; con `--audio`
-  cada animación cabe en lo que dura su paso. `ensamblar.py` muestra la animación de cada paso y después su
-  imagen final, funde una lámina con la siguiente y abre cada capítulo con un barrido. Sin `--animar`, el
-  video se arma igual con imágenes fijas.
-- **Si se interrumpe.** La captura (`--reanudar`) y la codificación (por tramos, uno por módulo) retoman donde
-  quedaron: solo se repite lo que cambió.
+- **Movimiento.** El video no tiene pantallas quietas. `movimiento.js` reproduce cada lámina de corrido con tres
+  capas: el fondo (la cinta de líneas ondula y unas motas suben, con el reloj del video, así que no saltan al
+  cambiar de lámina); la entrada de cada elemento repartida por su paso (el título primero y el detalle cuando la
+  narración lo desarrolla, las filas de una tabla en cascada, iconos que se dibujan, cifras que cuentan, barras y
+  líneas que crecen, prompts que se escriben y un puntero que los envía, respuestas de Claude que se van
+  generando); y lo que mantiene viva la pantalla entre un paso y otro (una luz que recorre lo que se está
+  explicando, el cursor, el avance del capítulo en el pie). De una lámina a la siguiente lo anterior se va, y cada
+  capítulo abre con un telón que cruza la pantalla. Todo es determinista: el mismo instante da siempre la misma
+  imagen.
+- **Captura.** `construir --continuo --audio <audio>` calcula con el audio cuántos cuadros dura cada lámina y
+  cada paso, reproduce cada lámina cuadro a cuadro (30 por segundo) en Chromium y pasa los cuadros directo a
+  ffmpeg: queda un video por escena en `<trabajo>/escenas`, sin guardar cuadros en disco, más una imagen por paso
+  tomada del video en `escenas/vistas` para revisarlo. `ensamblar` une las escenas y comprueba que calcen con el
+  audio. Sin `--continuo`, `construir` deja una imagen por paso y el video se arma con imágenes fijas.
+- **Si se interrumpe.** `--reanudar` no repite las escenas ya hechas con el mismo HTML, estilo, motor y audio:
+  la captura de una hora (unos 70 minutos con 4 navegadores) se retoma donde quedó.
 - **Narración.** Cada lámina tiene `pasos`: un texto por cada cambio en pantalla. El guion se escribe con cifras
   («11.800 millones», «18 %»); `voz.py` las convierte a palabras y reescribe términos como «Claude» → «Clod»
   para que la voz en español los pronuncie bien.
@@ -59,8 +66,7 @@ python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los cap�
 ## Requisitos
 
 Python 3.11+, `numpy`, `Pillow`, `xlsxwriter`, `ffmpeg` y Node con Playwright (Chromium) para capturar las láminas.
-Las fuentes van incluidas en `fuentes/` (licencia OFL). La captura animada del curso completo ocupa unos 8 GB
-de imágenes temporales en la carpeta de trabajo.
+Las fuentes van incluidas en `fuentes/` (licencia OFL).
 
 ## Pruebas
 

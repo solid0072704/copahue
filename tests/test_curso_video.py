@@ -119,3 +119,30 @@ def test_cada_imagen_cae_en_su_cuadro_exacto(tmp_path):
     esperados = [16 + nivel * 219 / 255 for nivel, n in zip(niveles, duraciones) for _ in range(n)]
     assert len(vistos) == len(esperados) == sum(duraciones)
     assert all(abs(v - e) < 3 for v, e in zip(vistos, esperados)), [round(v - e, 1) for v, e in zip(vistos, esperados)]
+
+
+def test_el_plan_de_escenas_reparte_todo_el_video():
+    """Cada lámina es una escena; entre todas cubren el video cuadro por cuadro y cada una sabe cómo entra y sale."""
+    from curso_youtube import deck
+    laminas = deck.cargar()[:9]                       # la introducción completa y el comienzo del primer capítulo
+    eventos, t = [], 0.35
+    for s in laminas:
+        for k in range(len(s["pasos"])):
+            eventos.append(dict(t=t, frame=f"{s['id']}_p{k:02d}.png"))
+            t += 3.21
+    plan = ensamblar.plan_de_escenas(dict(eventos=eventos, total=t + 2))
+    escenas = plan["escenas"]
+    assert [e["id"] for e in escenas] == [s["id"] for s in laminas]
+    assert escenas[0]["cuadro0"] == 0 and sum(e["cuadros"] for e in escenas) == plan["total"] == round((t + 2) * FPS)
+    for a, b in zip(escenas, escenas[1:]):
+        assert a["cuadro0"] + a["cuadros"] == b["cuadro0"]                     # sin huecos ni traslapes
+    for e, s in zip(escenas, laminas):
+        assert len(e["duraciones"]) == len(s["pasos"]) and all(d > 0 for d in e["duraciones"])
+        assert abs(sum(e["duraciones"]) - e["cuadros"] / FPS) < 1e-3             # los pasos llenan la escena
+        assert e["modIni"] <= e["inicio"] < e["modFin"]
+    # la portada del curso y las de capítulo entran con telón; la lámina anterior le deja el paso
+    por_tipo = {e["tipo"]: e for e in escenas}
+    assert por_tipo["titulo_curso"]["entra"] == "barrido" and por_tipo["seccion"]["entra"] == "barrido"
+    assert escenas[0]["entra"] == "" and escenas[0]["sale"] == "barrido"         # el gancho da paso a la portada
+    assert escenas[-1]["sale"] == ""                                             # la última no se va
+    assert all(e["sale"] == ("barrido" if escenas[i + 1]["entra"] else "fundido") for i, e in enumerate(escenas[:-1]))
