@@ -13,13 +13,18 @@ _Tiempos exactos del render final._
 ```
 Aprende a analizar estados financieros con Claude, paso a paso: verificación, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para el directorio. Con un caso práctico completo y 10 prompts listos para usar.
 
-📊 Archivo del caso (Excel) y los 10 prompts (PDF): https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-
-⬇️ Descarga oficial de Claude: https://claude.com/download
-💳 Planes y precios vigentes: https://claude.com/pricing
-💼 LinkedIn de Rodrigo Barceló: https://www.linkedin.com/in/rodrigobarcelo
+📥 DESCARGA GRATIS LOS MATERIALES DEL CURSO
+El archivo del caso (Excel) y los 10 prompts (PDF): https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-
 
-ASESORÍA
-¿Quieres implementar inteligencia artificial en el área de finanzas de tu empresa? Estoy disponible para asesorarte. Escríbeme por LinkedIn (https://www.linkedin.com/in/rodrigobarcelo) o a r.diaz.barcelo@gmail.com.
+✉️ ¿TIENES DUDAS?
+Escríbeme a r.diaz.barcelo@gmail.com o por LinkedIn: https://www.linkedin.com/in/rodrigobarcelo
+
+🤝 ASESORÍA
+¿Quieres implementar inteligencia artificial en el área de finanzas de tu empresa? Estoy disponible para asesorarte: escríbeme por cualquiera de esos dos medios.
+
+PARA EMPEZAR CON CLAUDE
+Descarga oficial: https://claude.com/download
+Planes y precios vigentes: https://claude.com/pricing
 
 CAPÍTULOS
 00:00 Introducción
@@ -67,6 +72,7 @@ análisis de estados financieros, estados financieros, análisis financiero, Cla
 ```
 Los 10 prompts del curso, en orden: 1) contexto y reglas, 2) verificación, 3) primera lectura, 4) análisis vertical y horizontal, 5) ratios, 6) flujo de caja, 7) desviaciones, 8) señales de alerta, 9) palancas y escenarios, 10) informe para el directorio.
 Descárgalos junto con el archivo del caso: https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-
+¿Dudas? Escríbeme a r.diaz.barcelo@gmail.com o por LinkedIn: https://www.linkedin.com/in/rodrigobarcelo
 ¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.
 ```
 
