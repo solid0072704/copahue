@@ -6,4 +6,6 @@ openpyxl
 altair
 python-dotenv
 tzdata
-anthropic
+anthropic>=2
+fastapi
+uvicorn

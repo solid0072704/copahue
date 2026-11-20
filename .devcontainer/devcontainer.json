@@ -25,9 +25,13 @@
     "8501": {
       "label": "Application",
       "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "Copahue"
     }
   },
   "forwardPorts": [
-    8501
+    8501,
+    8000
   ]
 }

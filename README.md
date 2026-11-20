@@ -2,9 +2,78 @@
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
+| `copahue/` | **SaaS para estudios contables**: cartera de clientes, calendario tributario, documentos, cobranza y automatizaciones que dejan todo listo para aprobar | `python -m copahue` |
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
+
+---
+
+## Copahue · gestión de clientes para estudios contables
+
+Aplicación web multi-estudio (cada estudio ve solo sus datos) con diseño propio de inspiración Apple:
+tipografía del sistema, un solo color de acento, modo claro y oscuro, y versión móvil con barra de pestañas.
+
+```bash
+pip install -r requirements.txt
+python -m copahue            # http://localhost:8000
+```
+
+Entra con **«Explorar con un estudio de ejemplo»**: cada visitante recibe un estudio ficticio armado
+alrededor de la fecha de hoy (16 clientes, declaraciones por vencer, documentos que faltan, facturas
+atrasadas y cifras fuera de lo normal). Los correos de ejemplo usan dominios `.example` y nunca salen.
+
+| Sección | Qué hace |
+|---|---|
+| **Hoy** | Resumen del día: lo que espera aprobación, agenda tributaria, clientes que requieren atención, tareas y actividad. |
+| **Para revisar** | Bandeja al estilo de Mail con los correos y tareas que prepararon las automatizaciones. Editas el borrador y apruebas con `⌘↵`. |
+| **Clientes** | Cartera con salud 0-100, próximo vencimiento, documentos y deuda. Ficha con ventas y compras de 12 meses, declaraciones, documentos, honorarios y actividad. |
+| **Vencimientos** | Calendario mensual de F29, Previred, LRE y F22, con feriados chilenos y cambio de estado. |
+| **Documentos** | Lo que cada cliente envió y lo que falta del último mes, con casillas al estilo de Recordatorios. |
+| **Cobranza** | Honorarios vencidos, por vencer y cobrados; registro de pagos. |
+| **Barra ⌘K** | Busca clientes o recibe pedidos: «pide los documentos que faltan», «prepara la cobranza». |
+
+### Automatizaciones (los agentes)
+
+Revisan la cartera cada `COPAHUE_INTERVALO_MIN` minutos (30 por defecto) y dejan **propuestas**. Cada una
+puede **pedir aprobación** (por defecto) o **actuar sola**:
+
+| Automatización | Qué propone |
+|---|---|
+| **Calendario tributario** | Genera las obligaciones según los servicios contratados (F29 día 20, Previred día 13, LRE día 15, F22 30 de abril, corridos al siguiente día hábil) y asigna las que vencen en 3 días hábiles. |
+| **Solicitud de documentos** | Pide cartolas, gastos y novedades de remuneraciones con la fecha del próximo vencimiento; recuerda cada 3 días si no llegan. |
+| **Revisión de cifras** | Compara ventas, compras, IVA y remuneraciones con el promedio de 6 meses; redacta la consulta al cliente o propone revisión interna (remanente de crédito fiscal, alza de sueldos). |
+| **Cobranza de honorarios** | Recordatorio amable (< 15 días), segundo aviso (15-44) y llamada del socio (≥ 45). |
+| **Salud de la cartera** | Detecta clientes en riesgo, clientes con trabajadores sin servicio de remuneraciones y honorarios que no se ajustan hace más de un año. |
+| **Informe mensual** | Cuando el mes quedó declarado, prepara el resumen para el cliente. |
+
+Las propuestas no se repiten: si la situación se resuelve sola (el cliente envió todo), se retiran.
+Para correr las automatizaciones desde cron en vez del servidor: `python -m copahue --automatizaciones`.
+
+### Configuración
+
+Todo va en `.env` (ver `.env.example`):
+
+- **Correo saliente**: `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CLAVE`, `SMTP_REMITENTE`. Sin SMTP, lo aprobado queda registrado sin enviarse.
+- **Redacción asistida (opcional)**: con `ANTHROPIC_API_KEY`, Claude (`claude-opus-5-5`, esfuerzo bajo y respaldo automático del servidor) pule los borradores conservando cifras, fechas y firma, y la barra ⌘K entiende pedidos abiertos usando herramientas que leen la cartera. Todo lo que propone pasa por **Para revisar**; nunca envía por su cuenta. Sin clave, funciona con plantillas y reglas.
+- **Producción**: sirve detrás de HTTPS con `COPAHUE_COOKIE_SEGURA=1` y `python -m copahue --host 0.0.0.0`.
+
+Seguridad: contraseñas con PBKDF2, sesiones en servidor con cookie `HttpOnly`, encabezado propio obligatorio en
+toda mutación (protección CSRF) y todas las consultas filtradas por estudio. El calendario incluye feriados
+2025-2027 en `copahue/calendario.py`; verifica cada año el calendario oficial del SII.
+
+```
+copahue/
+  api.py            API (FastAPI) y servidor de la aplicación web
+  calendario.py     días hábiles, feriados y reglas de F29, Previred, LRE y F22
+  salud.py          puntaje de salud de cada cliente
+  agentes/          las seis automatizaciones y la ejecución de propuestas aprobadas
+  asistente.py      barra de instrucciones (reglas o Claude)
+  llm.py            redacción asistida y herramientas para Claude
+  demo.py           estudio de ejemplo
+  web/              interfaz (HTML, CSS y JavaScript sin dependencias ni compilación)
+tests/test_copahue.py
+```
 
 ---
 
