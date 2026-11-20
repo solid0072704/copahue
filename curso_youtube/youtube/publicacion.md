@@ -13,7 +13,7 @@ _Tiempos exactos del render final._
 ```
 Aprende a analizar estados financieros con Claude, paso a paso: verificación, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para el directorio. Con un caso práctico completo y 10 prompts listos para usar.
 
-📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]
+📊 Archivo del caso (Excel) y los 10 prompts (PDF): https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-
 ⬇️ Descarga oficial de Claude: https://claude.com/download
 💳 Planes y precios vigentes: https://claude.com/pricing
 💼 LinkedIn de Rodrigo Barceló: https://www.linkedin.com/in/rodrigobarcelo
@@ -66,14 +66,13 @@ análisis de estados financieros, estados financieros, análisis financiero, Cla
 
 ```
 Los 10 prompts del curso, en orden: 1) contexto y reglas, 2) verificación, 3) primera lectura, 4) análisis vertical y horizontal, 5) ratios, 6) flujo de caja, 7) desviaciones, 8) señales de alerta, 9) palancas y escenarios, 10) informe para el directorio.
-Descárgalos junto con el archivo del caso: [ENLACE A LOS MATERIALES]
+Descárgalos junto con el archivo del caso: https://drive.google.com/drive/folders/1HBzyhRRWgxDncfWjbkE5c37ovR5C2kn-
 ¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.
 ```
 
 ## Lista de verificación antes de publicar
 
-- [ ] Reemplazar el enlace entre [corchetes] (materiales), en la descripción y en el comentario fijado.
-- [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.
+- [ ] Abrir el enlace de los materiales en una ventana privada y comprobar que se ven los dos archivos (el Excel del caso y los prompts en PDF).
 - [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).
 - [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.
 - [ ] Categoría: Educación. Idioma del video: español.

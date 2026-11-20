@@ -130,6 +130,24 @@ def test_el_cierre_ofrece_asesoria_con_los_datos_de_contacto():
     assert "[ENLACE A TU PERFIL DE LINKEDIN]" not in descripcion
 
 
+def test_la_ficha_no_deja_enlaces_por_completar():
+    """La descripción y el comentario fijado llevan el enlace a los materiales: no queda nada entre corchetes."""
+    import re
+    from curso_youtube import youtube
+    ficha = youtube.publicacion(["00:00 Introducción"], estimados=False)
+    assert youtube.MATERIALES_URL.startswith("https://") and ficha.count(youtube.MATERIALES_URL) == 2
+    assert not re.search(r"\[ENLACE[^\]]*\]", ficha)
+
+
+def test_los_prompts_para_descargar_salen_del_curso():
+    """El documento que se comparte trae los 10 prompts, tal como se muestran en el video."""
+    from curso_youtube import guion
+    html = guion.prompts_html()
+    numeros = {s["numero"] for s in _laminas() if s["tipo"] == "prompt" and "ejemplo" not in s["nombre"]}
+    assert len(numeros) == 10 and all(f"PROMPT {n}</span>" in html for n in numeros)
+    assert "Cinco repreguntas que siempre sirven" in html and "linkedin.com/in/" in html
+
+
 def test_la_miniatura_usa_el_retrato_del_autor_y_archivos_que_existen():
     import re
     from pathlib import Path

@@ -9,7 +9,7 @@ los subtítulos y los capítulos.
 | Guion para leer y corregir | `GUION.md` (se genera) |
 | Narración y láminas, por módulo | `contenido/m00_intro.py` … `m13_cierre.py` |
 | Caso práctico (Distribuidora Alerce, ficticia) | `caso.py` · todas las cifras se calculan y verifican aquí |
-| Material descargable para la audiencia | `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` |
+| Material descargable para la audiencia | `material/caso_distribuidora_alerce.xlsx` y `material/prompts.pdf` (se genera con `guion --pdf` desde los mismos prompts que `prompts.md`). Están publicados en la carpeta de Drive que enlaza la ficha (`MATERIALES_URL` en `youtube.py`) |
 | Título, descripción, capítulos, etiquetas y miniatura | `youtube/publicacion.md` y `youtube/miniatura.png` |
 | Retrato del autor para la miniatura (viene de su flyer en Canva, exportado con fondo transparente) | `imagenes/autor.png` |
 | Registro de la narración generada (qué audio corresponde a cada segmento) | `narracion.json` |
