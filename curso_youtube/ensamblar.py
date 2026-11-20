@@ -31,6 +31,7 @@ from .voz import CARACTERES_POR_SEGUNDO, a_voz
 FPS = 30
 MUESTRAS = 48000
 VOLUMEN_OBJETIVO = -16.0   # LUFS
+TASA_AUDIO = "96k"         # AAC en mono: de sobra para una voz, y deja el curso completo bajo los 400 MiB
 ENTRADA = 0.35             # segundos antes de la primera palabra
 FUNDIDO = 7                # cuadros de fundido entre una lámina y la siguiente
 BARRIDO = 17               # cuadros del barrido con que entran las portadas
@@ -559,7 +560,7 @@ def ensamblar(trabajo: Path, carpeta_audio: Path, salida: Path, solo: list[str],
     escribir_audio(tl, narracion)
     escribir_video(tl, trabajo, mudo)
     salida.parent.mkdir(parents=True, exist_ok=True)
-    _ffmpeg("-i", str(mudo), "-i", str(narracion), "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-ar", str(MUESTRAS),
+    _ffmpeg("-i", str(mudo), "-i", str(narracion), "-c:v", "copy", "-c:a", "aac", "-b:a", TASA_AUDIO, "-ar", str(MUESTRAS),
             "-movflags", "+faststart", "-shortest", str(salida))
     escribir_anexos(tl, salida)
     return tl
