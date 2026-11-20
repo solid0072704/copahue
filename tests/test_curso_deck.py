@@ -72,3 +72,20 @@ def test_el_curso_no_menciona_el_ebook():
         assert "ebook" not in pagina(s, ctx).lower(), s["id"]
     for g in deck.segmentos(laminas):
         assert "ebook" not in g["texto"].lower() and "íbuk" not in g["voz"].lower(), g["id"]
+
+
+def test_el_cierre_ofrece_asesoria_con_los_datos_de_contacto():
+    """El video termina con el mensaje de asesoría, y los datos de contacto están en pantalla y en la descripción."""
+    from curso_youtube import youtube
+    from curso_youtube.laminas import CORREO, LINKEDIN_URL
+    laminas = _laminas()
+    cierre = laminas[-1]
+    assert cierre["tipo"] == "cierre"
+    ctx = dict(kicker=cierre["kicker"], modulo=cierre["modulo"], n_modulos=cierre["n_modulos"], avance=cierre["avance"])
+    html = pagina(cierre, ctx)
+    assert 'class="asesoria"' in html and CORREO in html and "linkedin.com/in/" in html
+    voz = deck.segmentos(laminas)[-1]["voz"]
+    assert "asesorarte" in voz and "@" not in voz and "linkedin.com" not in voz.lower()     # los datos se leen en pantalla
+    descripcion = youtube.publicacion(["00:00 Introducción"], estimados=False)
+    assert LINKEDIN_URL in descripcion and CORREO in descripcion
+    assert "[ENLACE A TU PERFIL DE LINKEDIN]" not in descripcion

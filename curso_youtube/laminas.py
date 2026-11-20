@@ -12,6 +12,9 @@ import re
 
 CURSO = "Análisis de estados financieros con Claude"
 MARCA = "Rodrigo Barceló"
+# Datos de contacto del autor: se muestran en el cierre del video y van en la descripción de YouTube
+LINKEDIN_URL = "https://www.linkedin.com/in/rodrigobarcelo"
+CORREO = "r.diaz.barcelo@gmail.com"
 
 # Logo de LinkedIn (el recuadro con «in»): acompaña al nombre del autor para indicar dónde encontrarlo
 LINKEDIN = ('<svg class="logo-in" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#fff"/>'
@@ -61,6 +64,7 @@ ICONOS = {
     "ok": '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
     "banco": '<line x1="3" y1="21" x2="21" y2="21"/><line x1="5" y1="10" x2="5" y2="18"/><line x1="10" y1="10" x2="10" y2="18"/><line x1="14" y1="10" x2="14" y2="18"/><line x1="19" y1="10" x2="19" y2="18"/><polygon points="12 3 21 8 3 8 12 3"/>',
     "enviar": '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+    "correo": '<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22 6 12 13 2 6"/>',
     "libro": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
 }
 
@@ -340,8 +344,15 @@ def _cierre(s: dict) -> str:
     ops = "".join(f'<div class="op"{_p(o)}><div class="n">{esc(o["n"])}</div>{ico(o["icono"])}<b>{esc(o["t"])}</b>'
                   f'<span>{rico(o["d"])}</span></div>' for o in s["opciones"])
     gracias = f'<div class="gracias"{_p(s["gracias"])}>{s["gracias"]["html"]}</div>' if s.get("gracias") else ""
+    asesoria = ""
+    if s.get("asesoria"):            # mensaje de asesoría con los datos de contacto del autor
+        a = s["asesoria"]
+        contactos = (f'<span>{ico("linkedin")}{esc(LINKEDIN_URL.split("://www.")[-1])}</span>'
+                     f'<span>{ico("correo")}{esc(CORREO)}</span>')
+        asesoria = (f'<div class="asesoria"{_p(a)}><div class="as-t"><div class="as-k">{esc(a["k"])}</div>'
+                    f'<b>{rico(a["t"])}</b><span>{rico(a["d"])}</span></div><div class="as-c">{contactos}</div></div>')
     return (f'<div class="cab"><div class="kicker">{esc(s["kicker"])}</div><h1>{rico(s["titulo"])}</h1></div>'
-            f'<div class="cuerpo" style="bottom:250px"><div class="opciones">{ops}</div></div>{gracias}')
+            f'<div class="cuerpo cierre"><div class="opciones">{ops}</div>{asesoria}</div>{gracias}')
 
 
 _CON_CABECERA = {"puntos": _puntos, "dos": _dos, "prompt": _prompt, "tabla": _tabla, "respuesta": _respuesta,

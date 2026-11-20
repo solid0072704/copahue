@@ -47,7 +47,9 @@ LAMINAS = [
             dict(p=2, n="03", icono="play", t="Suscríbete y comenta",
                  d="Cuéntame qué paso te gustaría ver con más profundidad."),
         ],
-        gracias=dict(p=3, html="Gracias por acompañarme. <em>Nos vemos en el próximo video.</em>"),
+        asesoria=dict(p=3, k="Asesoría", t="¿Quieres implementar IA en tu área de finanzas?",
+                      d="Estoy disponible para asesorar a tu empresa. Escríbeme."),
+        gracias=dict(p=4, html="Gracias por acompañarme. <em>Nos vemos en el próximo video.</em>"),
         pasos=[
             "Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La primera: descarga el "
             "archivo del caso y los prompts. El enlace está en la descripción. Repite cada prompt con los mismos "
@@ -57,6 +59,8 @@ LAMINAS = [
             "números.",
             "Y la tercera: suscríbete al canal, y cuéntame en los comentarios qué paso te gustaría ver con más "
             "profundidad.",
+            "Y si quieres llevar la inteligencia artificial al área de finanzas de tu empresa, estoy disponible para "
+            "asesorarte en su implementación. Escríbeme por LinkedIn, o al correo que aparece en pantalla.",
             "Gracias por acompañarme durante esta hora. Nos vemos en el próximo video.",
         ],
     ),

@@ -14,7 +14,10 @@ _Tiempos exactos del render final._
 Aprende a analizar estados financieros con Claude, paso a paso: verificación, análisis vertical y horizontal, ratios, flujo de caja, desviaciones contra el presupuesto, señales de alerta e informe para el directorio. Con un caso práctico completo y 10 prompts listos para usar.
 
 📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]
-💼 LinkedIn de Rodrigo Barceló: [ENLACE A TU PERFIL DE LINKEDIN]
+💼 LinkedIn de Rodrigo Barceló: https://www.linkedin.com/in/rodrigobarcelo
+
+ASESORÍA
+¿Quieres implementar inteligencia artificial en el área de finanzas de tu empresa? Estoy disponible para asesorarte. Escríbeme por LinkedIn (https://www.linkedin.com/in/rodrigobarcelo) o a r.diaz.barcelo@gmail.com.
 
 CAPÍTULOS
 00:00 Introducción
@@ -65,7 +68,7 @@ Descárgalos junto con el archivo del caso: [ENLACE A LOS MATERIALES]
 
 ## Lista de verificación antes de publicar
 
-- [ ] Reemplazar los dos enlaces entre [corchetes] (materiales y tu perfil de LinkedIn).
+- [ ] Reemplazar el enlace entre [corchetes] (materiales), en la descripción y en el comentario fijado.
 - [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.
 - [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).
 - [ ] Subir los subtítulos `.srt` (idioma: español) o pegar el guion para que YouTube los sincronice.

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import deck
 from .ensamblar import ENTRADA, _marca
-from .laminas import LINKEDIN, MARCA
+from .laminas import CORREO, LINKEDIN, LINKEDIN_URL, MARCA
 
 AQUI = Path(__file__).parent
 SALIDA = AQUI / "youtube"
@@ -71,7 +71,11 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
         "el directorio. Con un caso práctico completo y 10 prompts listos para usar.",
         "",
         "📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]",
-        f"💼 LinkedIn de {MARCA}: [ENLACE A TU PERFIL DE LINKEDIN]",
+        f"💼 LinkedIn de {MARCA}: {LINKEDIN_URL}",
+        "",
+        "ASESORÍA",
+        "¿Quieres implementar inteligencia artificial en el área de finanzas de tu empresa? Estoy disponible para "
+        f"asesorarte. Escríbeme por LinkedIn ({LINKEDIN_URL}) o a {CORREO}.",
         "",
         "CAPÍTULOS",
         *capitulos,
@@ -104,7 +108,7 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "¿Qué paso te gustaría ver con más profundidad? Te leo en los comentarios.",
          "```", "",
          "## Lista de verificación antes de publicar", "",
-         "- [ ] Reemplazar los dos enlaces entre [corchetes] (materiales y tu perfil de LinkedIn).",
+         "- [ ] Reemplazar el enlace entre [corchetes] (materiales), en la descripción y en el comentario fijado.",
          "- [ ] Subir `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` al lugar que enlazarás.",
          *(["- [ ] Pegar los capítulos definitivos (archivo `*_capitulos.txt` del render final)."] if estimados else []),
          "- [ ] Subir la miniatura `youtube/miniatura.png` (1280 x 720).",

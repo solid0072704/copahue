@@ -218,6 +218,9 @@
     } else if (es('.remate, .docs, .dfila, .conecta .fuentes')) {
       visible(); fin = hijos(el, t0, .08, 16);
       $$('.fa b', el).forEach(function (b, i) { fin = Math.max(fin, contar(b, t0 + .15 + i * .06, .8)); });
+    } else if (es('.asesoria')) {
+      fin = surgir(el, t0, .75);
+      $$('.as-t > *, .as-c > *', el).forEach(function (x, i) { fin = Math.max(fin, aparecer(x, t0 + .2 + i * .08, .45, 12)); });
     } else if (es('.mini-prompt')) {
       fin = aparecer(el, t0, .45, 14);
     } else {

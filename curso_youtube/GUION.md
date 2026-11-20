@@ -1,6 +1,6 @@
 # Guion · Análisis de estados financieros con Claude
 
-113 láminas · 101 audios · 60.686 caracteres de narración · ≈ 62 minutos
+113 láminas · 101 audios · 60.885 caracteres de narración · ≈ 62 minutos
 
 Cada párrafo es un cambio en pantalla. Las cifras se escriben como se ven; la voz las recibe en palabras.
 Para cambiar el texto, edita los archivos de `contenido/` y vuelve a generar este documento.
@@ -1191,5 +1191,7 @@ Si quieres aplicar este método en tu empresa, tienes tres formas de seguir. La 
 La segunda: conecta conmigo en LinkedIn. Búscame como Rodrigo Barceló, o usa el enlace que está en la descripción. Escríbeme por ahí si tienes dudas, o si quieres contarme cómo te fue con tus propios números.
 
 Y la tercera: suscríbete al canal, y cuéntame en los comentarios qué paso te gustaría ver con más profundidad.
+
+Y si quieres llevar la inteligencia artificial al área de finanzas de tu empresa, estoy disponible para asesorarte en su implementación. Escríbeme por LinkedIn, o al correo que aparece en pantalla.
 
 Gracias por acompañarme durante esta hora. Nos vemos en el próximo video.

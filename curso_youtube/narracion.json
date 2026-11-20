@@ -3,10 +3,10 @@
  "modelo": "eleven_v4",
  "tono": "[calm] [professional]",
  "flow_id": "vBZfuT4WWyqQND7uVfIQ",
- "fecha": "2026-11-19",
+ "fecha": "2026-11-20",
  "audios": 101,
- "caracteres": 62908,
- "minutos": 59.0,
+ "caracteres": 63107,
+ "minutos": 59.2,
  "segmentos": {
   "seg_000": {
    "session_id": "SXpUjqACIqZuC83TiZgK",
@@ -609,10 +609,10 @@
    "segundos": 34.04
   },
   "seg_100": {
-   "session_id": "ua1NftQnvgwwyRC8I4lg",
-   "generation_id": "uHMbru5TAYv40tisCvzW",
-   "caracteres": 658,
-   "segundos": 36.28
+   "session_id": "ppy5Y2xuLmKpPFZCCCTw",
+   "generation_id": "9OsCGwQw1QoQDV41oTYb",
+   "caracteres": 857,
+   "segundos": 46.08
   }
  }
 }
