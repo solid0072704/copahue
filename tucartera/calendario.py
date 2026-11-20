@@ -30,7 +30,7 @@ FERIADOS = {
     date(2027, 12, 8), date(2027, 12, 25),
 }
 
-# Obligaciones que genera Cuadra. `servicio` indica qué servicio contratado la activa.
+# Obligaciones que genera Tu Cartera. `servicio` indica qué servicio contratado la activa.
 TIPOS = {
     "F29": {
         "nombre": "F29",

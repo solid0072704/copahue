@@ -1,26 +1,26 @@
-"""Pruebas de Cuadra: calendario, automatizaciones, aprobaciones y aislamiento entre estudios."""
+"""Pruebas de Tu Cartera: calendario, automatizaciones, aprobaciones y aislamiento entre estudios."""
 
 from datetime import date
 
 import pytest
 from starlette.testclient import TestClient
 
-from cuadra import agentes, asistente
-from cuadra import calendario as cal
-from cuadra.agentes.acciones import ejecutar_propuesta
-from cuadra.api import crear_app
-from cuadra.config import Config
-from cuadra.db import conectar, fila, filas, inicializar, json_cargar
-from cuadra.demo import crear_demo
-from cuadra.llm import _datos_protegidos
+from tucartera import agentes, asistente
+from tucartera import calendario as cal
+from tucartera.agentes.acciones import ejecutar_propuesta
+from tucartera.api import crear_app
+from tucartera.config import Config
+from tucartera.db import conectar, fila, filas, inicializar, json_cargar
+from tucartera.demo import crear_demo
+from tucartera.llm import _datos_protegidos
 
 HOY = date(2026, 11, 20)
-H = {"X-Cuadra": "1"}
+H = {"X-TuCartera": "1"}
 
 
 @pytest.fixture
 def cfg(tmp_path):
-    return Config(db=str(tmp_path / "cuadra.db"), hoy_fijo=HOY.isoformat(), intervalo_min=0)
+    return Config(db=str(tmp_path / "tucartera.db"), hoy_fijo=HOY.isoformat(), intervalo_min=0)
 
 
 @pytest.fixture
@@ -187,7 +187,7 @@ def test_flujo_completo_en_la_api(cliente_web):
 # --- Suscripción, cuotas de IA y modelo fijo --------------------------------------------------
 from types import SimpleNamespace
 
-from cuadra import planes
+from tucartera import planes
 
 
 def test_modelo_fijo_y_sin_configuracion():
@@ -322,7 +322,7 @@ def test_app_instalable(cliente_web):
 
 
 def test_uso_de_respuesta_de_la_api():
-    from cuadra.llm import uso_de
+    from tucartera.llm import uso_de
 
     respuesta = SimpleNamespace(usage=SimpleNamespace(input_tokens=100, output_tokens=50,
                                                       cache_read_input_tokens=None, cache_creation_input_tokens=20))

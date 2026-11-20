@@ -1,4 +1,4 @@
-"""Configuración de Cuadra desde variables de entorno (o un archivo .env en desarrollo)."""
+"""Configuración de Tu Cartera desde variables de entorno (o un archivo .env en desarrollo)."""
 
 import os
 from dataclasses import dataclass
@@ -33,7 +33,7 @@ def _env_bool(nombre, defecto=False):
 
 @dataclass
 class Config:
-    db: str = "data/cuadra.db"
+    db: str = "data/tucartera.db"
     zona_horaria: str = "America/Santiago"
     # Fecha fija (AAAA-MM-DD) para demos y pruebas; vacío = hoy real.
     hoy_fijo: str = ""
@@ -78,20 +78,20 @@ class Config:
 
 def cargar():
     return Config(
-        db=_env("CUADRA_DB", "data/cuadra.db"),
+        db=_env("TUCARTERA_DB", "data/tucartera.db"),
         zona_horaria=_env("ZONA_HORARIA", "America/Santiago"),
-        hoy_fijo=_env("CUADRA_HOY"),
-        sesion_dias=_env_int("CUADRA_SESION_DIAS", 14),
-        cookie_segura=_env_bool("CUADRA_COOKIE_SEGURA", False),
+        hoy_fijo=_env("TUCARTERA_HOY"),
+        sesion_dias=_env_int("TUCARTERA_SESION_DIAS", 14),
+        cookie_segura=_env_bool("TUCARTERA_COOKIE_SEGURA", False),
         smtp_host=_env("SMTP_HOST"),
         smtp_puerto=_env_int("SMTP_PUERTO", 465),
         smtp_usuario=_env("SMTP_USUARIO"),
         smtp_clave=_env("SMTP_CLAVE"),
         smtp_remitente=_env("SMTP_REMITENTE"),
         anthropic_api_key=_env("ANTHROPIC_API_KEY"),
-        demo_ia=_env_bool("CUADRA_DEMO_IA", False),
-        dolar_clp=_env_int("CUADRA_DOLAR_CLP", 950),
-        ventas_email=_env("CUADRA_VENTAS_EMAIL"),
-        intervalo_min=_env_int("CUADRA_INTERVALO_MIN", 30),
-        demo=_env_bool("CUADRA_DEMO", True),
+        demo_ia=_env_bool("TUCARTERA_DEMO_IA", False),
+        dolar_clp=_env_int("TUCARTERA_DOLAR_CLP", 950),
+        ventas_email=_env("TUCARTERA_VENTAS_EMAIL"),
+        intervalo_min=_env_int("TUCARTERA_INTERVALO_MIN", 30),
+        demo=_env_bool("TUCARTERA_DEMO", True),
     )

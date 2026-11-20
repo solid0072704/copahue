@@ -1,6 +1,6 @@
-// Service worker de Cuadra: la interfaz abre al instante y funciona como app en PC y celular.
+// Service worker de Tu Cartera: la interfaz abre al instante y funciona como app en PC y celular.
 // Los datos (/api) nunca se guardan en caché: siempre vienen del servidor.
-const VERSION = "cuadra-v1";
+const VERSION = "tucartera-v1";
 const BASE = ["/", "/css/app.css", "/js/app.js", "/js/api.js", "/js/ui.js", "/icono.svg", "/manifest.webmanifest", "/icono-192.png"];
 
 self.addEventListener("install", (e) => {

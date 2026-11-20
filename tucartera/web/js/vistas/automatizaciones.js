@@ -49,7 +49,7 @@ export async function render(el, _params, app) {
             <button class="boton pequeno" data-ejecutar="${a.clave}">Ejecutar</button>
           </div>
         </section>`).join("")}</div>
-      <p class="t3 pequeno" style="margin-top:18px">${d.intervalo_min ? `Se ejecutan solas cada ${d.intervalo_min} minutos.` : "Se ejecutan cuando lo pides aquí o en ⌘K. Para que corran solas, define CUADRA_INTERVALO_MIN o programa «python -m cuadra --automatizaciones»."}</p>`;
+      <p class="t3 pequeno" style="margin-top:18px">${d.intervalo_min ? `Se ejecutan solas cada ${d.intervalo_min} minutos.` : "Se ejecutan cuando lo pides aquí o en ⌘K. Para que corran solas, define TUCARTERA_INTERVALO_MIN o programa «python -m tucartera --automatizaciones»."}</p>`;
 
     el.querySelectorAll("[data-activo]").forEach((i) => i.onchange = () => ajustar(i.dataset.activo, { activo: i.checked },
       i.checked ? "Automatización activada" : "Automatización desactivada"));

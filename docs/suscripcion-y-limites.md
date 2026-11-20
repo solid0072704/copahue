@@ -1,11 +1,11 @@
-# Cuadra · suscripción, límites de tokens y cobro
+# Tu Cartera · suscripción, límites de tokens y cobro
 
 Propuesta de modelo de negocio con los números que la sostienen. Los planes, cuotas y precios viven en
-`cuadra/planes.py`: cambiarlos ahí actualiza la app, la página **Plan y uso** y los límites.
+`tucartera/planes.py`: cambiarlos ahí actualiza la app, la página **Plan y uso** y los límites.
 
 ## 1. Modelo de IA fijo
 
-Cuadra usa siempre **`claude-opus-5-5`**, sin desvío automático a otros modelos. Así el costo por token
+Tu Cartera usa siempre **`claude-opus-5-5`**, sin desvío automático a otros modelos. Así el costo por token
 no cambia según la solicitud y los márgenes se pueden calcular de antemano. Si el modelo rechaza una
 solicitud, la app responde con sus plantillas y reglas.
 
@@ -25,7 +25,7 @@ Precio de lista de Anthropic (US$ por millón de tokens, noviembre de 2026):
 Con una mezcla normal de pedidos y correos, el costo ronda **US$ 6 por millón de tokens**. Para fijar
 precios se usa un supuesto conservador de **US$ 10 por millón** (≈ $9.500 con dólar a $950).
 
-Estas cifras son estimaciones de diseño. Con clientes reales, `python -m cuadra uso` muestra el costo
+Estas cifras son estimaciones de diseño. Con clientes reales, `python -m tucartera uso` muestra el costo
 efectivo por millón de tokens de tu cartera; úsalo para ajustar el primer mes.
 
 Cada llamada tiene topes propios: máximo 6.000 tokens de respuesta y 6 vueltas de herramientas por pedido,
@@ -64,18 +64,18 @@ La mayoría de los usuarios no gasta toda su cuota, así que el peso real suele 
 servidor, el correo saliente y la comisión de la pasarela de pago (normalmente entre 3 % y 4 %).
 
 **Regla para revisar cada mes:** si el costo efectivo pasa de US$ 10 por millón, o si el costo de IA de un plan
-supera el 35 % de su precio, sube el precio del plan o baja su cuota en `cuadra/planes.py`.
+supera el 35 % de su precio, sube el precio del plan o baja su cuota en `tucartera/planes.py`.
 
 ## 5. Cómo cobrarlo
 
 1. **Cobro recurrente con tarjeta.** En Chile puedes usar Flow (suscripciones), Mercado Pago (suscripciones)
    o Transbank Oneclick. El estudio inscribe su tarjeta una vez y se le cobra cada mes:
    usuarios activos × precio del plan + IVA.
-2. **Activación en Cuadra.** Hoy, cuando confirmas el pago, activas o renuevas el plan con
-   `python -m cuadra plan correo@estudio.cl profesional --meses 1`. El siguiente paso es conectar el aviso
+2. **Activación en Tu Cartera.** Hoy, cuando confirmas el pago, activas o renuevas el plan con
+   `python -m tucartera plan correo@estudio.cl profesional --meses 1`. El siguiente paso es conectar el aviso
    automático (webhook) de la pasarela elegida para que esto ocurra solo.
-3. **Paquetes.** Cobro único; se activan con `python -m cuadra paquete correo@estudio.cl`. Desde la app, el
-   botón «Comprar paquete» escribe a `CUADRA_VENTAS_EMAIL`.
+3. **Paquetes.** Cobro único; se activan con `python -m tucartera paquete correo@estudio.cl`. Desde la app, el
+   botón «Comprar paquete» escribe a `TUCARTERA_VENTAS_EMAIL`.
 4. **Documento tributario.** Emite boleta o factura electrónica por cada cobro. La mayoría de los estudios
    pedirá factura para recuperar el IVA.
 5. **Plan anual (opcional).** 12 meses al precio de 10, pagados por adelantado: mejora la caja y reduce las

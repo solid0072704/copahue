@@ -80,7 +80,7 @@ export function formularioCliente(datos, c = {}) {
       <div class="campo"><span class="campo-etiqueta">Servicios</span><div class="opciones" data-servicios>${Object.entries(datos.servicios).map(([k, v]) => `<button type="button" class="opcion" data-servicio="${k}" aria-pressed="${servicios.includes(k)}">${esc(v)}</button>`).join("")}</div></div>
       <div class="campo"><label for="f-hon">Honorario mensual</label><input id="f-hon" name="honorario" type="number" min="0" step="1000" value="${esc(c.honorario ?? "")}" placeholder="$"></div>
       <div class="campo"><label for="f-resp">Responsable</label><select id="f-resp" name="responsable_id">${datos.equipo.map((u) => `<option value="${u.id}" ${u.id === c.responsable_id ? "selected" : ""}>${esc(u.nombre)}</option>`).join("")}</select></div>
-    </div><div class="grupo-pie">Según los servicios, Cuadra arma el calendario de F29, Previred, LRE y F22, y la lista mensual de documentos.</div></div>
+    </div><div class="grupo-pie">Según los servicios, Tu Cartera arma el calendario de F29, Previred, LRE y F22, y la lista mensual de documentos.</div></div>
     <div class="bloque-form"><div class="grupo-titulo">Contacto</div><div class="grupo">
       <div class="campo"><label for="f-cnom">Nombre</label><input id="f-cnom" name="contacto_nombre" value="${esc(c.contacto_nombre || "")}"></div>
       <div class="campo"><label for="f-cmail">Correo</label><input id="f-cmail" name="contacto_email" type="email" value="${esc(c.contacto_email || "")}" placeholder="nombre@empresa.cl"></div>

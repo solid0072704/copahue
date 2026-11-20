@@ -2,7 +2,7 @@
 
 Modelo de cobro: cada estudio paga un precio mensual por usuario según su plan. Cada usuario
 trae una cuota de tokens de IA al mes; si se agota, el estudio puede comprar paquetes que van a
-una bolsa común. Sin cuota disponible, Cuadra sigue funcionando con plantillas y reglas.
+una bolsa común. Sin cuota disponible, Tu Cartera sigue funcionando con plantillas y reglas.
 
 Los tokens se cuentan como todo lo que la IA lee y escribe (entrada + caché + salida). El costo
 real se calcula aparte con los precios del modelo, para medir el margen de cada plan.

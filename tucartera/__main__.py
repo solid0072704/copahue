@@ -1,11 +1,11 @@
-"""Ejecuta Cuadra y administra las suscripciones.
+"""Ejecuta Tu Cartera y administra las suscripciones.
 
-    python -m cuadra                                  # servidor web en http://localhost:8000
-    python -m cuadra servir --host 0.0.0.0 --puerto 8080
-    python -m cuadra automatizaciones                 # corre las automatizaciones de todos los estudios (cron)
-    python -m cuadra plan socio@estudio.cl profesional --meses 1   # activa o renueva un plan pagado
-    python -m cuadra paquete socio@estudio.cl         # suma un paquete de tokens este mes
-    python -m cuadra uso                              # consumo, costo y margen por estudio del mes
+    python -m tucartera                                  # servidor web en http://localhost:8000
+    python -m tucartera servir --host 0.0.0.0 --puerto 8080
+    python -m tucartera automatizaciones                 # corre las automatizaciones de todos los estudios (cron)
+    python -m tucartera plan socio@estudio.cl profesional --meses 1   # activa o renueva un plan pagado
+    python -m tucartera paquete socio@estudio.cl         # suma un paquete de tokens este mes
+    python -m tucartera uso                              # consumo, costo y margen por estudio del mes
 """
 
 import argparse
@@ -35,7 +35,7 @@ def _estudio_por_correo(conn, correo):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cuadra", description="Gestión de clientes para estudios contables.")
+    parser = argparse.ArgumentParser(prog="tucartera", description="Gestión de clientes para estudios contables.")
     sub = parser.add_subparsers(dest="comando")
     servir = sub.add_parser("servir", help="Inicia el servidor web (por defecto).")
     servir.add_argument("--host", default="127.0.0.1")
@@ -52,7 +52,7 @@ def main():
     cancelar.add_argument("correo")
     uso = sub.add_parser("uso", help="Consumo de IA, costo y margen por estudio.")
     uso.add_argument("--mes", help="AAAA-MM (por defecto, el mes actual)")
-    # Compatibilidad con la forma anterior: python -m cuadra --puerto 8080
+    # Compatibilidad con la forma anterior: python -m tucartera --puerto 8080
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--puerto", type=int, default=8000)
     args = parser.parse_args()

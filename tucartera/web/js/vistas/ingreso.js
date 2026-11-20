@@ -7,9 +7,9 @@ export function render(raiz, alEntrar) {
     const registro = modo === "registro";
     raiz.innerHTML = `<div class="ingreso"><div class="ingreso-caja">
       <div class="marca-logo">${LOGO}</div>
-      <h1>${registro ? "Crea la cuenta de tu estudio" : "Cuadra"}</h1>
+      <h1>${registro ? "Crea la cuenta de tu estudio" : "Tu Cartera"}</h1>
       <p class="subtitulo">${registro ? "Empieza con tu cartera en minutos. Puedes invitar a tu equipo después."
-        : "Tu cartera contable, siempre cuadrada. Vencimientos, documentos y cobranza que avanzan solos."}</p>
+        : "La cartera de tu estudio contable, siempre al día. Vencimientos, documentos y cobranza que avanzan solos."}</p>
       <form novalidate>
         ${registro ? `<input class="entrada" name="estudio" placeholder="Nombre del estudio" autocomplete="organization" required>
         <input class="entrada" name="nombre" placeholder="Tu nombre" autocomplete="name" required>` : ""}
@@ -62,5 +62,5 @@ export function render(raiz, alEntrar) {
     raiz.querySelector("input")?.focus();
   };
   pintar();
-  document.title = "Cuadra";
+  document.title = "Tu Cartera";
 }

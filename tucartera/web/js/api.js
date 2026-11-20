@@ -16,7 +16,7 @@ async function pedir(metodo, ruta, cuerpo) {
     respuesta = await fetch(ruta, {
       method: metodo,
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json", "X-Cuadra": "1" },
+      headers: { "Content-Type": "application/json", "X-TuCartera": "1" },
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
     });
   } catch {

@@ -5,12 +5,12 @@ import { avatar, aviso, cargando, esc, hoja, icono } from "../ui.js";
 const TEMAS = [["auto", "Automático"], ["light", "Claro"], ["dark", "Oscuro"]];
 
 function temaActual() {
-  try { return localStorage.getItem("cuadra-tema") || "auto"; } catch { return "auto"; }
+  try { return localStorage.getItem("tucartera-tema") || "auto"; } catch { return "auto"; }
 }
 export function aplicarTema(tema) {
   if (tema === "auto") document.documentElement.removeAttribute("data-theme");
   else document.documentElement.setAttribute("data-theme", tema);
-  try { localStorage.setItem("cuadra-tema", tema); } catch { /* sin almacenamiento */ }
+  try { localStorage.setItem("tucartera-tema", tema); } catch { /* sin almacenamiento */ }
 }
 
 export async function render(el, _params, app) {
@@ -26,7 +26,7 @@ export async function render(el, _params, app) {
     <header class="encabezado"><div class="encabezado-texto"><h1 class="titulo">Ajustes</h1><p class="subtitulo">${esc(e.nombre)}</p></div></header>
     <div style="max-width:720px">
       ${e.demo ? `<div class="franja"><span class="icono-cuadro naranja">${icono("info")}</span><div class="fila-cuerpo"><div class="fila-titulo">Estás en un estudio de ejemplo</div>
-        <div class="fila-sub">Los clientes y correos son ficticios: nada sale de Cuadra. Puedes volver a empezar cuando quieras.</div></div>
+        <div class="fila-sub">Los clientes y correos son ficticios: nada sale de Tu Cartera. Puedes volver a empezar cuando quieras.</div></div>
         <button class="boton" data-reiniciar>Restablecer datos</button></div>` : ""}
 
       <form class="bloque-form" data-estudio>
@@ -72,10 +72,10 @@ export async function render(el, _params, app) {
         <div class="grupo-titulo">Usar como app</div>
         <div class="grupo"><div class="campo" style="padding-top:8px;padding-bottom:8px">
           <span class="icono-cuadro">${icono("descargar")}</span>
-          <span style="flex:1;font-size:13.5px">${instalada ? "Cuadra ya está instalada en este dispositivo." : app.instalacion
-            ? "Instala Cuadra en este equipo para abrirla como una app, con su propio ícono."
+          <span style="flex:1;font-size:13.5px">${instalada ? "Tu Cartera ya está instalada en este dispositivo." : app.instalacion
+            ? "Instala Tu Cartera en este equipo para abrirla como una app, con su propio ícono."
             : esIOS ? "En iPhone o iPad: toca Compartir y luego «Agregar a inicio»."
-              : "Desde el menú del navegador elige «Instalar Cuadra» o «Agregar a la pantalla de inicio»."}</span>
+              : "Desde el menú del navegador elige «Instalar Tu Cartera» o «Agregar a la pantalla de inicio»."}</span>
           ${app.instalacion && !instalada ? `<button class="boton primario pequeno" data-instalar>Instalar</button>` : ""}
         </div></div>
         <div class="grupo-pie">Funciona en computador, tablet y celular con la misma cuenta.</div>

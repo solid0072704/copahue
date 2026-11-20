@@ -1,4 +1,4 @@
-"""Automatizaciones de Cuadra y su orquestación."""
+"""Automatizaciones de Tu Cartera y su orquestación."""
 
 import logging
 

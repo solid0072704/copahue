@@ -1,4 +1,4 @@
-"""API web de Cuadra y servidor de la aplicación."""
+"""API web de Tu Cartera y servidor de la aplicación."""
 
 import logging
 import mimetypes
@@ -27,7 +27,7 @@ from .seguridad import hash_clave, hash_token, nuevo_token, verificar_clave
 log = logging.getLogger(__name__)
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 WEB = os.path.join(os.path.dirname(__file__), "web")
-COOKIE = "cuadra_sesion"
+COOKIE = "tucartera_sesion"
 COLORES = ["#0a84ff", "#ff9f0a", "#30d158", "#ff375f", "#64d2ff", "#ac8e68", "#5e5ce6", "#ffd60a"]
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -41,14 +41,14 @@ def crear_app(cfg=None):
     cfg = cfg or cargar()
     inicializar(cfg.db)
     claude = llm.crear(cfg)
-    app = FastAPI(title="Cuadra", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Tu Cartera", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.cfg = cfg
 
     def hoy():
         return date.fromisoformat(cfg.hoy_fijo) if cfg.hoy_fijo else datetime.now(cfg.tz).date()
 
     def ia_para(estudio):
-        """En los estudios de ejemplo la IA queda apagada (salvo CUADRA_DEMO_IA) para no gastar tokens."""
+        """En los estudios de ejemplo la IA queda apagada (salvo TUCARTERA_DEMO_IA) para no gastar tokens."""
         return None if estudio.get("demo") and not cfg.demo_ia else claude
 
     def resumen_ia(conn, estudio, usuario_id):
@@ -68,7 +68,7 @@ def crear_app(cfg=None):
     async def proteger(request: Request, call_next):
         # Las mutaciones exigen un encabezado propio: un formulario de otro sitio no puede enviarlo.
         if request.url.path.startswith("/api/") and request.method not in ("GET", "HEAD", "OPTIONS"):
-            if request.headers.get("x-cuadra") != "1":
+            if request.headers.get("x-tucartera") != "1":
                 return JSONResponse({"detail": "Solicitud no permitida."}, status_code=403)
         respuesta = await call_next(request)
         respuesta.headers["X-Content-Type-Options"] = "nosniff"
@@ -852,7 +852,7 @@ def iniciar_programador(cfg, claude, hoy):
             except Exception:  # el programador nunca debe caerse
                 log.exception("Falló la ejecución programada")
 
-    threading.Thread(target=ciclo, name="cuadra-programador", daemon=True).start()
+    threading.Thread(target=ciclo, name="tucartera-programador", daemon=True).start()
 
 
 def ejecutar_todos(cfg, hoy, claude=None):

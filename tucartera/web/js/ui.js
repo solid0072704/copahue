@@ -51,7 +51,7 @@ export function icono(nombre, clase = "") {
 }
 export const iconoAgente = (n) => icono(ICONO_AGENTE[n] || "ciclo");
 
-// Logotipo de Cuadra: cuatro casillas en diagonal, como un debe y un haber que cuadran.
+// Logotipo de Tu Cartera: cuatro casillas, la cartera de clientes en orden.
 export const LOGO = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2.2" fill="currentColor"/><rect x="13" y="3" width="8" height="8" rx="2.2" fill="currentColor" opacity=".42"/><rect x="3" y="13" width="8" height="8" rx="2.2" fill="currentColor" opacity=".42"/><rect x="13" y="13" width="8" height="8" rx="2.2" fill="currentColor"/></svg>`;
 
 // ---------- Formato ----------

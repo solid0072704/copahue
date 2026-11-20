@@ -19,7 +19,7 @@ export async function render(el, _params, app) {
   const boton = (texto, asunto, clase = "") => {
     const href = correo(asunto);
     return href ? `<a class="boton ${clase}" href="${esc(href)}">${esc(texto)}</a>`
-      : `<button class="boton ${clase}" disabled title="Falta configurar el correo de ventas (CUADRA_VENTAS_EMAIL)">${esc(texto)}</button>`;
+      : `<button class="boton ${clase}" disabled title="Falta configurar el correo de ventas (TUCARTERA_VENTAS_EMAIL)">${esc(texto)}</button>`;
   };
 
   const subtitulo = s.estado === "prueba" && s.vigente
@@ -52,7 +52,7 @@ export async function render(el, _params, app) {
           <div class="fila-sub">${esc(tokensCorto(d.sin_responsable))} tokens en clientes sin responsable asignado</div></div></div>` : ""}
         ${d.extras ? `<div class="medidor-fila"><span class="icono-cuadro verde">${icono("mas")}</span><div class="fila-cuerpo"><div class="fila-titulo">Bolsa de paquetes</div>
           <div class="fila-sub">${esc(tokensCorto(d.bolsa))} disponibles de ${esc(tokensCorto(d.extras))} comprados este mes</div></div></div>` : ""}
-        <div class="grupo-pie" style="padding:6px 18px 18px">Cada persona tiene su cuota mensual. Los pedidos en ⌘K usan la cuota de quien pide y los correos pulidos, la del responsable del cliente. Si se agota, Cuadra sigue funcionando con plantillas y reglas.${d.ia_activa ? "" : " En este estudio la IA está apagada, así que estos consumos son ilustrativos."}</div>
+        <div class="grupo-pie" style="padding:6px 18px 18px">Cada persona tiene su cuota mensual. Los pedidos en ⌘K usan la cuota de quien pide y los correos pulidos, la del responsable del cliente. Si se agota, Tu Cartera sigue funcionando con plantillas y reglas.${d.ia_activa ? "" : " En este estudio la IA está apagada, así que estos consumos son ilustrativos."}</div>
       </section>
 
       <div class="columna">

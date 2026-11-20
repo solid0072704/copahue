@@ -1,6 +1,6 @@
 {
-  "name": "Cuadra · cartera contable",
-  "short_name": "Cuadra",
+  "name": "Tu Cartera · gestión contable",
+  "short_name": "Tu Cartera",
   "description": "Gestión de clientes para estudios contables: vencimientos, documentos y cobranza al día.",
   "lang": "es-CL",
   "start_url": "/#/hoy",

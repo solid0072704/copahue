@@ -44,7 +44,7 @@ export const app = {
 let limpiarVista = null;
 
 try {
-  const tema = localStorage.getItem("cuadra-tema");
+  const tema = localStorage.getItem("tucartera-tema");
   if (tema === "light" || tema === "dark") document.documentElement.setAttribute("data-theme", tema);
 } catch { /* sin almacenamiento */ }
 
@@ -90,7 +90,7 @@ function montar() {
   document.body.innerHTML = `
   <div class="app">
     <aside class="barra" aria-label="Navegación">
-      <div class="marca"><div class="marca-logo">${LOGO}</div><div class="truncar"><div class="marca-nombre">Cuadra</div>
+      <div class="marca"><div class="marca-logo">${LOGO}</div><div class="truncar"><div class="marca-nombre">Tu Cartera</div>
         <div class="marca-estudio truncar">${esc(s.estudio.nombre)}</div></div></div>
       <button class="buscador" data-paleta>${icono("buscar", "s")}<span>Buscar o pedir algo</span><kbd>⌘K</kbd></button>
       <nav class="nav">${enlaces}</nav>
@@ -101,7 +101,7 @@ function montar() {
     <main class="contenido">
       <div class="barra-movil">
         <button class="boton fantasma icono" data-menu aria-label="Menú">${icono("menu")}</button>
-        <div class="marca-nombre">Cuadra</div>
+        <div class="marca-nombre">Tu Cartera</div>
         <button class="boton fantasma icono" data-paleta aria-label="Buscar">${icono("buscar")}</button>
       </div>
       <div id="vista"></div>
@@ -149,7 +149,7 @@ async function enrutar() {
     vista.innerHTML = `<div class="vacio"><div class="icono-cuadro rojo">${icono("alerta")}</div><h3>No pudimos cargar esta sección</h3><p>${esc(e.message)}</p></div>`;
   }
   const titulo = document.querySelector(".titulo, .detalle-titulo");
-  document.title = `${titulo ? titulo.textContent.trim() + " · " : ""}Cuadra`;
+  document.title = `${titulo ? titulo.textContent.trim() + " · " : ""}Tu Cartera`;
 }
 
 window.addEventListener("hashchange", enrutar);
@@ -201,7 +201,7 @@ function abrirPaleta() {
       }
     };
     const clientes = (clientesCache || []).filter((c) => !q || norma(`${c.razon_social} ${c.nombre_corto} ${c.rut} ${c.giro}`).includes(nq)).slice(0, q ? 6 : 4);
-    const pedir = () => grupo("Pedir", [{ accion: "pedir", texto: q, html: `<span class="icono-cuadro">${icono("enviar")}</span><span class="truncar">${esc(q)}</span><span class="t3">Pedir a Cuadra</span>` }]);
+    const pedir = () => grupo("Pedir", [{ accion: "pedir", texto: q, html: `<span class="icono-cuadro">${icono("enviar")}</span><span class="truncar">${esc(q)}</span><span class="t3">Enviar pedido</span>` }]);
     const parecePedido = q.split(/\s+/).length > 2;
     if (q && parecePedido) pedir();
     grupo("Clientes", clientes.map((c) => ({ accion: "ir", ruta: `#/clientes/${c.id}`, html: `<span class="icono-cuadro gris">${icono("edificio")}</span><span class="truncar">${esc(c.razon_social)}</span><span class="t3">${esc(c.rut)}</span>` })));

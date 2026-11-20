@@ -2,14 +2,14 @@
 
 | App | Para qué sirve | Cómo se ejecuta |
 |---|---|---|
-| `cuadra/` | **SaaS para estudios contables**: cartera de clientes, calendario tributario, documentos, cobranza y automatizaciones que dejan todo listo para aprobar | `python -m cuadra` |
+| `tucartera/` | **SaaS para estudios contables**: cartera de clientes, calendario tributario, documentos, cobranza y automatizaciones que dejan todo listo para aprobar | `python -m tucartera` |
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
 
 ---
 
-## Cuadra · gestión de clientes para estudios contables
+## Tu Cartera · gestión de clientes para estudios contables
 
 SaaS por suscripción para estudios contables (cada estudio ve solo sus datos), con diseño propio de inspiración
 Apple: tipografía del sistema, un solo color de acento y modo claro y oscuro. Funciona en computador, tablet y
@@ -17,7 +17,7 @@ celular, y se puede **instalar como app** (Ajustes → Usar como app, o «Agrega
 
 ```bash
 pip install -r requirements.txt
-python -m cuadra            # http://localhost:8000
+python -m tucartera            # http://localhost:8000
 ```
 
 Entra con **«Explorar con un estudio de ejemplo»**: cada visitante recibe un estudio ficticio armado
@@ -47,23 +47,23 @@ Cada estudio parte con **14 días gratis** del plan Profesional (200.000 tokens 
 cuota, una persona sigue trabajando con plantillas y reglas; el estudio puede sumar **paquetes de 1.000.000
 tokens** ($14.990 + IVA) que quedan en una bolsa común hasta fin de mes. Si el pago vence, hay 3 días de gracia
 y luego se pausan la IA y las automatizaciones, sin bloquear los datos. Los cálculos de costo y margen están en
-[`docs/suscripcion-y-limites.md`](docs/suscripcion-y-limites.md); los planes se cambian en `cuadra/planes.py`.
+[`docs/suscripcion-y-limites.md`](docs/suscripcion-y-limites.md); los planes se cambian en `tucartera/planes.py`.
 
-La IA usa siempre el mismo modelo, **`claude-opus-5-5`** (fijo en `cuadra/planes.py`, sin desvío automático
+La IA usa siempre el mismo modelo, **`claude-opus-5-5`** (fijo en `tucartera/planes.py`, sin desvío automático
 a otros modelos), para que el costo por token sea predecible. Cada llamada registra sus tokens y su costo.
 
 Administración (para ti, como dueño del servicio):
 
 ```bash
-python -m cuadra plan socio@estudio.cl profesional --meses 1   # activa o renueva tras recibir el pago
-python -m cuadra paquete socio@estudio.cl                      # suma 1.000.000 tokens este mes
-python -m cuadra cancelar socio@estudio.cl
-python -m cuadra uso                                           # tokens, costo, ingreso y margen por estudio
+python -m tucartera plan socio@estudio.cl profesional --meses 1   # activa o renueva tras recibir el pago
+python -m tucartera paquete socio@estudio.cl                      # suma 1.000.000 tokens este mes
+python -m tucartera cancelar socio@estudio.cl
+python -m tucartera uso                                           # tokens, costo, ingreso y margen por estudio
 ```
 
 ### Automatizaciones (los agentes)
 
-Revisan la cartera cada `CUADRA_INTERVALO_MIN` minutos (30 por defecto) y dejan **propuestas**. Cada una
+Revisan la cartera cada `TUCARTERA_INTERVALO_MIN` minutos (30 por defecto) y dejan **propuestas**. Cada una
 puede **pedir aprobación** (por defecto) o **actuar sola**:
 
 | Automatización | Qué propone |
@@ -76,23 +76,23 @@ puede **pedir aprobación** (por defecto) o **actuar sola**:
 | **Informe mensual** | Cuando el mes quedó declarado, prepara el resumen para el cliente. |
 
 Las propuestas no se repiten: si la situación se resuelve sola (el cliente envió todo), se retiran.
-Para correr las automatizaciones desde cron en vez del servidor: `python -m cuadra automatizaciones`.
+Para correr las automatizaciones desde cron en vez del servidor: `python -m tucartera automatizaciones`.
 
 ### Configuración
 
 Todo va en `.env` (ver `.env.example`):
 
 - **Correo saliente**: `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CLAVE`, `SMTP_REMITENTE`. Sin SMTP, lo aprobado queda registrado sin enviarse.
-- **Redacción asistida (opcional)**: con `ANTHROPIC_API_KEY`, Claude pule los borradores conservando cifras, fechas y firma, y la barra ⌘K entiende pedidos abiertos usando herramientas que leen la cartera. Todo lo que propone pasa por **Para revisar**; nunca envía por su cuenta. Sin clave, funciona con plantillas y reglas. En los estudios de ejemplo queda apagada (`CUADRA_DEMO_IA=0`) para no gastar tokens.
-- **Ventas**: `CUADRA_VENTAS_EMAIL` recibe las solicitudes de plan y de paquetes que se hacen desde la app.
-- **Producción**: sirve detrás de HTTPS (necesario para instalarla como app) con `CUADRA_COOKIE_SEGURA=1` y `python -m cuadra servir --host 0.0.0.0`.
+- **Redacción asistida (opcional)**: con `ANTHROPIC_API_KEY`, Claude pule los borradores conservando cifras, fechas y firma, y la barra ⌘K entiende pedidos abiertos usando herramientas que leen la cartera. Todo lo que propone pasa por **Para revisar**; nunca envía por su cuenta. Sin clave, funciona con plantillas y reglas. En los estudios de ejemplo queda apagada (`TUCARTERA_DEMO_IA=0`) para no gastar tokens.
+- **Ventas**: `TUCARTERA_VENTAS_EMAIL` recibe las solicitudes de plan y de paquetes que se hacen desde la app.
+- **Producción**: sirve detrás de HTTPS (necesario para instalarla como app) con `TUCARTERA_COOKIE_SEGURA=1` y `python -m tucartera servir --host 0.0.0.0`.
 
 Seguridad: contraseñas con PBKDF2, sesiones en servidor con cookie `HttpOnly`, encabezado propio obligatorio en
 toda mutación (protección CSRF) y todas las consultas filtradas por estudio. El calendario incluye feriados
-2025-2027 en `cuadra/calendario.py`; verifica cada año el calendario oficial del SII.
+2025-2027 en `tucartera/calendario.py`; verifica cada año el calendario oficial del SII.
 
 ```
-cuadra/
+tucartera/
   api.py            API (FastAPI) y servidor de la aplicación web
   calendario.py     días hábiles, feriados y reglas de F29, Previred, LRE y F22
   salud.py          puntaje de salud de cada cliente
@@ -102,7 +102,7 @@ cuadra/
   llm.py            redacción asistida y herramientas para Claude
   demo.py           estudio de ejemplo
   web/              interfaz (HTML, CSS y JavaScript sin compilación), instalable como app
-tests/test_cuadra.py
+tests/test_tucartera.py
 ```
 
 ---
