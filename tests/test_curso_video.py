@@ -96,3 +96,26 @@ def test_el_motor_de_movimiento_y_el_capturador_son_javascript_valido():
     for archivo in ("movimiento.js", "capturar.cjs"):
         r = subprocess.run(["node", "--check", str(aqui / archivo)], capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
+
+
+def test_cada_imagen_cae_en_su_cuadro_exacto(tmp_path):
+    """Ni se pierde ni se repite un cuadro: la animación a 30 cuadros por segundo se codifica uno a uno."""
+    if not shutil.which("ffmpeg"):
+        pytest.skip("requiere ffmpeg")
+    niveles = [30 + 12 * k for k in range(18)]
+    duraciones = [1] * 13 + [9] + [1] * 3 + [5]          # animación, una pausa, más animación y la imagen final
+    lista = []
+    for k, (nivel, n) in enumerate(zip(niveles, duraciones)):
+        ruta = tmp_path / f"c{k:02d}.jpg"
+        Image.new("RGB", TAM, (nivel, nivel, nivel)).save(ruta, quality=95)
+        lista.append((ruta, n))
+    video = tmp_path / "tramo.mp4"
+    ensamblar._codificar(lista, video)
+    # se lee la luminancia tal como quedó guardada (rango de video: 16 a 235), sin convertirla
+    crudo = subprocess.run(["ffmpeg", "-v", "error", "-i", str(video), "-vf", "scale=16:8:in_range=tv:out_range=tv,format=yuv420p",
+                            "-f", "rawvideo", "-"], capture_output=True, check=True).stdout
+    cuadro = 16 * 8 * 3 // 2
+    vistos = [sum(crudo[i:i + 128]) / 128 for i in range(0, len(crudo), cuadro)]
+    esperados = [16 + nivel * 219 / 255 for nivel, n in zip(niveles, duraciones) for _ in range(n)]
+    assert len(vistos) == len(esperados) == sum(duraciones)
+    assert all(abs(v - e) < 3 for v, e in zip(vistos, esperados)), [round(v - e, 1) for v, e in zip(vistos, esperados)]

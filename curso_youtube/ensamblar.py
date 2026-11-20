@@ -273,20 +273,25 @@ def secuencia(tl: dict, trabajo: Path) -> list[tuple[Path, int, str]]:
     return seq
 
 
+# Las imágenes son JPEG (BT.601, rango completo): se pasan por RGB para llegar bien a BT.709 de rango de video.
+# La conversión va antes de `fps`, así se hace una vez por imagen y no una por cada cuadro que dura en pantalla.
+FILTRO_VIDEO = ("scale=1920:1080:in_color_matrix=bt601:in_range=pc,format=gbrp,"
+                f"scale=1920:1080:out_color_matrix=bt709:out_range=tv,format=yuv420p,fps={FPS}")
+CODIFICACION = ["-c:v", "libx264", "-preset", "medium", "-crf", "18", "-g", str(FPS * 10), "-bf", "2",
+                "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
+
+
 def _codificar(lista: list[tuple[Path, int]], destino: Path) -> None:
     cuadros = sum(n for _, n in lista)
     lineas = ["ffconcat version 1.0"]
     for img, n in lista:
-        lineas += [f"file '{img}'", f"duration {n / FPS:.6f}"]
-    lineas.append(f"file '{lista[-1][0]}'")
+        # `option framerate`: sin ella ffmpeg ubica las imágenes en una rejilla de 25 por segundo y, a 30 cuadros
+        # por segundo, uno de cada seis cuadros de animación cae sobre el anterior y se pierde.
+        lineas += [f"file '{img}'", f"option framerate {FPS}", f"duration {n / FPS:.6f}"]
+    lineas += [f"file '{lista[-1][0]}'", f"option framerate {FPS}"]
     concat = destino.with_suffix(".ffconcat")
     concat.write_text("\n".join(lineas) + "\n", encoding="utf-8")
-    # Las imágenes son JPEG (BT.601, rango completo): se pasan por RGB para llegar bien a BT.709 de rango de video.
-    filtro = (f"fps={FPS},scale=1920:1080:in_color_matrix=bt601:in_range=pc,format=gbrp,"
-              "scale=1920:1080:out_color_matrix=bt709:out_range=tv,format=yuv420p")
-    _ffmpeg("-f", "concat", "-safe", "0", "-i", str(concat), "-vf", filtro,
-            "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-g", str(FPS * 10), "-bf", "2",
-            "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
+    _ffmpeg("-f", "concat", "-safe", "0", "-i", str(concat), "-vf", FILTRO_VIDEO, *CODIFICACION,
             "-frames:v", str(cuadros), str(destino))
 
 
@@ -309,7 +314,8 @@ def escribir_video(tl: dict, trabajo: Path, destino: Path) -> None:
     partes = []
     for k, grupo in enumerate(grupos):
         parte = tramos_dir / f"tramo_{k:02d}.mp4"
-        firma = hashlib.sha1("|".join(f"{img}:{n}:{img.stat().st_mtime_ns}" for img, n in grupo).encode()).hexdigest()
+        firma = hashlib.sha1("|".join([FILTRO_VIDEO, *CODIFICACION, *(f"{img}:{n}:{img.stat().st_mtime_ns}" for img, n in grupo)])
+                             .encode()).hexdigest()
         marca = parte.with_suffix(".firma")
         if not (parte.exists() and marca.exists() and marca.read_text() == firma):
             marca.unlink(missing_ok=True)
