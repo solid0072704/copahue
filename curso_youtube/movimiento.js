@@ -371,10 +371,16 @@
       $$('.prompt, .resp, .memo, .proyecto, .tabla-caja thead, .conecta .fle, .conecta .nodo, .metodo, .grafico > svg > line, .grafico > svg > text, .grafico > svg > rect').forEach(function (el, i) {
         if (el.closest('[data-p]')) return;
         var cuando = Math.max(.2, t0) + i * .03;
-        if (el.matches('.prompt, .resp, .memo, .proyecto')) surgir(el, cuando); else aparecer(el, cuando, .5, 0);
+        if (DUR && DUR < 3.4) cuando = .12 + i * .03;
+        if (el.matches('.prompt, .resp, .memo, .proyecto')) surgir(el, cuando, DUR && DUR < 3.4 ? .5 : .7); else aparecer(el, cuando, .5, 0);
       });
       var pre = $('.prompt pre');
-      if (pre) {                         // el prompt se escribe mientras se presenta, y se envía
+      var corto = DUR && DUR < 3.4;      // no hay tiempo para escribirlo: llega pegado, tramo por tramo
+      if (pre && corto) {
+        var tramos = $$('.seg', pre), cada = entre((DUR - .95) / Math.max(1, tramos.length) * .5, .02, .08);
+        tramos.forEach(function (s, i) { aparecer(s, .5 + i * cada, .3, 0); });
+      }
+      if (pre && !corto) {               // el prompt se escribe mientras se presenta, y se envía
         var desde = Math.max(.6, t0 + .25), largo = entre((DUR || 4) * .6, 1.0, 11);
         if (DUR && desde + largo > DUR - .3) largo = Math.max(.5, DUR - .3 - desde);
         finEscritura = revelar(pre, desde, largo, true);
