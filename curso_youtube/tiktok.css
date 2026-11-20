@@ -1,0 +1,100 @@
+/* Video vertical para TikTok (1080 x 1920). Una sola página con cuatro escenas; tiktok.js mueve todo según el reloj
+   del video. Misma identidad que las láminas del curso: azul noche, crema y dorado; Montserrat, Source Sans 3,
+   Newsreader en itálica para los énfasis y Geist Mono para los rótulos.
+   Todo lo que hay que leer queda dentro de la zona segura: bajo las pestañas de arriba (210 px), sobre el texto de
+   la publicación (desde los 1480 px) y, de la mitad hacia abajo, a la izquierda de los botones (hasta los 930 px).
+   Las escenas se compusieron desde los 172 px y después se bajaron 48 (ver .esc) para ganar margen arriba. */
+@font-face { font-family: "Montserrat"; src: url("fuentes/montserrat.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Source Sans 3"; src: url("fuentes/source-sans-3.woff2") format("woff2"); font-weight: 200 900; font-display: block; }
+@font-face { font-family: "Newsreader"; font-style: italic; src: url("fuentes/newsreader-italic.woff2") format("woff2"); font-weight: 200 800; font-display: block; }
+@font-face { font-family: "Geist Mono"; src: url("fuentes/geist-mono.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+:root {
+  --papel: #101C2C; --papel-2: #17273B; --papel-3: #1E3149; --tinta: #F2EADB; --tinta-2: #B4BEC6; --tinta-3: #77858F;
+  --linea: #2A3D55; --acento: #E3A62F; --verde: #4CC38A; --rojo: #FF7462; --crema: #FBF8F0; --noche: #121E2E;
+  --f-titulo: "Montserrat", sans-serif; --f-texto: "Source Sans 3", sans-serif; --f-mono: "Geist Mono", monospace; --f-serif: "Newsreader", Georgia, serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--papel); }
+body { position: relative; font-family: var(--f-texto); color: var(--tinta); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums lining-nums;
+  background: radial-gradient(1100px 900px at 112% 104%, rgba(63, 98, 148, .40), transparent 62%),
+              radial-gradient(900px 700px at -14% -6%, rgba(46, 72, 110, .50), transparent 64%), var(--papel); }
+#fondo { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+em { font-family: var(--f-serif); font-style: italic; font-weight: 500; letter-spacing: -.02em; color: var(--acento); }
+
+/* Rótulo de la escena */
+.k { position: absolute; left: 72px; top: 172px; display: flex; align-items: center; gap: 18px; font-family: var(--f-mono); font-size: 26px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--acento); white-space: nowrap; }
+.k i { width: 46px; height: 3px; background: var(--acento); transform: scaleX(var(--k, 1)); transform-origin: 0 50%; }
+
+/* cada escena se acerca muy despacio; el punto fijo está en el borde derecho de la zona segura, para que nada se
+   corra hacia los botones */
+.esc { position: absolute; inset: 48px 0 -48px 0; transform-origin: 930px 50%; }
+.pl { display: inline-block; overflow: hidden; vertical-align: top; padding: .08em .06em .14em 0; margin: -.08em -.06em -.14em 0; }
+.pl > span { display: inline-block; }
+
+/* 1 · El caso */
+#caso h1 { position: absolute; left: 72px; right: 60px; top: 236px; font-family: var(--f-titulo); font-size: 92px; line-height: 1.045; font-weight: 800; letter-spacing: -.036em; transform-origin: 0 0; }
+#caso h1 em { font-size: 1.06em; position: relative; white-space: nowrap; }
+#caso h1 em::after { content: ""; position: absolute; left: 0; right: 0; bottom: .04em; height: 7px; border-radius: 4px; background: var(--rojo); transform: scaleX(var(--r, 0)); transform-origin: 0 50%; }
+.tiles { position: absolute; left: 72px; width: 858px; top: 566px; display: flex; flex-direction: column; gap: 14px; }
+.tile { position: relative; padding-top: 17px; --tono: var(--verde); }
+.tile.neg { --tono: var(--rojo); }
+.tile .fl { position: absolute; left: 0; top: 0; width: 100%; height: 3px; background: var(--tono); transform: scaleX(var(--r, 1)); transform-origin: 0 50%; }
+.tile .eti { font-family: var(--f-mono); font-size: 24px; line-height: 30px; font-weight: 500; letter-spacing: .15em; text-transform: uppercase; color: var(--tinta-2); }
+.tile .val { display: flex; align-items: baseline; gap: 18px; margin-top: 2px; transform-origin: 0 60%; font-family: var(--f-titulo); font-size: 102px; line-height: 106px; font-weight: 700; letter-spacing: -.04em; color: var(--tono); white-space: nowrap; }
+.tile .val small { font-family: var(--f-texto); font-size: 38px; line-height: 1; font-weight: 500; letter-spacing: 0; color: var(--tinta); }
+.tile .sub { font-size: 30px; line-height: 36px; color: var(--tinta-2); }
+.tile .barra { flex: 1; align-self: center; height: 20px; margin-left: 14px; border-radius: 10px; background: rgba(242, 234, 219, .10); overflow: hidden; }
+/* la caja parte en crema (lo que había) y se tiñe de rojo a medida que se vacía: --m va de 0 a 1 */
+.tile.neg .val { color: color-mix(in srgb, var(--rojo) calc(var(--m, 1) * 100%), var(--tinta)); }
+.tile .barra b { display: block; height: 100%; width: calc(var(--w, 1) * 100%); border-radius: 10px; background: var(--tono); }
+
+/* 2 · La idea */
+.preg { position: absolute; left: 72px; top: 560px; font-family: var(--f-serif); font-style: italic; font-weight: 500; font-size: 132px; line-height: 1.02; letter-spacing: -.03em; color: var(--acento); transform-origin: 0 0; white-space: nowrap; }
+.lock { position: absolute; left: 72px; top: 372px; font-family: var(--f-titulo); font-weight: 800; letter-spacing: -.045em; }
+.lock .pal { display: flex; width: fit-content; align-items: baseline; gap: 26px; font-size: 158px; line-height: 164px; }
+.lock .pal small { font-family: var(--f-mono); font-size: 30px; font-weight: 500; letter-spacing: .04em; color: var(--tinta-2); }
+.lock .lu { color: var(--verde); }
+.lock .lc { color: var(--rojo); }
+.lock .ne { height: 128px; padding-left: 6px; font-family: var(--f-titulo); font-weight: 600; font-size: 150px; line-height: 122px; letter-spacing: 0; color: var(--acento); transform-origin: 60px 64px; }
+.docs { position: absolute; left: 72px; width: 858px; top: 892px; display: flex; gap: 21px; }
+.doc { position: relative; flex: 1; height: 236px; padding: 20px 22px 0; border-radius: 16px; background: var(--papel-2); border: 1px solid var(--linea); box-shadow: 0 24px 50px -28px rgba(0, 0, 0, .8); }
+#d-flujo { transform-origin: 100% 60%; }      /* al destacarse crece hacia la izquierda: a su derecha van los botones */
+.doc .dt { font-family: var(--f-titulo); font-size: 25px; line-height: 30px; font-weight: 700; letter-spacing: -.015em; height: 60px; }
+.doc svg { display: block; width: 100%; height: 118px; margin-top: 14px; }
+.doc::after { content: ""; position: absolute; inset: -5px; border-radius: 20px; border: 4px solid var(--acento); opacity: var(--f, 0); box-shadow: 0 0 34px 2px rgba(227, 166, 47, .45); }
+
+/* 3 · El curso */
+.esc h2 { position: absolute; left: 72px; right: 60px; top: 236px; font-family: var(--f-titulo); font-weight: 800; letter-spacing: -.036em; }
+#curso h2 { font-size: 74px; line-height: 1.06; }
+.vent { position: absolute; left: 72px; top: 428px; width: 858px; height: 597px; border-radius: 22px; overflow: hidden; background: #0B1420; transform-origin: 50% 0;
+  box-shadow: 0 0 0 1px rgba(242, 234, 219, .16), 0 -4px 0 0 var(--acento), 0 40px 80px -36px rgba(0, 0, 0, .9); }
+.vent img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.chips { position: absolute; left: 72px; width: 858px; top: 1052px; display: flex; gap: 14px; }
+.chip { flex: 1 1 auto; height: 96px; padding: 0 20px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 16px; background: var(--papel-2); border: 1px solid var(--linea);
+  font-family: var(--f-titulo); font-size: 31px; font-weight: 700; letter-spacing: -.025em; white-space: nowrap; }
+.chip svg { width: 34px; height: 34px; flex: none; fill: none; stroke: var(--acento); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 4 · Dónde está */
+#cta h2 { font-size: 108px; line-height: 1.02; }
+#cta h2 em { font-size: 1.08em; }
+.busca { position: absolute; left: 72px; width: 936px; top: 506px; height: 104px; display: flex; align-items: center; gap: 20px; padding: 0 34px; border-radius: 52px; background: var(--crema);
+  color: var(--noche); font-size: 39px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .8); transform-origin: 0 50%; }
+.busca svg { width: 44px; height: 44px; flex: none; fill: none; stroke: #47535F; stroke-width: 2.4; stroke-linecap: round; }
+.busca .cur { width: 3px; height: 46px; margin-left: -14px; background: var(--noche); opacity: var(--c, 1); }
+.video { position: absolute; left: 72px; top: 652px; width: 858px; height: 483px; border-radius: 22px; overflow: hidden; background: #0B1420; transform-origin: 50% 0;
+  box-shadow: 0 0 0 1px rgba(242, 234, 219, .16), 0 40px 80px -36px rgba(0, 0, 0, .9); }
+.video img { width: 100%; height: 100%; display: block; }
+.video .dur { position: absolute; right: 16px; bottom: 16px; padding: 4px 12px; border-radius: 8px; background: rgba(8, 14, 22, .86); font-family: var(--f-mono); font-size: 25px; font-weight: 500; }
+.meta { position: absolute; left: 72px; width: 858px; top: 1168px; }
+.meta b { display: block; font-family: var(--f-titulo); font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -.03em; }
+.meta span { display: block; margin-top: 6px; font-size: 33px; line-height: 40px; color: var(--tinta-2); }
+
+/* Subtítulos */
+.rot { position: absolute; left: 150px; width: 780px; top: 1238px; height: 236px; display: flex; align-items: center; justify-content: center; }
+.rot p { font-family: var(--f-titulo); font-size: 51px; line-height: 1.19; font-weight: 600; letter-spacing: -.022em; text-align: center; text-wrap: balance; text-shadow: 0 3px 18px rgba(8, 14, 22, .7); }
+.rot p b { font-weight: 700; color: var(--acento); }
+
+/* Guías para revisar la zona segura (body.guias): lo que tapa la interfaz de TikTok */
+.guia { display: none; position: absolute; background: rgba(255, 60, 90, .26); outline: 1px solid rgba(255, 60, 90, .8); z-index: 50; }
+body.guias .guia { display: block; }

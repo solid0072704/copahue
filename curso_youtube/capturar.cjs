@@ -7,7 +7,8 @@
 //       Video: cada lámina se reproduce de corrido con movimiento.js (cuadro a cuadro, a los cuadros por segundo
 //       del plan) y sus cuadros se pasan directo a ffmpeg, que deja <id>.mp4. No se guardan cuadros en disco.
 //       El plan (lo escribe `construir --continuo`) dice cuántos cuadros dura cada lámina, cuánto dura cada paso y
-//       cómo se codifica. Con --reanudar no se repiten las escenas ya hechas con el mismo HTML, estilo y plan.
+//       cómo se codifica; con `ancho` y `alto` cambia el tamaño de la página (el video vertical usa 1080 x 1920).
+//       Con --reanudar no se repiten las escenas ya hechas con el mismo HTML, estilo y plan.
 //       De paso deja en <carpeta_escenas>/vistas una imagen por paso, tomada del video, para revisarlo.
 const { chromium } = require('playwright');
 const { spawn } = require('child_process');
@@ -66,7 +67,7 @@ const dos = (n, largo = 2) => String(n).padStart(largo, '0');
   };
   async function escenas(lista) {
     const browser = await chromium.launch();     // un navegador por hilo: dentro de uno solo las capturas van de a una
-    const contexto = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+    const contexto = await browser.newContext({ viewport: { width: plan.ancho || 1920, height: plan.alto || 1080 }, deviceScaleFactor: 1 });
     const page = await contexto.newPage();
     const cdp = await contexto.newCDPSession(page);      // la captura directa por el protocolo ahorra unos milisegundos por cuadro
     for (;;) {

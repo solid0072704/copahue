@@ -162,3 +162,50 @@ def test_la_muestra_corta_en_cambios_de_paso_y_reubica_los_subtitulos():
     p = muestra.PORTADA
     assert rotulos == [(p + 1.0, p + 3.0, "uno"), (p + 9.5, p + 10.0, "a caballo"), (p + 11.0, p + 13.0, "dos")]
 
+
+
+def test_el_video_de_tiktok_sale_de_un_solo_guion():
+    """Del guion del video vertical salen el texto de la voz y los subtítulos; las cifras son las del caso."""
+    from curso_youtube import tiktok
+    from curso_youtube.voz import duracion_estimada
+    voz = tiktok.texto_para_voz()
+    assert voz.count("\n\n") == 3 and "*" not in voz and "¶" not in voz              # cuatro párrafos, sin marcas
+    assert "dieciocho por ciento" in voz and "ocho pasos" in voz and voz.endswith("con Clod.")
+    assert 25 <= duracion_estimada(tiktok.texto()) <= 40                              # medio minuto
+    assert max(len(tiktok._limpio(f)) for _, f in tiktok.GUION) <= 52                 # cada subtítulo cabe en dos líneas
+    assert len(set(tiktok.CLAVES)) == len(tiktok.CLAVES) and set(tiktok.PAUSAS) | tiktok.SIN_ROTULO <= set(tiktok.CLAVES)
+    c = tiktok.cifras()
+    assert f'{c["ventas_pct"]} % más' in tiktok.texto() and c["utilidad"] > c["utilidad_antes"] and c["caja"] < c["caja_antes"] / 5
+    assert tiktok.TITULO in tiktok.texto() and tiktok.TITULO in __import__("curso_youtube.youtube", fromlist=["x"]).TITULOS[0]
+
+
+def test_el_video_de_tiktok_separa_las_escenas_con_pausas_y_no_sale_de_la_zona_segura():
+    """Las pausas se agregan dentro de los silencios de la voz y corren lo que sigue; los subtítulos no se pisan."""
+    from curso_youtube import deck, tiktok
+    marcas = json.loads((Path(tiktok.__file__).parent / "tiktok.json").read_text())["marcas"]
+    orden = tiktok.CLAVES + ["fin"]
+    assert all(marcas[a] < marcas[b] for a, b in zip(orden, orden[1:]))
+    silencios = [(marcas[k] - 0.4, marcas[k]) for k in ("pregunta", "busca")]        # «curso» llega sin pausa previa
+    cortes, m = tiktok.con_pausas(marcas, silencios)
+    assert [round(p, 2) for p, _ in cortes] == [round(marcas["pregunta"] - 0.2, 2), round(marcas["curso"] - 0.03, 2), round(marcas["busca"] - 0.2, 2)]
+    assert m["ventas"] == tiktok.ENTRADA and m["caja"] == round(marcas["caja"] + tiktok.ENTRADA, 3)
+    assert m["pregunta"] == round(marcas["pregunta"] + tiktok.ENTRADA + tiktok.PAUSAS["pregunta"], 3)
+    assert m["fin"] == round(marcas["fin"] + tiktok.ENTRADA + sum(tiktok.PAUSAS.values()), 3)
+    rotulos = tiktok.rotulos(m)
+    assert len(rotulos) == len(tiktok.GUION) - len(tiktok.SIN_ROTULO) and "<b>18 % más</b>" in rotulos[0]["html"]
+    assert all(a["t0"] < a["t1"] <= b["t0"] for a, b in zip(rotulos, rotulos[1:])) and rotulos[-1]["t1"] < m["busca"]
+    # las láminas del curso que se ven en la ventana existen y caben en su escena
+    laminas = {s["id"]: s for s in deck.cargar()}
+    assert all(laminas[x["lamina"]]["tipo"] == x["tipo"] and len(laminas[x["lamina"]]["pasos"]) == len(x["pesos"]) for x in tiktok.CINE)
+    (a0, a1), (b0, b1) = tiktok.tiempos_del_cine(m)
+    assert m["curso"] < a0 < b0 < a1 < b1 <= m["busca"]
+    # la página trae todo lo que el motor mueve, y las guías marcan lo que tapa la interfaz de TikTok
+    datos = dict(fps=30, total=33.0, marcas=m, rotulos=rotulos, cine=[dict(id=x["id"], dir="d", t0=0, n=1) for x in tiktok.CINE],
+                 titulo=tiktok.TITULO, cifras=tiktok.cifras(), guias=False, zona=tiktok.ZONA, ancho=tiktok.ANCHO, alto=tiktok.ALTO)
+    html = tiktok.pagina_html(datos)
+    motor = (Path(tiktok.__file__).parent / "tiktok.js").read_text()
+    import re
+    assert all(f'id="{i}"' in html for i in set(re.findall(r"\$\('#([\w-]+)'", motor)))
+    assert all(f'"{k}"' in html for k in set(re.findall(r"\bM\.(\w+)", motor)))        # cada marca que usa el motor existe
+    z = tiktok.ZONA
+    assert f'top:{tiktok.ALTO - z["abajo"]}px' in html and f'left:{tiktok.ANCHO - z["derecha"]}px;top:{z["botones_desde"]}px' in html

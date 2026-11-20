@@ -83,6 +83,29 @@ en las redes casi todos miran sin sonido. `cierre.mp3` es la frase final (`CIERR
 Se publicó en LinkedIn como video nativo, junto con el anuncio del curso: el texto es `ANUNCIO_LINKEDIN`
 (`youtube.anuncio_para_linkedin()` lo entrega como lo recibe la API) y el enlace queda en `LINKEDIN_POST_URL`.
 
+## Video para TikTok
+
+```bash
+python -m curso_youtube.tiktok --texto                                   # el texto que recibe la voz
+python -m curso_youtube.tiktok voz.mp3 <trabajo> tiktok.mp4 tiktok.json  # el video: 1080 x 1920, 33 segundos
+```
+
+No es un recorte del curso: es una pieza vertical propia (`tiktok.py`, `tiktok.css` y `tiktok.js`), que sirve igual
+para Reels y Shorts. `GUION` es su única fuente: de ahí salen el texto de la voz, los subtítulos y el momento en que
+entra cada cosa. Tiene cuatro escenas: el caso (tres cifras, con la caja que se vacía), la idea («utilidad ≠ caja»),
+el curso (una ventana con un prompt real del curso y la respuesta de Claude: las mismas láminas, capturadas con otro
+ritmo por `tiktok_cine.cjs`) y el cierre, que dice cómo buscar el curso en YouTube, porque en TikTok los enlaces del
+texto no se pueden abrir.
+
+- **Zona segura.** Lo que hay que leer queda fuera de lo que tapa la interfaz de TikTok (`ZONA`: pestañas arriba,
+  texto de la publicación abajo y botones a la derecha). Al armar, `revisar()` avisa si algo se sale; con `--guias`
+  el video sale con esas franjas marcadas.
+- **Voz y tiempos.** `tiktok.json` anota la generación de ElevenLabs y el segundo en que empieza cada frase
+  (`marcas`, medidas sobre el audio). `PAUSAS` agrega silencio antes de las frases que abren escena. Sin marcas,
+  los tiempos se estiman con las pausas de la voz.
+- **Publicación.** El texto es `PUBLICACION`; la ficha (`youtube/publicacion.md`) lo trae con las indicaciones
+  para subirlo.
+
 ## Requisitos
 
 Python 3.11+, `numpy`, `Pillow`, `xlsxwriter`, `ffmpeg` y Node con Playwright (Chromium) para capturar las láminas.

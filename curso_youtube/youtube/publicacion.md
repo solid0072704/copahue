@@ -109,6 +109,26 @@ Si tienes dudas, o quieres implementar IA en el área de finanzas de tu empresa,
 
 El video es la muestra de 1:42 que arma `python -m curso_youtube.muestra` (vertical, con subtítulos), subida a LinkedIn como video nativo. Reemplazó a un primer anuncio que solo llevaba el enlace.
 
+## Video para TikTok
+
+Video vertical de 33 segundos, hecho para TikTok (`python -m curso_youtube.tiktok`). Se sube desde la aplicación o desde tiktok.com/upload, con este texto:
+
+```
+¿Se puede vender más, ganar más… y quedarse sin caja? Sí: utilidad no es lo mismo que caja.
+
+En mi curso gratuito de 1 hora analizo este caso paso a paso con inteligencia artificial (Claude): un método de 8 pasos, los prompts exactos que uso y el archivo del caso en Excel.
+
+🔎 Búscalo en YouTube: Análisis de estados financieros con Claude (canal Rodrigo Barceló).
+
+El caso es de una empresa ficticia, creada para el curso.
+
+#finanzas #contabilidad #estadosfinancieros #flujodecaja #inteligenciaartificial #claude #excel #pymes
+```
+
+- En TikTok los enlaces del texto no se pueden abrir: por eso el video y el texto dicen cómo buscar el curso.
+- Al publicarlo, activar «Contenido generado por IA» (en «Más opciones»): la narración usa la voz del autor sintetizada, y TikTok pide etiquetar el audio realista hecho con IA (https://support.tiktok.com/en/using-tiktok/creating-videos/ai-generated-content).
+- Portada sugerida: el segundo 7, con las tres cifras del caso a la vista.
+
 ## Lo que queda por hacer, en YouTube Studio
 
 - [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).

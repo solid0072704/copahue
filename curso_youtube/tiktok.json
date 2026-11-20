@@ -1,0 +1,29 @@
+{
+ "voz": {
+  "nota": "Narración del video de TikTok (el texto de `python -m curso_youtube.tiktok --texto`, con el prefijo de tono del curso). Se puede volver a descargar desde la cuenta de ElevenLabs sin gastar créditos.",
+  "modelo": "eleven_v4",
+  "sesion": "W5ABFDmfNPBLHKa5W2ZI",
+  "generacion": "A20Nozs8B1SEqpL2cyeJ",
+  "segundos": 30.04,
+  "creditos": 565
+ },
+ "marcas": {
+  "ventas": 0.0,
+  "utilidad": 2.3,
+  "caja": 4.83,
+  "pregunta": 7.85,
+  "idea": 9.22,
+  "estados": 11.78,
+  "mirar": 13.64,
+  "curso": 15.06,
+  "ia": 16.64,
+  "claude": 18.67,
+  "metodo": 20.6,
+  "prompts": 22.4,
+  "excel": 23.84,
+  "empresa": 25.26,
+  "busca": 26.97,
+  "titulo": 27.97,
+  "fin": 29.86
+ }
+}

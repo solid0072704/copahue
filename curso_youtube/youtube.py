@@ -119,6 +119,7 @@ def capitulos_estimados() -> list[tuple[float, str]]:
 
 
 def publicacion(capitulos: list[str], estimados: bool) -> str:
+    from . import tiktok        # aquí, y no arriba: tiktok usa la miniatura de este módulo
     nota = ("_Tiempos estimados a partir del guion. Reemplázalos por el archivo de capítulos del render final._"
             if estimados else "_Tiempos exactos del render final._")
     descripcion = [
@@ -184,6 +185,15 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
          "```", *ANUNCIO_LINKEDIN, "```", "",
          "El video es la muestra de 1:42 que arma `python -m curso_youtube.muestra` (vertical, con subtítulos), subida a "
          "LinkedIn como video nativo. Reemplazó a un primer anuncio que solo llevaba el enlace.", "",
+         "## Video para TikTok", "",
+         "Video vertical de 33 segundos, hecho para TikTok (`python -m curso_youtube.tiktok`). Se sube desde la aplicación "
+         "o desde tiktok.com/upload, con este texto:", "",
+         "```", *tiktok.PUBLICACION, "```", "",
+         "- En TikTok los enlaces del texto no se pueden abrir: por eso el video y el texto dicen cómo buscar el curso.",
+         "- Al publicarlo, activar «Contenido generado por IA» (en «Más opciones»): la narración usa la voz del autor "
+         "sintetizada, y TikTok pide etiquetar el audio realista hecho con IA "
+         "(https://support.tiktok.com/en/using-tiktok/creating-videos/ai-generated-content).",
+         "- Portada sugerida: el segundo 7, con las tres cifras del caso a la vista.", "",
          "## Lo que queda por hacer, en YouTube Studio", "",
          "- [ ] Publicar el comentario de arriba y fijarlo (YouTube solo deja fijar comentarios desde la página del video).",
          "- [ ] Pantalla final en los últimos 20 segundos (suscripción y video recomendado) y tarjetas.",
