@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from . import caso
 
-TINTA, TINTA3, ORO, VERDE, ROJO, AZUL, GRIS, LINEA = "#0B1B2B", "#1D3C5A", "#E3A72B", "#1B8553", "#C23A29", "#2A66CF", "#8792A0", "#D3CBB9"
+# Colores sobre el fondo azul noche de las láminas
+TINTA, TINTA3, ORO, VERDE, ROJO, AZUL, GRIS, LINEA = "#F2EADB", "#8FA3B8", "#E3A62F", "#4CC38A", "#FF7462", "#4F7DB8", "#77858F", "#405064"
+FONDO, TEXTO2, ROJO_OSC = "#101C2C", "#B4BEC6", "#E0513F"
 
 
 def _num(v: float, signo: bool = False) -> str:
@@ -43,7 +45,7 @@ def cascada(barras: list[dict], ancho: int = 1660, alto: int = 684, anotaciones:
             color = VERDE if b["valor"] >= 0 else ROJO
             texto = _num(b["valor"], signo=True)
         else:
-            color = TINTA3 if z >= 0 else "#8E2A1D"
+            color = TINTA3 if z >= 0 else ROJO_OSC
             texto = _num(z)
         arriba = z >= a if b["tipo"] == "delta" else z >= 0
         ty = (y0 - 14) if arriba else (y1 + 40)
@@ -53,21 +55,21 @@ def cascada(barras: list[dict], ancho: int = 1660, alto: int = 684, anotaciones:
             prev = tramos[i - 1][1]
             x_prev = izq + (i - 1) * paso_x + (paso_x - w) / 2 + w
             g.append(f'<line x1="{x_prev:.1f}" y1="{y(prev):.1f}" x2="{x:.1f}" y2="{y(prev):.1f}" stroke="{GRIS}" '
-                     f'stroke-width="2" stroke-dasharray="6 6"/>')
-        g.append(f'<rect x="{x:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="7" fill="{color}"/>')
+                     f'stroke-width="2" stroke-dasharray="6 6" class="con"/>')
+        g.append(f'<rect class="barra" data-dir="{"arriba" if arriba else "abajo"}" x="{x:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="4" fill="{color}"/>')
         g.append(f'<text x="{x + w / 2:.1f}" y="{ty:.1f}" text-anchor="middle" font-size="31" font-weight="750" '
                  f'fill="{color}">{texto}</text>')
         for j, linea in enumerate(b["etq"].split("\n")):
             peso = "750" if b["tipo"] != "delta" else "550"
             g.append(f'<text x="{x + w / 2:.1f}" y="{alto - inf + 84 + j * 28:.1f}" text-anchor="middle" font-size="23" '
-                     f'font-weight="{peso}" fill="{TINTA if b["tipo"] != "delta" else "#4E5C6B"}">{linea}</text>')
+                     f'font-weight="{peso}" fill="{TINTA if b["tipo"] != "delta" else TEXTO2}">{linea}</text>')
         g.append("</g>")
         out.append("".join(g))
     for an in anotaciones or []:
         out.append(f'<g data-p="{an["p"]}"><rect x="{an["x"]}" y="{an["y"]}" width="{an["w"]}" height="{an.get("h", 108)}" rx="16" '
-                   f'fill="{an.get("fondo", "#FBF0D4")}" stroke="{an.get("borde", "#EFD89A")}" stroke-width="2"/>'
+                   f'fill="{an.get("fondo", "#17273B")}" stroke="{an.get("borde", ORO)}" stroke-width="2"/>'
                    + "".join(f'<text x="{an["x"] + 26}" y="{an["y"] + 44 + k * 40}" font-size="{30 if k == 0 else 27}" '
-                             f'font-weight="{750 if k == 0 else 500}" fill="{TINTA if k == 0 else "#4E5C6B"}">{t}</text>'
+                             f'font-weight="{750 if k == 0 else 500}" fill="{TINTA if k == 0 else TEXTO2}">{t}</text>'
                              for k, t in enumerate(an["lineas"])) + "</g>")
     out.append("</svg>")
     return "".join(out)
@@ -139,16 +141,17 @@ def _cascada_truncada(barras: list[dict], base: float, ancho: int, alto: int) ->
             prev = tramos[i - 1][1]
             x_prev = izq + (i - 1) * paso_x + (paso_x - w) / 2 + w
             g.append(f'<line x1="{x_prev:.1f}" y1="{y(prev):.1f}" x2="{x:.1f}" y2="{y(prev):.1f}" stroke="{GRIS}" '
-                     f'stroke-width="2" stroke-dasharray="6 6"/>')
-        g.append(f'<rect x="{x:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="7" fill="{color}"/>')
+                     f'stroke-width="2" stroke-dasharray="6 6" class="con"/>')
+        sube = b["tipo"] != "delta" or b["valor"] >= 0
+        g.append(f'<rect class="barra" data-dir="{"arriba" if sube else "abajo"}" x="{x:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="4" fill="{color}"/>')
         if b["tipo"] != "delta":  # marca de eje cortado
-            g.append(f'<path d="M{x - 6:.1f} {y(base) - 26:.1f} l{w + 12:.1f} -14 v10 l-{w + 12:.1f} 14 z" fill="#FFFFFF"/>')
+            g.append(f'<path d="M{x - 6:.1f} {y(base) - 26:.1f} l{w + 12:.1f} -14 v10 l-{w + 12:.1f} 14 z" fill="{FONDO}"/>')
         g.append(f'<text x="{x + w / 2:.1f}" y="{y0 - 16:.1f}" text-anchor="middle" font-size="36" font-weight="750" '
                  f'fill="{color}">{texto}</text>')
         for j, linea in enumerate(b["etq"].split("\n")):
             g.append(f'<text x="{x + w / 2:.1f}" y="{alto - inf + 50 + j * 32:.1f}" text-anchor="middle" '
                      f'font-size="{26 if j == 0 else 23}" font-weight="{700 if j == 0 else 500}" '
-                     f'fill="{TINTA if j == 0 else "#4E5C6B"}">{linea}</text>')
+                     f'fill="{TINTA if j == 0 else TEXTO2}">{linea}</text>')
         g.append("</g>")
         out.append("".join(g))
     out.append("</svg>")
@@ -162,14 +165,14 @@ def ciclo_caja() -> str:
     out = [f'<svg viewBox="0 0 {ancho} {alto}" xmlns="http://www.w3.org/2000/svg">']
     for d in range(0, 151, 30):
         x = x0 + d * escala
-        out.append(f'<line x1="{x:.0f}" y1="34" x2="{x:.0f}" y2="{alto - 60}" stroke="#ECE6D9" stroke-width="2"/>'
+        out.append(f'<line x1="{x:.0f}" y1="34" x2="{x:.0f}" y2="{alto - 60}" stroke="#22344A" stroke-width="2"/>'
                    f'<text x="{x:.0f}" y="{alto - 24}" text-anchor="middle" font-size="24" fill="{GRIS}" font-weight="600">'
                    f'{"día " + str(d) if d else "día 0"}</text>')
 
     def barra(x_ini, dias, yb, color, etiqueta, valor, p, color_texto="#FFFFFF", alto_b=86):
         x = x0 + x_ini * escala
         w = dias * escala
-        return (f'<g data-p="{p}"><rect x="{x:.1f}" y="{yb}" width="{w - 5:.1f}" height="{alto_b}" rx="12" fill="{color}"/>'
+        return (f'<g data-p="{p}"><rect class="barra" data-dir="derecha" x="{x:.1f}" y="{yb}" width="{w - 5:.1f}" height="{alto_b}" rx="5" fill="{color}"/>'
                 f'<text x="{x + 20:.1f}" y="{yb + 36}" font-size="25" font-weight="600" fill="{color_texto}" '
                 f'opacity=".92">{etiqueta}</text>'
                 f'<text x="{x + 20:.1f}" y="{yb + 72}" font-size="33" font-weight="750" fill="{color_texto}">{valor} días</text></g>')
@@ -181,10 +184,10 @@ def ciclo_caja() -> str:
         yb = 56 + i * 300
         out.append(f'<text x="24" y="{yb + 106}" font-size="46" font-weight="780" fill="{TINTA}">{anio}</text>')
         out.append(barra(0, inv, yb, AZUL, "Inventario", inv, 0))
-        out.append(barra(inv, cob, yb, TINTA3, "Cobro a clientes", cob, 1))
-        out.append(barra(0, pag, yb + 98, GRIS, "Pago a proveedores", pag, 2))
-        out.append(barra(pag, inv + cob - pag, yb + 98, ORO, "Ciclo de conversión de efectivo", cic, 3, color_texto=TINTA))
-    out.append(f'<g data-p="4"><rect x="{ancho - 600}" y="262" width="570" height="70" rx="14" fill="#FBE5E1" stroke="#F0C3BB" stroke-width="2"/>'
+        out.append(barra(inv, cob, yb, TINTA3, "Cobro a clientes", cob, 1, color_texto=FONDO))
+        out.append(barra(0, pag, yb + 98, "#56687C", "Pago a proveedores", pag, 2))
+        out.append(barra(pag, inv + cob - pag, yb + 98, ORO, "Ciclo de conversión de efectivo", cic, 3, color_texto=FONDO))
+    out.append(f'<g data-p="4"><rect x="{ancho - 600}" y="262" width="570" height="70" rx="14" fill="#472523" stroke="{ROJO}" stroke-width="2"/>'
                f'<text x="{ancho - 315}" y="308" text-anchor="middle" font-size="31" font-weight="780" fill="{ROJO}">'
                f'De 55 a 92: +37 días que financiar</text></g>')
     out.append("</svg>")
@@ -223,9 +226,9 @@ def proyeccion_caja() -> str:
     x = lambda s: izq + s * (ancho - izq - der) / 13  # noqa: E731
     y = lambda v: sup + (vmax - v) / (vmax - vmin) * (alto - sup - inf)  # noqa: E731
     out = [f'<svg viewBox="0 0 {ancho} {alto}" xmlns="http://www.w3.org/2000/svg">']
-    out.append(f'<rect x="{izq}" y="{y(0):.1f}" width="{ancho - izq - der}" height="{y(vmin) - y(0):.1f}" fill="#FBE5E1" opacity=".7"/>')
+    out.append(f'<rect x="{izq}" y="{y(0):.1f}" width="{ancho - izq - der}" height="{y(vmin) - y(0):.1f}" fill="{ROJO}" opacity=".12"/>')
     for v in (-100, 0, 100, 200):
-        out.append(f'<line x1="{izq}" y1="{y(v):.1f}" x2="{ancho - der}" y2="{y(v):.1f}" stroke="{TINTA if v == 0 else "#E4DDCF"}" '
+        out.append(f'<line x1="{izq}" y1="{y(v):.1f}" x2="{ancho - der}" y2="{y(v):.1f}" stroke="{TINTA if v == 0 else "#22344A"}" '
                    f'stroke-width="{2.5 if v == 0 else 1.5}"/><text x="{izq - 14}" y="{y(v) + 9:.1f}" text-anchor="end" '
                    f'font-size="24" font-weight="600" fill="{GRIS}">{_num(v)}</text>')
     for s in range(1, 14):
@@ -236,8 +239,8 @@ def proyeccion_caja() -> str:
 
     def linea(serie, color, p):
         pts = " ".join(f"{x(s):.1f},{y(v):.1f}" for s, v in enumerate(serie))
-        circ = "".join(f'<circle cx="{x(s):.1f}" cy="{y(v):.1f}" r="7" fill="{color}"/>' for s, v in enumerate(serie))
-        return (f'<g data-p="{p}"><polyline points="{pts}" fill="none" stroke="{color}" stroke-width="5" stroke-linejoin="round"/>'
+        circ = "".join(f'<circle class="punto" cx="{x(s):.1f}" cy="{y(v):.1f}" r="7" fill="{color}"/>' for s, v in enumerate(serie))
+        return (f'<g data-p="{p}"><polyline class="traza" points="{pts}" fill="none" stroke="{color}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>'
                 f'{circ}</g>')
 
     def leyenda(fila, color, p, texto):

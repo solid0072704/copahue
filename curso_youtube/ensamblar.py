@@ -15,6 +15,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -22,7 +23,7 @@ import wave
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from . import deck
 from .voz import CARACTERES_POR_SEGUNDO, a_voz
@@ -31,7 +32,12 @@ FPS = 30
 MUESTRAS = 48000
 VOLUMEN_OBJETIVO = -16.0   # LUFS
 ENTRADA = 0.35             # segundos antes de la primera palabra
-FUNDIDO = 4                # cuadros de fundido entre una imagen y la siguiente
+FUNDIDO = 7                # cuadros de fundido entre una lámina y la siguiente
+BARRIDO = 17               # cuadros del barrido con que entran las portadas
+SOMBRA_BARRIDO = 150       # ancho, en pixeles, de la sombra que acompaña al barrido
+ABREN_CON_BARRIDO = {"seccion", "titulo_curso"}
+ORO = (227, 166, 47)
+CALIDAD_JPEG = 95
 
 
 def _ffmpeg(*args: str, capturar: bool = False) -> str:
@@ -174,38 +180,145 @@ def escribir_audio(tl: dict, destino: Path) -> None:
         w.writeframes(muestras.tobytes())
 
 
-def escribir_video(tl: dict, trabajo: Path, destino: Path) -> None:
+def _suave(p: float) -> float:
+    return 4 * p ** 3 if p < .5 else 1 - (-2 * p + 2) ** 3 / 2
+
+
+def _jpeg(img: Image.Image, ruta: Path) -> Path:
+    img.save(ruta, quality=CALIDAD_JPEG, subsampling=2)
+    return ruta
+
+
+def _barrer(a: Image.Image, b: Image.Image, p: float) -> Image.Image:
+    """Barrido de izquierda a derecha: `b` entra sobre `a`, con un filete dorado en el borde y su sombra."""
+    ancho, alto = b.size
+    x = round(ancho * p)
+    img = a.copy()
+    sombra = Image.linear_gradient("L").rotate(90).resize((SOMBRA_BARRIDO, alto)).point(lambda v: v * 120 // 255)
+    img.paste((4, 8, 14), (x, 0), sombra)
+    if x > 0:
+        img.paste(b.crop((0, 0, x, alto)), (0, 0))
+    ImageDraw.Draw(img).rectangle((x - 2, 0, x + 1, alto), fill=ORO)
+    return img
+
+
+def secuencia(tl: dict, trabajo: Path) -> list[tuple[Path, int, str]]:
+    """El video completo como lista de (imagen JPEG, cuadros que dura, lámina).
+
+    Cada paso muestra primero los cuadros de su animación (si se capturaron con `construir --animar`) y después
+    su imagen final hasta que empieza el siguiente. Al cambiar de lámina, los primeros cuadros se funden con la
+    imagen con que terminó la anterior; las portadas de capítulo entran con un barrido. Las imágenes que se
+    generan aquí (fundidos, barridos) no se vuelven a escribir si sus fuentes no cambiaron.
+    """
     frames, trans = trabajo / "frames", trabajo / "fundidos"
     trans.mkdir(exist_ok=True)
+    manifiesto = trabajo / "html" / "laminas.json"
+    tipos = {s["id"]: s.get("tipo", "") for s in json.loads(manifiesto.read_text())} if manifiesto.exists() else {}
+    animadas: dict[str, dict] = {}
+
+    def cuadros(lamina: str, clave: str) -> int:
+        """Cuántos cuadros de animación tiene un paso (0 si la lámina no se capturó con animación)."""
+        if lamina not in animadas:
+            marca = frames / f"{lamina}.listo"
+            animadas[lamina] = json.loads(marca.read_text())["cuadros"] if marca.exists() else {}
+        return animadas[lamina].get(clave, 0)
+
+    def fija(clave: str) -> Path:
+        """La imagen final de un paso en JPEG: el video se arma con un solo formato de imagen."""
+        jpg, png = frames / f"{clave}.jpg", frames / f"{clave}.png"
+        if jpg.exists() and (not png.exists() or jpg.stat().st_mtime >= png.stat().st_mtime):
+            return jpg
+        destino = trans / f"{clave}.jpg"
+        if not destino.exists() or destino.stat().st_mtime < png.stat().st_mtime:
+            _jpeg(Image.open(png).convert("RGB"), destino)
+        return destino
+
     total_cuadros = int(round(tl["total"] * FPS))
     cortes = [int(round(e["t"] * FPS)) for e in tl["eventos"]]
     cortes[0] = 0
-    lineas = ["ffconcat version 1.0"]
+    seq: list[tuple[Path, int, str]] = []
+    previa: Path | None = None
+    lamina_previa = ""
     for i, e in enumerate(tl["eventos"]):
-        ini = cortes[i]
-        fin = cortes[i + 1] if i + 1 < len(cortes) else total_cuadros
-        if fin <= ini:
+        n = (cortes[i + 1] if i + 1 < len(cortes) else total_cuadros) - cortes[i]
+        if n <= 0:
             continue
-        actual = frames / e["frame"]
-        n_fundido = 0
-        if i + 1 < len(cortes) and fin - ini > FUNDIDO * 3:
-            n_fundido = FUNDIDO
-        lineas += [f"file '{actual}'", f"duration {(fin - ini - n_fundido) / FPS:.6f}"]
-        if n_fundido:
-            a = Image.open(actual).convert("RGB")
-            b = Image.open(frames / tl["eventos"][i + 1]["frame"]).convert("RGB")
-            for k in range(1, n_fundido + 1):
-                ruta = trans / f"f{i:04d}_{k}.png"
-                Image.blend(a, b, k / (n_fundido + 1)).save(ruta, compress_level=1)
-                lineas += [f"file '{ruta}'", f"duration {1 / FPS:.6f}"]
-    lineas.append(f"file '{frames / tl['eventos'][-1]['frame']}'")
-    lista = trabajo / "video.ffconcat"
-    lista.write_text("\n".join(lineas) + "\n", encoding="utf-8")
-    _ffmpeg("-f", "concat", "-safe", "0", "-i", str(lista),
-            "-vf", f"fps={FPS},scale=1920:1080:out_color_matrix=bt709:out_range=tv,format=yuv420p",
-            "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-tune", "stillimage", "-g", str(FPS * 10),
+        clave = e["frame"][:-4]
+        lamina = clave.rsplit("_p", 1)[0]
+        final = fija(clave)
+        con_animacion = min(cuadros(lamina, clave), n)
+        imagenes = [frames / f"{clave}_f{f:03d}.jpg" for f in range(con_animacion)]
+        cambia = lamina != lamina_previa
+        if previa is not None and (cambia or not con_animacion):
+            # transición desde la imagen anterior, sobre los primeros cuadros de la animación (o sobre la imagen final)
+            barrido = cambia and tipos.get(lamina) in ABREN_CON_BARRIDO
+            largo = min(BARRIDO if barrido else FUNDIDO if con_animacion else 4, max(0, n - 2))
+            a = None
+            for k in range(largo):
+                fuente = imagenes[k] if k < len(imagenes) else final
+                ruta = trans / f"{clave}_desde_{previa.stem}_t{k:02d}.jpg"
+                if not ruta.exists() or ruta.stat().st_mtime < max(previa.stat().st_mtime, fuente.stat().st_mtime):
+                    a = a or Image.open(previa).convert("RGB")
+                    b = Image.open(fuente).convert("RGB")
+                    peso = (k + 1) / (largo + 1)
+                    _jpeg(_barrer(a, b, _suave(peso)) if barrido else Image.blend(a, b, peso * peso * (3 - 2 * peso)), ruta)
+                if k < len(imagenes):
+                    imagenes[k] = ruta
+                else:
+                    imagenes.append(ruta)
+        seq += [(img, 1, lamina) for img in imagenes]
+        if n - len(imagenes) > 0:
+            seq.append((final, n - len(imagenes), lamina))
+        previa, lamina_previa = final, lamina
+    return seq
+
+
+def _codificar(lista: list[tuple[Path, int]], destino: Path) -> None:
+    cuadros = sum(n for _, n in lista)
+    lineas = ["ffconcat version 1.0"]
+    for img, n in lista:
+        lineas += [f"file '{img}'", f"duration {n / FPS:.6f}"]
+    lineas.append(f"file '{lista[-1][0]}'")
+    concat = destino.with_suffix(".ffconcat")
+    concat.write_text("\n".join(lineas) + "\n", encoding="utf-8")
+    # Las imágenes son JPEG (BT.601, rango completo): se pasan por RGB para llegar bien a BT.709 de rango de video.
+    filtro = (f"fps={FPS},scale=1920:1080:in_color_matrix=bt601:in_range=pc,format=gbrp,"
+              "scale=1920:1080:out_color_matrix=bt709:out_range=tv,format=yuv420p")
+    _ffmpeg("-f", "concat", "-safe", "0", "-i", str(concat), "-vf", filtro,
+            "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-g", str(FPS * 10), "-bf", "2",
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
-            "-frames:v", str(total_cuadros), str(destino))
+            "-frames:v", str(cuadros), str(destino))
+
+
+def escribir_video(tl: dict, trabajo: Path, destino: Path) -> None:
+    """Codifica el video por tramos (uno por módulo) y los une sin recodificar.
+
+    Un tramo ya codificado con las mismas imágenes no se repite: si el proceso se interrumpe, se retoma donde quedó.
+    """
+    seq = secuencia(tl, trabajo)
+    tramos_dir = trabajo / "tramos"
+    tramos_dir.mkdir(exist_ok=True)
+    grupos: list[list[tuple[Path, int]]] = []
+    modulo = None
+    for img, n, lamina in seq:
+        m = lamina.split("_")[0]
+        if m != modulo:
+            grupos.append([])
+            modulo = m
+        grupos[-1].append((img, n))
+    partes = []
+    for k, grupo in enumerate(grupos):
+        parte = tramos_dir / f"tramo_{k:02d}.mp4"
+        firma = hashlib.sha1("|".join(f"{img}:{n}:{img.stat().st_mtime_ns}" for img, n in grupo).encode()).hexdigest()
+        marca = parte.with_suffix(".firma")
+        if not (parte.exists() and marca.exists() and marca.read_text() == firma):
+            marca.unlink(missing_ok=True)
+            _codificar(grupo, parte)
+            marca.write_text(firma)
+        partes.append(parte)
+    lista = tramos_dir / "tramos.txt"
+    lista.write_text("".join(f"file '{x}'\n" for x in partes), encoding="utf-8")
+    _ffmpeg("-f", "concat", "-safe", "0", "-i", str(lista), "-c", "copy", str(destino))
 
 
 def _marca(t: float, coma: bool = False) -> str:

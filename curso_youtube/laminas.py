@@ -59,6 +59,7 @@ ICONOS = {
     "ajustes": '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
     "ok": '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
     "banco": '<line x1="3" y1="21" x2="21" y2="21"/><line x1="5" y1="10" x2="5" y2="18"/><line x1="10" y1="10" x2="10" y2="18"/><line x1="14" y1="10" x2="14" y2="18"/><line x1="19" y1="10" x2="19" y2="18"/><polygon points="12 3 21 8 3 8 12 3"/>',
+    "enviar": '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
     "libro": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
 }
 
@@ -158,7 +159,7 @@ def _puntos(s: dict) -> str:
         elif estilo == "cruz":
             marca = f'<span class="marca no">{ico("x")}</span>'
         else:
-            marca = f'<span class="marca">{i}</span>'
+            marca = f'<span class="marca">{i:02d}</span>'
         d = f'<span>{rico(it["d"])}</span>' if it.get("d") else ""
         lis.append(f'<li{_p(it)}>{marca}<div class="txt"><b>{rico(it["t"])}</b>{d}</div></li>')
     return f'<ul class="{" ".join(clases)}">{"".join(lis)}</ul>' + _lateral(s.get("lateral", []))
@@ -190,7 +191,9 @@ def _prompt(s: dict) -> str:
         attr = f' data-foco="{foco}"' if foco is not None else ""
         cuerpo.append(f'<span class="seg"{attr}>{_prompt_texto(texto)}</span>')
     return (f'<div class="prompt"><div class="ph"><span class="pill">PROMPT {s["numero"]}</span>'
-            f'<span class="nom">{esc(s["nombre"])}</span></div><pre>{"".join(cuerpo)}</pre></div>'
+            f'<span class="nom">{esc(s["nombre"])}</span></div><pre>{"".join(cuerpo)}</pre>'
+            f'<div class="pb"><span class="adj">{ico("carpeta")}Proyecto · Distribuidora Alerce</span>'
+            f'<span class="env">{ico("enviar")}</span></div></div>'
             + _notas(s.get("notas", [])))
 
 
@@ -344,6 +347,10 @@ _CON_CABECERA = {"puntos": _puntos, "dos": _dos, "prompt": _prompt, "tabla": _ta
                  "cifras": _cifras, "svg": _svg, "metodo": _metodo, "alertas": _alertas, "memo": _memo,
                  "html": _html_libre}
 _OSCURAS = {"gancho", "titulo_curso", "chips", "seccion", "cierre"}
+# Imagen de fondo de cada lámina de portada (recortes de las portadas de las presentaciones del autor en Canva).
+# Los inicios de capítulo las van alternando.
+_HEROES = {"gancho": "gestion", "titulo_curso": "datos", "chips": "automatizacion", "seccion": None, "cierre": "transformacion"}
+_HEROES_DE_CAPITULO = ["datos", "transformacion", "automatizacion", "gestion"]
 
 _JS = """
 function irPaso(k){
@@ -367,6 +374,7 @@ function revisar(){
   var Z = zona ? zona.getBoundingClientRect() : L;
   document.querySelectorAll('.cuerpo *, .cab *, .centro *, .seccion *').forEach(function(el){
     if(el.closest('svg') && el.tagName.toLowerCase() !== 'svg') return;
+    if(el.closest('.pl')) return;
     var r = el.getBoundingClientRect(); if(r.width === 0 || r.height === 0) return;
     var enCuerpo = !!el.closest('.cuerpo');
     var lim = enCuerpo ? {l: Z.left - 2, t: Z.top - 2, r: Z.right + 2, b: Z.bottom + 2} : {l: 40, t: 30, r: 1880, b: 1000};
@@ -414,6 +422,13 @@ def pagina(s: dict, ctx: dict, css_href: str = "../../estilo.css") -> str:
     else:
         raise ValueError(f"Tipo de lámina desconocido: {tipo}")
     clase = "oscuro" if tipo in _OSCURAS else "claro"
+    base = css_href.rsplit("/", 1)[0] if "/" in css_href else "."
+    heroe = ""
+    if tipo in _HEROES:
+        nombre = _HEROES[tipo] or _HEROES_DE_CAPITULO[ctx["modulo"] % len(_HEROES_DE_CAPITULO)]
+        fondo = " fondo" if tipo == "cierre" else ""
+        heroe = f'<div class="heroe{fondo}"><i style="background-image:url(\'{base}/imagenes/heroe_{nombre}.jpg\')"></i></div>'
     return (f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>{esc(s.get("id", ""))}</title>'
             f'<link rel="stylesheet" href="{css_href}"></head><body class="{clase} t-{tipo}">'
-            f'<div class="lienzo">{cuerpo}{_pie(ctx)}</div><script>{_JS}</script></body></html>')
+            f'<div class="lienzo">{heroe}{cuerpo}{_pie(ctx)}</div><script>{_JS}</script>'
+            f'<script src="{base}/movimiento.js"></script></body></html>')
