@@ -69,7 +69,7 @@ export async function render(el, params, app) {
         <div class="correo-campo"><label for="c-para">Para</label><input id="c-para" name="para" value="${esc(d.para)}" ${resuelta ? "readonly" : ""}></div>
         <div class="correo-campo"><label for="c-asunto">Asunto</label><input id="c-asunto" class="asunto" name="asunto" value="${esc(d.asunto)}" ${resuelta ? "readonly" : ""}></div>
         <textarea name="cuerpo" aria-label="Cuerpo del correo" ${resuelta ? "readonly" : ""}>${esc(d.cuerpo)}</textarea>
-        <div class="correo-pie">${icono("info", "xs")}${d.responder_a ? `Las respuestas llegarán a ${esc(d.responder_a)}` : "Las respuestas llegarán al correo del estudio"}${d.redaccion_asistida ? " · Redacción pulida" : ""}</div>
+        <div class="correo-pie">${icono("info", "xs")}${d.responder_a ? `Las respuestas llegarán a ${esc(d.responder_a.replace(/\+[^@]+@/, "@"))}` : "Las respuestas llegarán al correo del estudio"}${d.redaccion_asistida ? " · Redacción pulida" : ""}</div>
       </div>` : `
       <div class="tarea-propuesta">
         <span class="icono-cuadro grande ${COLOR_AGENTE[p.agente] || ""}">${icono("tareas", "l")}</span>

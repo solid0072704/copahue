@@ -95,6 +95,11 @@ Todo va en `.env` (ver `.env.example`):
 - **Ventas**: `TUCARTERA_VENTAS_EMAIL` recibe las solicitudes de plan y de paquetes que se hacen desde la app.
 - **Producción**: sirve detrás de HTTPS (necesario para instalarla como app) con `TUCARTERA_COOKIE_SEGURA=1` y `python -m tucartera servir --host 0.0.0.0`.
 
+Video demo: `scripts/video_demo.js` recorre la app con el estudio de ejemplo (cursor y subtítulos incluidos) y la
+graba con Playwright. Con el servidor corriendo en el puerto 8765 y la fecha fija (`TUCARTERA_HOY=2026-11-20`):
+`node scripts/video_demo.js http://127.0.0.1:8765 video/` y luego
+`ffmpeg -i video/*.webm -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart tu-cartera-demo.mp4`.
+
 Seguridad: contraseñas con PBKDF2, sesiones en servidor con cookie `HttpOnly`, encabezado propio obligatorio en
 toda mutación (protección CSRF) y todas las consultas filtradas por estudio. El calendario incluye feriados
 2025-2027 en `tucartera/calendario.py`; verifica cada año el calendario oficial del SII.
