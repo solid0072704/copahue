@@ -7,6 +7,7 @@ Los elementos visuales llevan el número de paso en que aparecen (`p`) o se enfo
 from __future__ import annotations
 
 import html
+import math
 import re
 
 CURSO = "Análisis de estados financieros con Claude"
@@ -374,6 +375,7 @@ function revisar(){
   var Z = zona ? zona.getBoundingClientRect() : L;
   document.querySelectorAll('.cuerpo *, .cab *, .centro *, .seccion *').forEach(function(el){
     if(el.closest('svg') && el.tagName.toLowerCase() !== 'svg') return;
+    if(el.closest('.ondas')) return;
     if(el.closest('.pl')) return;
     var r = el.getBoundingClientRect(); if(r.width === 0 || r.height === 0) return;
     var enCuerpo = !!el.closest('.cuerpo');
@@ -391,6 +393,30 @@ function revisar(){
 }
 ajustar(); irPaso(0);
 """
+
+
+def _ondas(modulo: int) -> str:
+    """Cinta de líneas finas que cruza el fondo de las láminas de contenido, como en las portadas.
+
+    Es la misma en todas las láminas de un capítulo (el fondo no se mueve al pasar de una a otra) y cambia
+    levemente de un capítulo al siguiente.
+    """
+    n, fase = 22, modulo * 0.83
+    lineas = []
+    for i in range(n):
+        puntos = []
+        for j in range(97):
+            u = j / 96
+            centro = 1018 - 380 * u ** 1.9
+            ancho = (i - (n - 1) / 2) * (2.2 + 19 * u)
+            y = centro + ancho * math.sin(1.9 * math.pi * u + fase + i * 0.075)
+            puntos.append(f"{'M' if j == 0 else 'L'}{1920 * u:.0f} {y:.1f}")
+        lineas.append(f'<path d="{" ".join(puntos)}"/>')
+    return ('<svg class="ondas" viewBox="0 0 1920 1080" aria-hidden="true"><defs>'
+            '<linearGradient id="ondas-g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1920" y2="0">'
+            '<stop offset=".2" stop-color="#E3A62F" stop-opacity="0"/><stop offset=".62" stop-color="#E3A62F" stop-opacity=".5"/>'
+            '<stop offset="1" stop-color="#F2D9A0" stop-opacity="1"/></linearGradient></defs>'
+            f'<g fill="none" stroke="url(#ondas-g)" stroke-width="1.15">{"".join(lineas)}</g></svg>')
 
 
 def pagina(s: dict, ctx: dict, css_href: str = "../../estilo.css") -> str:
@@ -423,7 +449,7 @@ def pagina(s: dict, ctx: dict, css_href: str = "../../estilo.css") -> str:
         raise ValueError(f"Tipo de lámina desconocido: {tipo}")
     clase = "oscuro" if tipo in _OSCURAS else "claro"
     base = css_href.rsplit("/", 1)[0] if "/" in css_href else "."
-    heroe = ""
+    heroe = _ondas(ctx["modulo"])
     if tipo in _HEROES:
         nombre = _HEROES[tipo] or _HEROES_DE_CAPITULO[ctx["modulo"] % len(_HEROES_DE_CAPITULO)]
         fondo = " fondo" if tipo == "cierre" else ""

@@ -32,7 +32,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--papel); }
 body { font-family: "Source Sans 3", "Inter", sans-serif; color: var(--tinta); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums lining-nums; }
-.lienzo { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--papel); }
+.lienzo { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+  background: radial-gradient(1500px 900px at 104% 112%, rgba(63, 98, 148, .30), transparent 62%),
+              radial-gradient(1100px 700px at -6% -18%, rgba(46, 72, 110, .34), transparent 64%), var(--papel); }
+/* Cinta de líneas finas al fondo de las láminas de contenido */
+.ondas { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: .2; pointer-events: none; }
 .lienzo::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: soft-light; z-index: 9;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/></filter><rect width='320' height='320' filter='url(%23n)'/></svg>"); }
 b, strong { font-weight: 700; }
