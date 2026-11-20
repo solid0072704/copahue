@@ -57,24 +57,36 @@
   function pintar(t) { T.forEach(function (x) { x.pintar(x.curva(limitar((t - x.t0) / x.dur)), t >= x.t0 + x.dur); }); }
 
   // Animaciones elementales. Todas dejan el estilo en línea limpio al terminar, para que mande la hoja de estilos.
+  // No todo es opaco por diseño (una banda tenue de un gráfico, por ejemplo): la entrada llega hasta la opacidad
+  // propia del elemento y no la sobrepasa.
+  function propia(el) {
+    var previa = el.style.opacity;
+    el.style.opacity = '';
+    var o = parseFloat(getComputedStyle(el).opacity);
+    el.style.opacity = previa;
+    return isNaN(o) ? 1 : o;
+  }
   function aparecer(el, t0, dur, dy, curva) {
     if (dy === undefined) dy = 22;
+    var tope = propia(el);
     return tramo(t0, dur || .5, curva || 'sale', function (p, fin) {
       if (fin) { el.style.opacity = ''; el.style.transform = ''; return; }
-      el.style.opacity = p; el.style.transform = dy ? 'translate3d(0,' + ((1 - p) * dy).toFixed(2) + 'px,0)' : '';
+      el.style.opacity = p * tope; el.style.transform = dy ? 'translate3d(0,' + ((1 - p) * dy).toFixed(2) + 'px,0)' : '';
     });
   }
   function desdeLado(el, t0, dur, dx) {
+    var tope = propia(el);
     return tramo(t0, dur || .5, 'sale', function (p, fin) {
       if (fin) { el.style.opacity = ''; el.style.transform = ''; return; }
-      el.style.opacity = p; el.style.transform = 'translate3d(' + ((1 - p) * (dx || -18)).toFixed(2) + 'px,0,0)';
+      el.style.opacity = p * tope; el.style.transform = 'translate3d(' + ((1 - p) * (dx || -18)).toFixed(2) + 'px,0,0)';
     });
   }
   function surgir(el, t0, dur) {      // superficies grandes: suben y se asientan, sin quedarse a medio fundir
     el.style.transformOrigin = '50% 0';
+    var tope = propia(el);
     return tramo(t0, dur || .7, 'sale4', function (p, fin) {
       if (fin) { el.style.opacity = ''; el.style.transform = ''; return; }
-      el.style.opacity = limitar(p * 1.6);
+      el.style.opacity = limitar(p * 1.6) * tope;
       el.style.transform = 'translate3d(0,' + ((1 - p) * 40).toFixed(2) + 'px,0) scale(' + (.98 + .02 * p).toFixed(4) + ')';
     });
   }
@@ -139,9 +151,10 @@
   }
   function brotar(el, t0, dur) {
     el.style.transformBox = 'fill-box'; el.style.transformOrigin = 'center';
+    var tope = propia(el);
     return tramo(t0, dur || .34, 'rebote', function (p, fin) {
       if (fin) { el.style.transform = ''; el.style.opacity = ''; return; }
-      el.style.opacity = limitar(p * 3); el.style.transform = 'scale(' + Math.max(.001, p).toFixed(3) + ')';
+      el.style.opacity = limitar(p * 3) * tope; el.style.transform = 'scale(' + Math.max(.001, p).toFixed(3) + ')';
     });
   }
   function hijos(el, t0, paso, dy) {  // los hijos directos entran escalonados
@@ -162,7 +175,7 @@
   function entrar(el, t0) {
     var es = function (sel) { return el.matches(sel); }, fin = t0, q = function (sel) { return el.querySelector(sel); };
     el.style.opacity = '';
-    var visible = function () { tramo(t0, .001, 'lin', function (p, f) { el.style.opacity = f || p > 0 ? 1 : 0; }); };
+    var visible = function () { tramo(t0, .001, 'lin', function (p, f) { el.style.opacity = f || p > 0 ? '' : 0; }); };
     if (el instanceof SVGElement) {
       visible();
       $$('.con', el).forEach(function (c) { fin = Math.max(fin, aparecer(c, t0, .25, 0)); });
