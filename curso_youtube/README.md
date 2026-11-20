@@ -69,6 +69,17 @@ python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los cap�
 - **Audios.** No se guardan en el repositorio (pesan unos 54 MB). `narracion.json` anota la generación de
   ElevenLabs que corresponde a cada segmento, para volver a descargarlos desde la cuenta sin gastar créditos.
 
+## Muestra para redes sociales
+
+```bash
+python -m curso_youtube.muestra curso.mp4 <trabajo> cierre.mp3 muestra.mp4
+```
+
+Arma un video vertical (1080 x 1350, 1:42) con fragmentos reales del curso: la miniatura como primer cuadro, el
+gancho, el método, el caso, un prompt con la respuesta de Claude y una lámina de cierre que dice dónde está el curso
+completo. Corta en cambios de paso (donde la voz hace una pausa) y lleva los subtítulos quemados en grande, porque
+en las redes casi todos miran sin sonido. `cierre.mp3` es la frase final (`CIERRE["texto"]`), con la misma voz.
+
 ## Requisitos
 
 Python 3.11+, `numpy`, `Pillow`, `xlsxwriter`, `ffmpeg` y Node con Playwright (Chromium) para capturar las láminas.

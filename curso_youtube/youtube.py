@@ -226,8 +226,8 @@ __ONDAS__
 </body></html>"""
 
 
-def miniatura(destino: Path) -> None:
-    """Miniatura de 1280 x 720 con el retrato del autor (imagenes/autor.png)."""
+def miniatura(destino: Path, escala: float = 1) -> None:
+    """Miniatura de 1280 x 720 con el retrato del autor (imagenes/autor.png). Con `escala=1.5` sale a 1920 x 1080."""
     aqui = Path(__file__).parent.resolve()
     html = destino.with_suffix(".html")
     html.write_text(MINIATURA_HTML.replace("__LOGO__", LINKEDIN).replace("__MARCA__", MARCA)
@@ -235,7 +235,7 @@ def miniatura(destino: Path) -> None:
                     .replace("__FUENTES__", (aqui / "fuentes").as_uri()).replace("__IMAGENES__", (aqui / "imagenes").as_uri()),
                     encoding="utf-8")
     script = ("const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();"
-              "const c=await b.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1});const p=await c.newPage();"
+              f"const c=await b.newContext({{viewport:{{width:1280,height:720}},deviceScaleFactor:{escala}}});const p=await c.newPage();"
               f"await p.goto('file://{html.resolve()}');await p.evaluate(()=>document.fonts.ready);"
               "await p.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));"
               f"await p.screenshot({{path:'{destino.resolve()}'}});await b.close();}})();")

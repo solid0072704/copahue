@@ -146,3 +146,19 @@ def test_el_plan_de_escenas_reparte_todo_el_video():
     assert escenas[0]["entra"] == "" and escenas[0]["sale"] == "barrido"         # el gancho da paso a la portada
     assert escenas[-1]["sale"] == ""                                             # la última no se va
     assert all(e["sale"] == ("barrido" if escenas[i + 1]["entra"] else "fundido") for i, e in enumerate(escenas[:-1]))
+
+
+def test_la_muestra_corta_en_cambios_de_paso_y_reubica_los_subtitulos():
+    """La muestra para redes toma láminas que existen, corta antes del paso pedido y mueve los subtítulos a su tiempo."""
+    from curso_youtube import deck, muestra
+    laminas = {s["id"]: s for s in deck.cargar()}
+    assert [laminas[f["desde"]]["tipo"] for f in muestra.FRAGMENTOS] == ["gancho", "metodo", "prompt", "respuesta"]
+    assert all(f.get("pasos", 1) <= len(laminas[f["hasta"]]["pasos"]) for f in muestra.FRAGMENTOS)
+    escenas = {"a": dict(cuadro0=0, cuadros=300, duraciones=[4.0, 6.0]), "b": dict(cuadro0=900, cuadros=600, duraciones=[5.0, 2.5, 12.5])}
+    completa, cortada = muestra.tramo(escenas, dict(desde="a", hasta="a")), muestra.tramo(escenas, dict(desde="b", hasta="b", pasos=2))
+    assert completa == (0, 300, False) and cortada == (900, 900 + 225, True)
+    subs = [(1.0, 3.0, "uno"), (9.5, 11.0, "a caballo"), (31.0, 33.0, "dos"), (37.4, 39.0, "queda fuera")]
+    rotulos = muestra.rotulos_de([completa, cortada], subs)
+    p = muestra.PORTADA
+    assert rotulos == [(p + 1.0, p + 3.0, "uno"), (p + 9.5, p + 10.0, "a caballo"), (p + 11.0, p + 13.0, "dos")]
+
