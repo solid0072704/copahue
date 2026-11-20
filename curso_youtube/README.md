@@ -7,7 +7,7 @@ los subtítulos y los capítulos.
 | Qué | Dónde |
 |---|---|
 | Guion para leer y corregir | `GUION.md` (se genera) |
-| Narración y láminas, por módulo | `contenido/m00_intro.py` … `m12_cierre.py` |
+| Narración y láminas, por módulo | `contenido/m00_intro.py` … `m13_cierre.py` |
 | Caso práctico (Distribuidora Alerce, ficticia) | `caso.py` · todas las cifras se calculan y verifican aquí |
 | Material descargable para la audiencia | `material/caso_distribuidora_alerce.xlsx` y `material/prompts.md` |
 | Título, descripción, capítulos, etiquetas y miniatura | `youtube/publicacion.md` y `youtube/miniatura.png` |
@@ -59,7 +59,13 @@ python -m curso_youtube.youtube curso_capitulos.txt  # descripción con los cap�
 - **Borrador sin voz.** `ensamblar … --borrador` rellena con silencio los audios que falten, para revisar ritmo
   y duración antes de gastar créditos de voz.
 - **Cambiar el texto.** Edita el archivo del módulo, vuelve a generar la lámina y regenera solo el audio de ese
-  segmento (`seg_XXX`).
+  segmento (`seg_XXX`). Los segmentos se numeran en orden: si agregas o quitas láminas, los audios que siguen
+  cambian de número (su texto no cambia, así que se renombran y no hay que generarlos de nuevo).
+- **Índice y primeros pasos.** La introducción trae un índice (`tipo="indice"`): cada parte nombra sus
+  capítulos, y `deck` le calcula los minutos y la barra de capítulos a escala. El capítulo `m01_primeros`
+  explica dónde se usa Claude, cómo se instala y qué planes existen; sus datos (planes, precios de referencia y
+  aplicaciones) se verificaron en claude.com/pricing y claude.com/download en la fecha que indica el archivo:
+  conviene revisarlos antes de volver a publicar.
 - **Audios.** No se guardan en el repositorio (pesan unos 54 MB). `narracion.json` anota la generación de
   ElevenLabs que corresponde a cada segmento, para volver a descargarlos desde la cuenta sin gastar créditos.
 

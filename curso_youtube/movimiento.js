@@ -36,7 +36,7 @@
 
   // ---- Texto: cada palabra dentro de una máscara, para que suba línea por línea -------------------------
   var CON_MASCARA = 'h1, .seccion h2, .pregunta, .titulo-curso h2, .chips-tit, .frase-pie, .tarjeta .frase, .gracias, ' +
-                    '.puntos .txt b, .op > b, .chip b, .asesoria .as-t b';
+                    '.puntos .txt b, .op > b, .chip b, .asesoria .as-t b, .acc b, .plan .pn';
   function partir(el) {
     if (el.dataset.partido) return;
     el.dataset.partido = '1';
@@ -233,6 +233,20 @@
     $$('svg.ico', el).forEach(function (s, i) { fin = Math.max(fin, dibujar(s, t0 + .08 + i * .05, .62)); });
     return fin;
   }
+  // El puntero llega a un botón y lo pulsa. Devuelve el instante del clic (solo en el video: necesita el reloj).
+  function clic(objetivo, t0) {
+    var puntero = $('.puntero');
+    if (!puntero || !objetivo || !DUR) return t0;
+    var r = objetivo.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    tramo(t0, .7, 'entraSale', function (p) {
+      puntero.style.opacity = limitar(p * 4);
+      puntero.style.transform = 'translate3d(' + (cx - 240 * (1 - p)).toFixed(1) + 'px,' + (cy - 150 * (1 - p) * (1 - p)).toFixed(1) + 'px,0)';
+    }, true);
+    pulso(objetivo, t0 + .7, .1, .4);
+    tramo(t0 + .7, .2, 'lin', function (p) { puntero.style.transform = 'translate3d(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px,0) scale(' + (1 - .16 * Math.sin(Math.PI * p)).toFixed(3) + ')'; }, true);
+    tramo(t0 + 1.0, .3, 'lin', function (p) { puntero.style.opacity = 1 - p; }, true);
+    return t0 + .7;
+  }
   // El texto principal de un elemento: si quedó partido en palabras, sube palabra por palabra.
   function titular(el, t0) {
     if (!el) return t0;
@@ -242,7 +256,8 @@
 
   // ---- Cómo entra cada tipo de elemento --------------------------------------------------------------
   var SIEMPRE = '.puntos li, .panel, .cifra, .tabla tbody tr, .mp, .bq, .rk, .fm, .al, .op, .chip, .nt, .tarjeta, .bl, .ms, .dfila, .vs, ' +
-                '.conecta .fuentes, .frase-pie, .sub-pie, .sobre-cifras, .mini-prompt, .docs, .pregunta, .remate, .gracias, .dconc, .pc, .lateral > *';
+                '.conecta .fuentes, .frase-pie, .sub-pie, .sobre-cifras, .mini-prompt, .docs, .pregunta, .remate, .gracias, .dconc, .pc, .lateral > *, ' +
+                '.ix, .acc, .plan, .aviso';
   function entrar(el, t0) {
     var es = function (sel) { return el.matches(sel); }, fin = t0, q = function (sel) { return el.querySelector(sel); };
     el.style.opacity = '';
@@ -265,7 +280,7 @@
       fin = Math.max(fin, titular(b, t0 + .14));
       if (sp) fin = Math.max(fin, aparecer(sp, t0 + luego(.36, .42, 4.5), .6, 16));
       if (q('.v')) fin = Math.max(fin, contar(q('.v'), t0 + .2, 1.1));
-    } else if (es('.panel li, .al, .rk, .fm')) {
+    } else if (es('.panel li, .al, .rk, .fm, .ix')) {
       visible();
       fin = variable(el, '--r', 0, 1, t0, .7);
       Array.prototype.forEach.call(el.children, function (h, i) { fin = Math.max(fin, i === 0 ? desdeLado(h, t0 + .06, .45, -26) : aparecer(h, t0 + .12 + i * .1, .55, 18)); });
@@ -300,7 +315,7 @@
         fin = Math.max(fin, variable(li, '--r', 0, 1, t0 + .3 + i * paso, .6));
         fin = Math.max(fin, desdeLado(li, t0 + .3 + i * paso, .5, -22));
       });
-    } else if (es('.mp, .bq, .op, .chip')) {
+    } else if (es('.mp, .bq, .op, .chip, .acc')) {
       visible();
       fin = variable(el, '--r', 0, 1, t0, .7);
       Array.prototype.forEach.call(el.children, function (h, i) {
@@ -330,6 +345,40 @@
       });
     } else if (es('.mini-prompt')) {
       fin = surgir(el, t0, .6);
+    } else if (es('.tramos')) {         // la barra de capítulos: sus tramos crecen de izquierda a derecha
+      visible();
+      $$('.ts i', el).forEach(function (seg, i, todos) {
+        fin = Math.max(fin, tramo(t0 + .15 + i * 1.1 / todos.length, .5, 'expo', function (p, f) { seg.style.transform = f ? '' : 'scaleX(' + Math.max(.001, p).toFixed(4) + ')'; }));
+      });
+      $$('em', el).forEach(function (e, i) { fin = Math.max(fin, aparecer(e, t0 + .55 + i * .1, .45, 8)); });
+    } else if (es('.plan')) {           // un plan: nombre, para quién es, el precio que cuenta y lo que incluye
+      visible();
+      fin = variable(el, '--r', 0, 1, t0, .8);
+      var precio = q('.val'), cada = entre((DUR || 3) * .1, .12, .8), desdeLista = luego(.34, .95, 4.5);
+      fin = Math.max(fin, titular(q('.pn'), t0 + .1));
+      if (q('.lema')) fin = Math.max(fin, aparecer(q('.lema'), t0 + .32, .5, 14));
+      if (precio) {
+        var llega = luego(.14, .55, 2.2);
+        fin = Math.max(fin, aparecer(precio, t0 + llega, .5, 24));
+        fin = Math.max(fin, contar(precio, t0 + llega + .05, 1.3));
+        fin = Math.max(fin, pulso(precio, t0 + llega + 1.45, .06, .5));
+        $$('.un, .alt', el).forEach(function (x, i) { fin = Math.max(fin, aparecer(x, t0 + llega + .3 + i * .15, .45, 10)); });
+      }
+      if (q('ul')) fin = Math.max(fin, aparecer(q('ul'), t0 + desdeLista - .15, .4, 0));
+      $$('li', el).forEach(function (li, i) { fin = Math.max(fin, desdeLado(li, t0 + desdeLista + i * cada, .5, -20)); });
+    } else if (es('.baj')) {            // la descarga: el puntero pulsa el botón, el instalador baja y queda listo
+      var cuando = clic($('.nav .btn.sel'), t0 + .2) + .22;
+      fin = aparecer(el, cuando, .45, 14);
+      var barra = q('.riel i'), pct = q('b'), listo = q('.ico:last-child'), baja = entre((DUR || 3) * .38, .9, 2.4);
+      fin = tramo(cuando + .3, baja, 'entraSale', function (p, f) {
+        if (barra) barra.style.setProperty('--av', f ? 1 : p.toFixed(4));
+        if (pct) pct.textContent = (f ? 100 : Math.round(p * 100)) + ' %';
+      });
+      if (listo) fin = Math.max(fin, brotar(listo, fin - .08, .4));
+    } else if (es('.cta')) {            // la cuenta: aparece el formulario y el puntero elige «con tu correo»
+      fin = aparecer(el, t0, .45, 14);
+      $$('.ct, .co, .cd', el).forEach(function (x, i) { fin = Math.max(fin, aparecer(x, t0 + .15 + i * .13, .45, 12)); });
+      if (DUR > 3.5) fin = Math.max(fin, clic(q('.co'), t0 + luego(.3, 1.1, 3.5)) + .4);
     } else {
       fin = aparecer(el, t0, .55, 24);
     }
@@ -350,7 +399,7 @@
   var activo = null;              // el elemento que se está explicando en este paso: por él pasa la luz
   var finEntrada = 0;             // segundo del paso en que termina de entrar lo principal
   var finEscritura = 0;           // segundo del paso en que termina de escribirse el prompt (0: no hay)
-  var CON_LUZ = 'li, .panel, .cifra, .op, .chip, .bq, .rk, .fm, .al, .mp, .nt, .tarjeta, .bl, tr, .asesoria, .dfila, .ms, .mini-prompt';
+  var CON_LUZ = 'li, .panel, .cifra, .op, .chip, .bq, .rk, .fm, .al, .mp, .nt, .tarjeta, .bl, tr, .asesoria, .dfila, .ms, .mini-prompt, .ix, .acc, .plan';
 
   function prepararPaso(k) {
     T = []; pasoActual = k;
@@ -368,12 +417,17 @@
       if (titulo) t0 = subirPalabras(titulo, .1, .7, .1) - .36;
       $$('.seccion .baj, .titulo-curso .sub, .titulo-curso .quien').forEach(function (el, i) { if (!el.dataset.p) aparecer(el, t0 + .1 + i * .18, .6, 22); });
       $$('.seccion .it').forEach(function (it, i) { aparecer(it, t0 + .3 + i * .08, .45, 14); });
-      $$('.prompt, .resp, .memo, .proyecto, .tabla-caja thead, .conecta .fle, .conecta .nodo, .metodo, .grafico > svg > line, .grafico > svg > text, .grafico > svg > rect').forEach(function (el, i) {
+      $$('.prompt, .resp, .memo, .proyecto, .nav, .tabla-caja thead, .conecta .fle, .conecta .nodo, .metodo, .grafico > svg > line, .grafico > svg > text, .grafico > svg > rect').forEach(function (el, i) {
         if (el.closest('[data-p]')) return;
         var cuando = Math.max(.2, t0) + i * .03;
         if (DUR && DUR < 3.4) cuando = .12 + i * .03;
-        if (el.matches('.prompt, .resp, .memo, .proyecto')) surgir(el, cuando, DUR && DUR < 3.4 ? .5 : .7); else aparecer(el, cuando, .5, 0);
+        if (el.matches('.prompt, .resp, .memo, .proyecto, .nav')) surgir(el, cuando, DUR && DUR < 3.4 ? .5 : .7); else aparecer(el, cuando, .5, 0);
       });
+      var nav = $('.nav');
+      if (nav) {                         // en el navegador se escribe la dirección y después carga la página
+        var escribe = Math.max(.75, t0 + .35), finDir = revelar($('.dir .u', nav), escribe, entre((DUR || 4) * .2, .8, 1.7), true);
+        $$('.nc > *', nav).forEach(function (x, i) { if (x.dataset.p === undefined) aparecer(x, finDir + .22 + i * .15, .5, 16); });
+      }
       var pre = $('.prompt pre');
       var corto = DUR && DUR < 3.4;      // no hay tiempo para escribirlo: llega pegado, tramo por tramo
       if (pre && corto) {
@@ -449,7 +503,7 @@
     // por dónde pasa la luz: lo que entró en este paso o, si nada entró, lo que quedó destacado
     activo = propios.filter(function (el) { return !(el instanceof SVGElement) && el.matches(CON_LUZ); })[0] || null;
     if (k === 0 && propios.length > 1) activo = null;          // al llegar la lámina entra todo: no hay un «esto»
-    if (!activo && k > 0) activo = $('tr.foco, .mp.foco, .mp.actual, li.foco, .seg.foco');
+    if (!activo && k > 0) activo = $('tr.foco, .mp.foco, .mp.actual, li.foco, .seg.foco, .tramos.foco');
     return duracion();
   }
 
@@ -464,7 +518,7 @@
   function limpiar() {
     $$('[style]').forEach(function (el) {
       if (el.closest('.heroe, .ambiente, .pie, .capa-fija') || el.classList.contains('heroe') || el.classList.contains('lienzo')) return;
-      ['opacity', 'transform', 'stroke-dasharray', 'stroke-dashoffset', '--r', '--f', '--d', '--a', '--h'].forEach(function (p) { el.style.removeProperty(p); });
+      ['opacity', 'transform', 'stroke-dasharray', 'stroke-dashoffset', '--r', '--f', '--d', '--a', '--h', '--av'].forEach(function (p) { el.style.removeProperty(p); });
     });
     $$('.cursor').forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
   }

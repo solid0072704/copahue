@@ -21,7 +21,7 @@
   --oro: var(--acento); --oro-osc: var(--acento); --oro-claro: var(--acento-claro); --azul: var(--acento); --azul-claro: var(--acento-claro);
 }
 /* Superficie clara: ventanas de chat, documentos y tarjetas invertidas */
-.prompt, .resp, .memo, .mini-prompt, .tarjeta.tinta, .dfila .fa.res, .asesoria {
+.prompt, .resp, .memo, .mini-prompt, .tarjeta.tinta, .dfila .fa.res, .asesoria, .nav {
   --papel: #F5F0E4; --papel-2: #FBF8F0; --papel-3: #ECE5D5;
   --tinta: #121E2E; --tinta-2: #47535F; --tinta-3: #86909B;
   --linea: #DED6C4; --linea-2: #C4BBA6;
@@ -423,3 +423,86 @@ svg text.mono { font-family: "Geist Mono", monospace; } svg text.tit { font-fami
 .conecta .nodo { background: var(--acento); color: var(--sobre-acento); border-radius: 10px; padding: 34px 26px; text-align: center; }
 .conecta .nodo b { display: block; font-family: var(--f-titulo); font-size: 44px; font-weight: 700; letter-spacing: -.03em; }
 .conecta .nodo span { display: block; margin-top: 10px; font-size: 27px; line-height: 1.3; }
+
+/* Índice del curso: las partes en lista y, debajo, la barra de capítulos a escala de su duración.
+   La fila que se está nombrando se enciende (--f), y su tramo de la barra con ella. */
+.indice { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.ix { position: relative; display: grid; grid-template-columns: 96px 560px 1fr 150px; align-items: baseline; padding: 19px 22px 21px 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--acento-claro) calc(var(--f, 0) * 100%), transparent), transparent 86%);
+  box-shadow: inset 5px 0 0 color-mix(in srgb, var(--acento) calc(var(--f, 0) * 100%), transparent); }
+.ix::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1.5px; background: var(--linea-2); transform: scaleX(var(--r, 1)); transform-origin: left; }
+.ix.foco { --f: 1; }
+.ix .n { font-family: var(--f-mono); font-size: 23px; font-weight: 500; letter-spacing: .06em; color: var(--acento); padding-left: 24px; }
+.ix b { font-family: var(--f-titulo); font-size: 35px; line-height: 1.2; font-weight: 600; letter-spacing: -.018em; color: var(--tinta); white-space: nowrap; }
+.ix span { font-size: 30px; line-height: 1.25; color: var(--tinta-2); }
+.ix .v { font-family: var(--f-mono); font-size: 23px; font-weight: 500; letter-spacing: .04em; text-align: right; white-space: nowrap;
+  color: color-mix(in srgb, var(--acento) calc(var(--f, 0) * 100%), var(--tinta-3)); }
+.tramos { display: flex; gap: 7px; margin-top: 30px; padding-top: 3px; }
+.tramos .g { display: flex; flex-direction: column; gap: 10px; min-width: 0; --base: var(--linea-2); }
+.tramos .g:has(~ .g.foco) { --base: var(--acento-medio); }      /* las partes ya nombradas quedan a media luz */
+.tramos .g.foco { --f: 1; }
+.tramos .ts { display: flex; gap: 3px; height: 12px; }
+.tramos .ts i { border-radius: 2px; transform-origin: left; background: color-mix(in srgb, var(--acento) calc(var(--f, 0) * 100%), var(--base)); }
+.tramos em { font-style: normal; font-family: var(--f-mono); font-size: 17px; font-weight: 500; letter-spacing: .08em; white-space: nowrap;
+  color: color-mix(in srgb, var(--acento) calc(var(--f, 0) * 100%), var(--tinta-3)); }
+.indice .sub-pie { margin-top: 28px; }
+
+/* Dónde se usa Claude: tres columnas con un dibujo de línea que se traza */
+.accesos { display: grid; grid-template-columns: repeat(3, 1fr); flex: 1; align-content: center; }
+.acc { position: relative; padding: 36px 48px 6px 0; display: flex; flex-direction: column; }
+.acc::before { content: ""; position: absolute; left: 0; right: 48px; top: 0; height: 4px; background: var(--acento); transform: scaleX(var(--r, 1)); transform-origin: left; }
+.acc .dib { width: 246px; height: 160px; color: var(--tinta-2); stroke-width: 2.3; margin-bottom: 26px; }
+.acc .dib .ac { stroke: var(--acento); }
+.acc .k { font-family: var(--f-mono); font-size: 21px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--acento); }
+.acc b { display: block; font-family: var(--f-titulo); font-size: 42px; line-height: 1.12; font-weight: 700; letter-spacing: -.026em; color: var(--tinta); margin-top: 12px; }
+.acc span { display: block; font-size: 31px; line-height: 1.32; color: var(--tinta-2); margin-top: 12px; }
+
+/* La instalación: una ventana de navegador esquemática (superficie clara) */
+.nav { flex: 1.36; min-width: 0; background: var(--papel-2); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 44px 80px -40px var(--sombra); }
+.nav .nb { display: flex; align-items: center; gap: 22px; padding: 16px 26px; background: var(--papel-3); border-bottom: 1.5px solid var(--linea); }
+.nav .sem { display: flex; gap: 9px; flex: none; }
+.nav .sem i { width: 15px; height: 15px; border-radius: 50%; background: var(--linea-2); }
+.nav .dir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: var(--papel-2); border-radius: 999px; padding: 9px 22px;
+  font-family: var(--f-mono); font-size: 25px; font-weight: 500; color: var(--tinta); box-shadow: 0 0 0 calc(var(--f, 0) * 4px) var(--acento-medio); }
+.nav .dir.foco { --f: 1; }
+.nav .dir .ico { font-size: 22px; color: var(--verde); stroke-width: 2.3; }
+.nav .nc { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 26px 46px 30px; }
+.nav .nk { font-family: var(--f-mono); font-size: 19px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--acento); }
+.nav .nh { font-family: var(--f-titulo); font-size: 60px; line-height: 1.08; font-weight: 700; letter-spacing: -.034em; color: var(--tinta); margin-top: 8px; }
+.nav .nbs { display: flex; gap: 14px; margin-top: 24px; }
+.nav .btn { display: inline-flex; align-items: center; gap: 12px; font-family: var(--f-titulo); font-size: 26px; font-weight: 600; letter-spacing: -.01em; padding: 13px 24px; border-radius: 10px; border: 1.5px solid var(--linea-2); color: var(--tinta); white-space: nowrap; }
+.nav .btn.sel { background: var(--tinta); color: var(--papel-2); border-color: var(--tinta); }
+.nav .btn .ico { font-size: 26px; stroke-width: 2.3; }
+.nav .baj { display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: 16px; margin-top: 26px; padding: 15px 22px; border-radius: 12px; background: var(--papel-3); font-size: 27px; font-weight: 500; color: var(--tinta); }
+.nav .baj > .ico { font-size: 30px; color: var(--tinta-2); }
+.nav .baj .riel { height: 8px; border-radius: 4px; background: var(--linea-2); overflow: hidden; }
+.nav .baj .riel i { display: block; height: 100%; width: calc(var(--av, 1) * 100%); background: var(--verde); border-radius: 4px; }
+.nav .baj b { font-family: var(--f-mono); font-size: 22px; font-weight: 600; min-width: 88px; text-align: right; }
+.nav .baj > .ico:last-child { color: var(--verde); stroke-width: 2.5; }
+.nav .cta { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; padding-top: 22px; border-top: 1.5px solid var(--linea); }
+.nav .ct { display: flex; align-items: center; gap: 14px; font-family: var(--f-titulo); font-size: 31px; font-weight: 700; letter-spacing: -.02em; color: var(--tinta); }
+.nav .ct .ico { font-size: 34px; color: var(--acento); }
+.nav .cos { display: flex; gap: 12px; }
+.nav .co { display: inline-flex; align-items: center; gap: 10px; font-size: 25px; font-weight: 600; padding: 10px 20px; border-radius: 999px; border: 1.5px solid var(--linea-2); color: var(--tinta); white-space: nowrap; }
+.nav .co .ico { font-size: 24px; color: var(--acento); }
+.nav .cd { display: flex; align-items: center; gap: 12px; font-size: 25px; color: var(--tinta-2); }
+.nav .cd .ico { font-size: 23px; color: var(--tinta-3); }
+.aviso { display: flex; align-items: center; gap: 18px; background: var(--ambar-claro); color: #FFE2B5; border-radius: 6px; padding: 17px 24px; font-size: 28px; line-height: 1.3; font-weight: 500; }
+.aviso .ico { font-size: 38px; color: var(--ambar); stroke-width: 2.1; }
+
+/* Planes: una columna por plan; la que se está nombrando se enciende (--f) */
+.planes { display: grid; flex: none; align-items: stretch; }
+.plan { position: relative; padding: 28px 28px 24px 26px; display: flex; flex-direction: column; min-width: 0;
+  background: color-mix(in srgb, var(--papel-2) calc(var(--f, 0) * 100%), transparent); }
+.plan::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; transform: scaleX(var(--r, 1)); transform-origin: left;
+  background: color-mix(in srgb, var(--acento) calc(var(--f, 0) * 100%), var(--linea-2)); }
+.plan:not(:last-child) { border-right: 1.5px solid var(--linea); }
+.plan.foco { --f: 1; }
+.plan .pn { font-family: var(--f-titulo); font-size: 46px; line-height: 1.06; font-weight: 700; letter-spacing: -.03em; color: var(--tinta); }
+.plan .lema { font-family: var(--f-serif); font-style: italic; font-size: 30px; line-height: 1.18; color: var(--tinta-2); margin-top: 8px; min-height: 71px; }
+.plan .val { font-family: var(--f-titulo); font-size: 66px; line-height: 1; font-weight: 700; letter-spacing: -.04em; color: var(--acento); margin-top: 14px; white-space: nowrap; transform-origin: left center; }
+.plan .un { font-size: 28px; line-height: 1.2; font-weight: 500; color: var(--tinta-2); margin-top: 6px; min-height: 34px; }
+.plan .alt { font-family: var(--f-mono); font-size: 18px; line-height: 1.3; letter-spacing: .02em; color: var(--tinta-3); margin-top: 4px; min-height: 24px; white-space: nowrap; }
+.plan ul { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-top: 20px; padding-top: 22px; border-top: 1.5px solid var(--linea-2); }
+.plan li { display: flex; gap: 12px; font-size: 28px; line-height: 1.26; color: var(--tinta-2); }
+.plan li .ico { font-size: 26px; color: var(--verde); stroke-width: 2.7; margin-top: 5px; }

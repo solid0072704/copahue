@@ -24,6 +24,11 @@ PRONUNCIACION = [
     (r"\bplugin\b", "pláguin"),
     (r"\bskills\b", "eskíls"),
     (r"\bskill\b", "eskil"),
+    # nombres de los planes y de los equipos, que una voz en español tiende a leer letra por letra
+    (r"\bFree\b", "Fri"),
+    (r"\bTeam\b", "Tim"),
+    (r"\bEnterprise\b", "Énterprais"),
+    (r"\biPhone\b", "aifon"),
 ]
 
 _UNIDADES = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",
@@ -138,7 +143,7 @@ def a_voz(texto: str) -> str:
     return t.strip()
 
 
-CARACTERES_POR_SEGUNDO = 16.7  # medido con la voz clonada (muestra de 42 s)
+CARACTERES_POR_SEGUNDO = 17.1  # medido con la narración completa de la voz clonada (60.885 caracteres en 59,2 min)
 
 
 def duracion_estimada(texto: str) -> float:

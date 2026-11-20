@@ -57,6 +57,32 @@ LAMINAS = [
         ],
     ),
     dict(
+        # El índice: cada parte es uno o varios capítulos del video (`mods`); `deck` les calcula los minutos.
+        tipo="indice", titulo="Qué vas a encontrar en este curso",
+        partes=[
+            dict(p=1, t="Primeros pasos", d="Cómo descargar Claude y qué plan elegir", mods=["m01_primeros"]),
+            dict(p=2, t="Antes de empezar", d="Qué puede y qué no puede hacer Claude con tus números", mods=["m02_claude"]),
+            dict(p=3, t="El método de 8 pasos", d="De los datos al informe final, sobre un caso práctico", mods="pasos",
+                 rotulo="8 pasos"),
+            dict(p=4, t="Tu rutina mensual", d="Cómo repetirlo en cada cierre y los errores más comunes", mods=["m11_rutina"]),
+            dict(p=5, t="Para ir más lejos", d="Artefactos, conectores y plugins de Claude", mods=["m12_herramientas"]),
+            dict(p=6, t="Resumen y próximos pasos", d="Lo esencial del método y cómo seguir", mods=["m13_cierre"]),
+        ],
+        nota=dict(p=7, icono="play", t="Cada parte es un capítulo del video: salta o vuelve a cualquiera desde la barra de reproducción"),
+        pasos=[
+            "Antes de empezar, este es el índice del curso.",
+            "+ Partimos por los primeros pasos: cómo descargar Claude y qué plan elegir.",
+            "+ Después, qué puede y qué no puede hacer Claude con tus números.",
+            "Luego viene el corazón del curso: el método de análisis, que aplicamos de principio a fin sobre un "
+            "caso práctico.",
+            "Al terminar, vemos cómo convertirlo en tu rutina de cada mes, y los errores más comunes.",
+            "+ Para ir más lejos, tres herramientas de Claude: artefactos, conectores y plugins.",
+            "+ Y cerramos con un resumen y tus próximos pasos.",
+            "Cada parte es un capítulo del video: están marcados en la barra de reproducción, para que vuelvas a "
+            "cualquiera cuando lo necesites.",
+        ],
+    ),
+    dict(
         tipo="metodo", titulo="Un método de 8 pasos: de los datos a la decisión", p0=1,
         pasos=[
             "Vamos a trabajar con un método de 8 pasos.",

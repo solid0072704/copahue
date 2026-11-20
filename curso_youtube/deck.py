@@ -18,18 +18,19 @@ from .voz import CARACTERES_POR_SEGUNDO, a_voz
 
 MODULOS = [
     dict(clave="m00_intro", capitulo="Introducción", kicker="Introducción"),
-    dict(clave="m01_claude", capitulo="Qué puede y qué no puede hacer Claude", kicker="Antes de empezar"),
-    dict(clave="m02_prepara", capitulo="Paso 1: preparar los datos y el contexto", paso=1),
-    dict(clave="m03_verifica", capitulo="Paso 2: verificar que todo cuadre", paso=2),
-    dict(clave="m04_entiende", capitulo="Paso 3: análisis vertical y horizontal", paso=3),
-    dict(clave="m05_mide", capitulo="Paso 4: ratios financieros", paso=4),
-    dict(clave="m06_caja", capitulo="Paso 5: flujo de efectivo y capital de trabajo", paso=5),
-    dict(clave="m07_compara", capitulo="Paso 6: desviaciones contra el presupuesto", paso=6),
-    dict(clave="m08_cuestiona", capitulo="Paso 7: señales de alerta", paso=7),
-    dict(clave="m09_decide", capitulo="Paso 8: escenarios, plan de acción e informe", paso=8),
-    dict(clave="m10_rutina", capitulo="Tu rutina mensual y los errores más comunes", kicker="Tu rutina mensual"),
-    dict(clave="m11_herramientas", capitulo="Artefactos, conectores y plugins de Claude", kicker="Para ir más lejos"),
-    dict(clave="m12_cierre", capitulo="Resumen y próximos pasos", kicker="Cierre"),
+    dict(clave="m01_primeros", capitulo="Cómo descargar Claude y qué plan elegir", kicker="Primeros pasos"),
+    dict(clave="m02_claude", capitulo="Qué puede y qué no puede hacer Claude", kicker="Antes de empezar"),
+    dict(clave="m03_prepara", capitulo="Paso 1: preparar los datos y el contexto", paso=1),
+    dict(clave="m04_verifica", capitulo="Paso 2: verificar que todo cuadre", paso=2),
+    dict(clave="m05_entiende", capitulo="Paso 3: análisis vertical y horizontal", paso=3),
+    dict(clave="m06_mide", capitulo="Paso 4: ratios financieros", paso=4),
+    dict(clave="m07_caja", capitulo="Paso 5: flujo de efectivo y capital de trabajo", paso=5),
+    dict(clave="m08_compara", capitulo="Paso 6: desviaciones contra el presupuesto", paso=6),
+    dict(clave="m09_cuestiona", capitulo="Paso 7: señales de alerta", paso=7),
+    dict(clave="m10_decide", capitulo="Paso 8: escenarios, plan de acción e informe", paso=8),
+    dict(clave="m11_rutina", capitulo="Tu rutina mensual y los errores más comunes", kicker="Tu rutina mensual"),
+    dict(clave="m12_herramientas", capitulo="Artefactos, conectores y plugins de Claude", kicker="Para ir más lejos"),
+    dict(clave="m13_cierre", capitulo="Resumen y próximos pasos", kicker="Cierre"),
 ]
 
 PAUSA_ENTRE_SEGMENTOS = 1.0  # segundos de silencio entre un audio y el siguiente
@@ -65,7 +66,40 @@ def cargar() -> list[dict]:
                      avance=(si + 1) / len(crudas), seg=seg, primera_del_modulo=(si == 0))
             assert s.get("pasos"), f"La lámina {s['id']} no tiene narración"
             laminas.append(s)
+    _medir_indice(laminas)
     return laminas
+
+
+def minutos_por_modulo(laminas: list[dict]) -> dict[int, float]:
+    """Minutos estimados de cada capítulo: su narración más la pausa que sigue a cada audio."""
+    por_seg = {g["n"]: g for g in segmentos(laminas)}
+    minutos: dict[int, float] = {}
+    for mi in sorted({s["modulo"] for s in laminas}):
+        ns = {s["seg"] for s in laminas if s["modulo"] == mi}
+        minutos[mi] = sum(por_seg[n]["segundos_estimados"] + PAUSA_ENTRE_SEGMENTOS for n in ns) / 60
+    return minutos
+
+
+def _medir_indice(laminas: list[dict]) -> None:
+    """Completa la lámina de índice: cuántos minutos dura cada parte y los capítulos que la forman.
+
+    Cada parte nombra sus capítulos en `mods` (claves de módulo, o "pasos" para los del método). Recibe `tramos`
+    (los minutos de cada capítulo, para la barra) y `min` (el total redondeado, para la lista).
+    """
+    indices = [s for s in laminas if s["tipo"] == "indice"]
+    if not indices:
+        return
+    minutos = minutos_por_modulo(laminas)
+    claves = {m["clave"]: i for i, m in enumerate(MODULOS)}
+    for s in indices:
+        s["partes"] = [dict(parte) for parte in s["partes"]]
+        for parte in s["partes"]:
+            if parte["mods"] == "pasos":
+                mods = [i for i, m in enumerate(MODULOS) if m.get("paso")]
+            else:
+                mods = [claves[c] for c in parte["mods"]]
+            parte["tramos"] = [round(minutos.get(i, 0.0), 2) for i in mods]
+            parte["min"] = max(1, round(sum(parte["tramos"])))
 
 
 def segmentos(laminas: list[dict] | None = None) -> list[dict]:

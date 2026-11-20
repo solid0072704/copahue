@@ -4,9 +4,9 @@
  "tono": "[calm] [professional]",
  "flow_id": "vBZfuT4WWyqQND7uVfIQ",
  "fecha": "2026-11-20",
- "audios": 101,
- "caracteres": 63107,
- "minutos": 59.2,
+ "audios": 107,
+ "caracteres": 66859,
+ "minutos": 62.7,
  "segmentos": {
   "seg_000": {
    "session_id": "SXpUjqACIqZuC83TiZgK",
@@ -21,594 +21,630 @@
    "segundos": 20.92
   },
   "seg_002": {
+   "session_id": "Zgyee4FByYmKA744Cmxx",
+   "generation_id": "UnrK2GwMxz73jpVgIxCS",
+   "caracteres": 669,
+   "segundos": 38.19
+  },
+  "seg_003": {
    "session_id": "GV4I9cG9AAwKUgXO3Ldr",
    "generation_id": "nypQRFb5z01cpQhZlTvW",
    "caracteres": 448,
    "segundos": 25.89
   },
-  "seg_003": {
+  "seg_004": {
    "session_id": "TDvgB31GuCRSdo9QrL6v",
    "generation_id": "pRqVZDhrrEkYgikl2CUy",
    "caracteres": 715,
    "segundos": 39.55
   },
-  "seg_004": {
+  "seg_005": {
+   "session_id": "9G2gamZkY3OrWScM5sZN",
+   "generation_id": "CfbnRbuF8hRuTpRZbCjd",
+   "caracteres": 656,
+   "segundos": 37.72
+  },
+  "seg_006": {
+   "session_id": "lkn9rX6sgTXDRFNapN8B",
+   "generation_id": "CVC5PF3SLgUoC9K9lRQf",
+   "caracteres": 582,
+   "segundos": 32.52
+  },
+  "seg_007": {
+   "session_id": "IAZvB8qeemBK9wnUe8la",
+   "generation_id": "ZCaoK749F1yXldWMSswP",
+   "caracteres": 680,
+   "segundos": 39.31
+  },
+  "seg_008": {
+   "session_id": "CQQky46Gpo36gJBHI1FN",
+   "generation_id": "3fKqc2HHdc1Kq2MuFVKt",
+   "caracteres": 608,
+   "segundos": 33.96
+  },
+  "seg_009": {
+   "session_id": "bD78V922xbasXQXIhVc4",
+   "generation_id": "j06namZP0gqiSjAgXYWw",
+   "caracteres": 557,
+   "segundos": 30.43
+  },
+  "seg_010": {
    "session_id": "OSZKAoNqWb3wFsXgQ9Bf",
    "generation_id": "a600B4HszH1RfLzApGT2",
    "caracteres": 524,
    "segundos": 29.39
   },
-  "seg_005": {
+  "seg_011": {
    "session_id": "JX5pF89EVRibWAMMzVJs",
    "generation_id": "kKcYpwWv8V0mljrgpinB",
    "caracteres": 626,
    "segundos": 38.03
   },
-  "seg_006": {
+  "seg_012": {
    "session_id": "CXWxGOHtqcC9LQIzgLUi",
    "generation_id": "Bqb8FzPmYEVQ5HnibtS8",
    "caracteres": 594,
    "segundos": 34.27
   },
-  "seg_007": {
+  "seg_013": {
    "session_id": "IJJtrQFdSf3qics9O8gu",
    "generation_id": "rJMPlgw3Ue0mkD2vNv4L",
    "caracteres": 451,
    "segundos": 26.04
   },
-  "seg_008": {
+  "seg_014": {
    "session_id": "tjh40J8vpkMlDFSvRz1V",
    "generation_id": "BX79Z8D2NtxXIAFQ5GXL",
    "caracteres": 626,
    "segundos": 39.24
   },
-  "seg_009": {
+  "seg_015": {
    "session_id": "WROTS1XaHGXMDGsYmC0Z",
    "generation_id": "D4EQKAdsJmqY46y7Jzkc",
    "caracteres": 713,
    "segundos": 38.84
   },
-  "seg_010": {
+  "seg_016": {
    "session_id": "OgYzJx6q0f2EKSRMxbHW",
    "generation_id": "NIxQrWmxJ5utwPf6m1A5",
    "caracteres": 720,
    "segundos": 39.24
   },
-  "seg_011": {
+  "seg_017": {
    "session_id": "Kt6tIUj99vtRV1QRWs5T",
    "generation_id": "1ZqEFsB5hI4QqYhFYczY",
    "caracteres": 613,
    "segundos": 36.05
   },
-  "seg_012": {
+  "seg_018": {
    "session_id": "SmuV9SI7g0UJaoCfwUhn",
    "generation_id": "Il8ZvZL8NxmgWkCYsG9W",
    "caracteres": 540,
    "segundos": 32.37
   },
-  "seg_013": {
+  "seg_019": {
    "session_id": "ZX9E4N4BsCR4aDcWKg8r",
    "generation_id": "z7gs7qp4m6YLoxoFLMi0",
    "caracteres": 379,
    "segundos": 21.55
   },
-  "seg_014": {
+  "seg_020": {
    "session_id": "WKURZvCehuS50SpXa7s5",
    "generation_id": "5sjvR9DXPisBUVrmbBp8",
    "caracteres": 719,
    "segundos": 40.44
   },
-  "seg_015": {
+  "seg_021": {
    "session_id": "jjKFo4NFiVky16ks5J8D",
    "generation_id": "sCAvmvP5wGIkcnUd3q2o",
    "caracteres": 708,
    "segundos": 39.0
   },
-  "seg_016": {
+  "seg_022": {
    "session_id": "FAvdaToqsJLNW3RVWRaS",
    "generation_id": "tbdZG8h4XNWo2wB7wMCX",
    "caracteres": 875,
    "segundos": 49.08
   },
-  "seg_017": {
+  "seg_023": {
    "session_id": "1LLZPBeTaX2GiaPRWZ1k",
    "generation_id": "ZSjsGWHnb1Aj2YcYmUL9",
    "caracteres": 399,
    "segundos": 23.48
   },
-  "seg_018": {
+  "seg_024": {
    "session_id": "0g6CWMVdNdGjrB2AjIf0",
    "generation_id": "z8lQheDh5wDMRqAzdr5Z",
    "caracteres": 530,
    "segundos": 31.24
   },
-  "seg_019": {
+  "seg_025": {
    "session_id": "c2ADRLCYiY772PnrgOZl",
    "generation_id": "pwF0hxNnt3zkv0ikiGkP",
    "caracteres": 648,
    "segundos": 34.59
   },
-  "seg_020": {
+  "seg_026": {
    "session_id": "XOQyxpKNszoQyTrNyzPp",
    "generation_id": "3i5CCdyYKuKbtC9qlS7c",
    "caracteres": 522,
    "segundos": 27.72
   },
-  "seg_021": {
+  "seg_027": {
    "session_id": "VhDDqqUiuHqvG02aHk3F",
    "generation_id": "rTH15Pyt4YGvf1KR3geQ",
    "caracteres": 266,
    "segundos": 15.15
   },
-  "seg_022": {
+  "seg_028": {
    "session_id": "gfV1uVVeLb5oy941UlOf",
    "generation_id": "UTWO22fMqOZpFlrKmr8j",
    "caracteres": 625,
    "segundos": 34.27
   },
-  "seg_023": {
+  "seg_029": {
    "session_id": "XoFNPrOFC84IME1t6P9w",
    "generation_id": "LJwnVuZTvKmCTjIbqhmy",
    "caracteres": 640,
    "segundos": 36.83
   },
-  "seg_024": {
+  "seg_030": {
    "session_id": "CNJYjii1iwMEIDY65HqZ",
    "generation_id": "qsUxVDqYpoOU0hGbki3q",
    "caracteres": 856,
    "segundos": 44.59
   },
-  "seg_025": {
+  "seg_031": {
    "session_id": "LkC3tlQOi2AtDo2xn0iH",
    "generation_id": "JbITJArG6K9sbQkkcO3b",
    "caracteres": 826,
    "segundos": 47.96
   },
-  "seg_026": {
+  "seg_032": {
    "session_id": "jUL4wGXtt3SqHqHAaUqF",
    "generation_id": "w7lP11zqIGvBtD2bI3MV",
    "caracteres": 534,
    "segundos": 30.12
   },
-  "seg_027": {
+  "seg_033": {
    "session_id": "8XNfsYXZLAHkOz7o5Hyc",
    "generation_id": "5rr3QZE6euY6OEi9vun7",
    "caracteres": 393,
    "segundos": 21.63
   },
-  "seg_028": {
+  "seg_034": {
    "session_id": "q6mS3T6H64RYu2y3SzPx",
    "generation_id": "ZVeodn9bEikfHTNpLacp",
    "caracteres": 683,
    "segundos": 38.35
   },
-  "seg_029": {
+  "seg_035": {
    "session_id": "5IEChHVnBkcRcWVL1kei",
    "generation_id": "HxIyFTcA4AJy9wfcKqWJ",
    "caracteres": 204,
    "segundos": 11.81
   },
-  "seg_030": {
+  "seg_036": {
    "session_id": "2PqkEAs0w3ReB2VzhI3w",
    "generation_id": "NdUCUyJtpSywR1ULQj3u",
    "caracteres": 815,
    "segundos": 47.23
   },
-  "seg_031": {
+  "seg_037": {
    "session_id": "MKi1kSl7nNSeWqTJwGz9",
    "generation_id": "5qJMO7S5MTbLm6hAhMix",
    "caracteres": 500,
    "segundos": 26.59
   },
-  "seg_032": {
+  "seg_038": {
    "session_id": "ApB4ikH5kui5mtRzM1Ht",
    "generation_id": "d5L1SxB4U891Ubxj2O7b",
    "caracteres": 925,
    "segundos": 51.96
   },
-  "seg_033": {
+  "seg_039": {
    "session_id": "Li5pP1sAXcV1E731PzBf",
    "generation_id": "NiOtd2b9gFRH7KJsmOHF",
    "caracteres": 927,
    "segundos": 54.36
   },
-  "seg_034": {
+  "seg_040": {
    "session_id": "pOgAtT7DSlmfkfby2wf5",
    "generation_id": "4KR9sco1WvLe9k5Sren3",
    "caracteres": 879,
    "segundos": 48.77
   },
-  "seg_035": {
+  "seg_041": {
    "session_id": "KKstkQJYzwidKvMCIgco",
    "generation_id": "sUU9D8Y4Ol2hLnerTL2V",
    "caracteres": 688,
    "segundos": 39.08
   },
-  "seg_036": {
+  "seg_042": {
    "session_id": "FvK9ufiaR65XaZwXWp6j",
    "generation_id": "1ePxrRa7E4OrYRxChukf",
    "caracteres": 259,
    "segundos": 15.07
   },
-  "seg_037": {
+  "seg_043": {
    "session_id": "WXFpmk6DDboDFupmYHLl",
    "generation_id": "R2Jvrn2r9TuMS1nz2dQz",
    "caracteres": 693,
    "segundos": 40.99
   },
-  "seg_038": {
+  "seg_044": {
    "session_id": "rasDM4q1LZDt4QJn4wZA",
    "generation_id": "pvcYJWW6gPTQZUook9hb",
    "caracteres": 538,
    "segundos": 29.88
   },
-  "seg_039": {
+  "seg_045": {
    "session_id": "H6R81LL4iNVLWBX8vVAp",
    "generation_id": "8Qo19xrL3VGCAaf2Uv1f",
    "caracteres": 776,
    "segundos": 42.27
   },
-  "seg_040": {
+  "seg_046": {
    "session_id": "orvGzp3Q7kUDWojSGByY",
    "generation_id": "EVlmCC2JYFhqli7GrZEQ",
    "caracteres": 507,
    "segundos": 29.47
   },
-  "seg_041": {
+  "seg_047": {
    "session_id": "v54Y7CUUkKTpVWtNb4Qo",
    "generation_id": "ZYll2jcd7kXujMLk9vYT",
    "caracteres": 836,
    "segundos": 46.29
   },
-  "seg_042": {
+  "seg_048": {
    "session_id": "J2Biqk0GSgjDW2hMVTSk",
    "generation_id": "gSaMrQJhXRbffFRwuWrq",
    "caracteres": 634,
    "segundos": 35.16
   },
-  "seg_043": {
+  "seg_049": {
    "session_id": "f9DxqnXWHGitkbdAqUjF",
    "generation_id": "5oiZ8Nsd6c4oP6knoTzd",
    "caracteres": 419,
    "segundos": 23.8
   },
-  "seg_044": {
+  "seg_050": {
    "session_id": "NyHj0FYwgfxVvwLqr46k",
    "generation_id": "PG5bqAj9qSMA5URc1hiL",
    "caracteres": 554,
    "segundos": 32.44
   },
-  "seg_045": {
+  "seg_051": {
    "session_id": "1ufHF5zjbCyXlzX5vVV0",
    "generation_id": "efWvc5KkINBlZPeDVAUX",
    "caracteres": 940,
    "segundos": 52.43
   },
-  "seg_046": {
+  "seg_052": {
    "session_id": "FBrQncrypNBB0iz7lcpo",
    "generation_id": "jOpEM6vEfiXaFjqjYGop",
    "caracteres": 565,
    "segundos": 30.12
   },
-  "seg_047": {
+  "seg_053": {
    "session_id": "jQnYftEnvzVvE6hZTTh4",
    "generation_id": "AQsIiN8W853yb4qM12g0",
    "caracteres": 601,
    "segundos": 33.8
   },
-  "seg_048": {
+  "seg_054": {
    "session_id": "Sy6V9fOQtvuZODxLXvc4",
    "generation_id": "IL68EvdVErl3sw65Xywx",
    "caracteres": 266,
    "segundos": 15.15
   },
-  "seg_049": {
+  "seg_055": {
    "session_id": "gX2J1QScAqnW9BZ3hyLe",
    "generation_id": "1FdV12qLJBlfPHw7SmyE",
    "caracteres": 743,
    "segundos": 43.31
   },
-  "seg_050": {
+  "seg_056": {
    "session_id": "nrGL5dsAicrtSVdYoIo9",
    "generation_id": "hKEH0LnXi61uaEYvzKHp",
    "caracteres": 507,
    "segundos": 28.92
   },
-  "seg_051": {
+  "seg_057": {
    "session_id": "i4w7qTmDGNdLmFJr3QfC",
    "generation_id": "pyHWezkFo4cHCiXRQA5d",
    "caracteres": 1089,
    "segundos": 56.84
   },
-  "seg_052": {
+  "seg_058": {
    "session_id": "uUvnxfiga8QkiJbSaGBX",
    "generation_id": "sWx6lyf7CHBPlDRWPPWO",
    "caracteres": 491,
    "segundos": 27.56
   },
-  "seg_053": {
+  "seg_059": {
    "session_id": "ESnK6cyYLGNKRCYaf3FO",
    "generation_id": "IocFEeO5iU8EO1RjvQLn",
    "caracteres": 726,
    "segundos": 38.43
   },
-  "seg_054": {
+  "seg_060": {
    "session_id": "dEKGKffAmNIlZ7MuLXQ9",
    "generation_id": "q6qZIUjTyCzvGcemSlwU",
    "caracteres": 860,
    "segundos": 47.96
   },
-  "seg_055": {
+  "seg_061": {
    "session_id": "PoeCzAdHud97J4hz63K3",
    "generation_id": "2rYAou36V4mM8cg6yIIg",
    "caracteres": 933,
    "segundos": 50.99
   },
-  "seg_056": {
+  "seg_062": {
    "session_id": "1xfiLdiL9SHA06C18gHQ",
    "generation_id": "QVheBjmRRDXIOg5ALOpv",
    "caracteres": 827,
    "segundos": 46.11
   },
-  "seg_057": {
+  "seg_063": {
    "session_id": "l5JJtSKRIOtAYVTFpbKk",
    "generation_id": "tLqODgOIzga1sZQ6fvzv",
    "caracteres": 563,
    "segundos": 30.75
   },
-  "seg_058": {
+  "seg_064": {
    "session_id": "skTkN24pbgdmqBgSTJAe",
    "generation_id": "Wfmz2tt7KjMnI2h8jWv9",
    "caracteres": 279,
    "segundos": 15.31
   },
-  "seg_059": {
+  "seg_065": {
    "session_id": "661u2YJlFg6JXSh9dvnI",
    "generation_id": "Hul4zQvxSrouqwW5SO6k",
    "caracteres": 695,
    "segundos": 41.4
   },
-  "seg_060": {
+  "seg_066": {
    "session_id": "yHMVMuloFDolqGiLpxXv",
    "generation_id": "vLSc5dSmJaHAkSuruBoB",
    "caracteres": 713,
    "segundos": 40.36
   },
-  "seg_061": {
+  "seg_067": {
    "session_id": "L2JfqI4LVtm6ByDBWPdW",
    "generation_id": "pUWbCNgquTM7asPf68VB",
    "caracteres": 803,
    "segundos": 44.59
   },
-  "seg_062": {
+  "seg_068": {
    "session_id": "SqWS4RcPi9YxREtBTEGx",
    "generation_id": "vIwbUhijwxXE3N3JHNwd",
    "caracteres": 761,
    "segundos": 41.17
   },
-  "seg_063": {
+  "seg_069": {
    "session_id": "Fk3WP4hzOn7BYYe8HJ8R",
    "generation_id": "yNRQ3o1mho09PBjse01J",
    "caracteres": 395,
    "segundos": 21.32
   },
-  "seg_064": {
+  "seg_070": {
    "session_id": "IuxCzS3paGrLNgNcptdx",
    "generation_id": "3IL9wpAcUhGn8sbThdkc",
    "caracteres": 761,
    "segundos": 43.39
   },
-  "seg_065": {
+  "seg_071": {
    "session_id": "P7smPdBI5f2e5ZPdR9Er",
    "generation_id": "ensbbpdKcKu6wkSCdunq",
    "caracteres": 651,
    "segundos": 36.91
   },
-  "seg_066": {
+  "seg_072": {
    "session_id": "642961BN8Rf1WPdbJ7J5",
    "generation_id": "Qc6ccz2DajI2O5n5tPjG",
    "caracteres": 190,
    "segundos": 11.47
   },
-  "seg_067": {
+  "seg_073": {
    "session_id": "2nord5BnhylDZ8GcPPi9",
    "generation_id": "EXSUSNPAbPzueySGHphA",
    "caracteres": 863,
    "segundos": 48.27
   },
-  "seg_068": {
+  "seg_074": {
    "session_id": "ldXiwYqjqTZFxQaZLm9j",
    "generation_id": "eyThbToatG2TzrlPdQx6",
    "caracteres": 1196,
    "segundos": 64.03
   },
-  "seg_069": {
+  "seg_075": {
    "session_id": "hFbVymRfeILk2tx7VxVu",
    "generation_id": "cbpfUC27V9JWoO1IINNi",
    "caracteres": 612,
    "segundos": 33.57
   },
-  "seg_070": {
+  "seg_076": {
    "session_id": "mo9erx4rH14u7FuyFmiu",
    "generation_id": "0AkSjmhBntbCKwFMy3mZ",
    "caracteres": 704,
    "segundos": 39.71
   },
-  "seg_071": {
+  "seg_077": {
    "session_id": "MfjnFdN98yuNfUedlGiL",
    "generation_id": "RT5g693gMuMwUwKilMvA",
    "caracteres": 550,
    "segundos": 29.65
   },
-  "seg_072": {
+  "seg_078": {
    "session_id": "dTgxgabcSU1HKwxnJfoO",
    "generation_id": "4qwzbNivN5ODzFuDNSF0",
    "caracteres": 562,
    "segundos": 31.32
   },
-  "seg_073": {
+  "seg_079": {
    "session_id": "220WhmVo5sT7U8ohwvKJ",
    "generation_id": "yiBrt9KGJuYRU9cwGZPp",
    "caracteres": 524,
    "segundos": 29.47
   },
-  "seg_074": {
+  "seg_080": {
    "session_id": "kuTSbK4tnrOWIdbg6nr5",
    "generation_id": "P1QtO6fOlJF94vNE9heL",
    "caracteres": 206,
    "segundos": 11.96
   },
-  "seg_075": {
+  "seg_081": {
    "session_id": "dihocYIOlePmOqmZaUwW",
    "generation_id": "2Sy4Q7uVEZawvOTltv3y",
    "caracteres": 871,
    "segundos": 48.93
   },
-  "seg_076": {
+  "seg_082": {
    "session_id": "463bizWY8D42Z4I52qtH",
    "generation_id": "kyRFXKAGCHySxb7Sxfa9",
    "caracteres": 984,
    "segundos": 53.63
   },
-  "seg_077": {
+  "seg_083": {
    "session_id": "5BPcuoJBTE9vCkJbQwKL",
    "generation_id": "gytpLsNN0OMYgylbEQ1m",
    "caracteres": 817,
    "segundos": 44.83
   },
-  "seg_078": {
+  "seg_084": {
    "session_id": "nzRAgJaZaDRhWTTVVGTH",
    "generation_id": "PPcTcT1sY9lPQHLvZ9hb",
    "caracteres": 878,
    "segundos": 47.8
   },
-  "seg_079": {
+  "seg_085": {
    "session_id": "7pRfRBjrC5Lygdf1bEgh",
    "generation_id": "ltbiZslI8H6Eh5e8QkWT",
    "caracteres": 644,
    "segundos": 36.21
   },
-  "seg_080": {
+  "seg_086": {
    "session_id": "kmSr7IIxPM43uJhqymJf",
    "generation_id": "QCKPu5Q0bgExjLfOJGKU",
    "caracteres": 526,
    "segundos": 30.67
   },
-  "seg_081": {
+  "seg_087": {
    "session_id": "ZzSrWmvLXXDLmk8YzPtY",
    "generation_id": "B44p4EunZ1j2PX0Epnga",
    "caracteres": 803,
    "segundos": 45.24
   },
-  "seg_082": {
+  "seg_088": {
    "session_id": "z90Kwv570XC9WvTKPK3l",
    "generation_id": "gVr6KBM65n51fLeqEZNl",
    "caracteres": 421,
    "segundos": 26.51
   },
-  "seg_083": {
+  "seg_089": {
    "session_id": "C6yafpsKSFTXQEKILMSE",
    "generation_id": "XP7IGio767nrXeh2CwiU",
    "caracteres": 202,
    "segundos": 11.15
   },
-  "seg_084": {
+  "seg_090": {
    "session_id": "NpvDzgtTuZKPaKonw6lB",
    "generation_id": "T21xn3ilwaCWiji1RwcW",
    "caracteres": 637,
    "segundos": 36.52
   },
-  "seg_085": {
+  "seg_091": {
    "session_id": "c5EY2w95LARzDzc1Nnar",
    "generation_id": "G1jYhA7zoAV5y9RnrMPQ",
    "caracteres": 519,
    "segundos": 29.96
   },
-  "seg_086": {
+  "seg_092": {
    "session_id": "F8eW1pUOpywMnjTcunQB",
    "generation_id": "XZxctCSRood26V0qWCiL",
    "caracteres": 633,
    "segundos": 39.55
   },
-  "seg_087": {
+  "seg_093": {
    "session_id": "S9ZX9PTubkrxMYisX9qs",
    "generation_id": "IXnravVKrcHjlZNgb7nk",
    "caracteres": 700,
    "segundos": 44.2
   },
-  "seg_088": {
+  "seg_094": {
    "session_id": "WXcPEACli6fQQgLWCukd",
    "generation_id": "13e0xnxjF5po2cVdmxGA",
    "caracteres": 459,
    "segundos": 26.59
   },
-  "seg_089": {
+  "seg_095": {
    "session_id": "4emgriLD7GPAu7xKcATF",
    "generation_id": "HHttyjL6psFtSc215OOZ",
    "caracteres": 506,
    "segundos": 25.73
   },
-  "seg_090": {
+  "seg_096": {
    "session_id": "xgdRjY4AXPEz0Xj1RtNI",
    "generation_id": "tqSgbdSyIPfd0Zu9hitK",
    "caracteres": 568,
    "segundos": 32.21
   },
-  "seg_091": {
+  "seg_097": {
    "session_id": "THQcbx2q0yHQKUOaYRse",
    "generation_id": "1XmLNJp5MWAzKonZfywQ",
    "caracteres": 393,
    "segundos": 21.89
   },
-  "seg_092": {
+  "seg_098": {
    "session_id": "vdV5RrS1B1O73iLG02YT",
    "generation_id": "jpZ2xOjXKlLCL1wMsAuw",
    "caracteres": 514,
    "segundos": 29.23
   },
-  "seg_093": {
+  "seg_099": {
    "session_id": "5m7cpsOuXI6jaJKuwYrC",
    "generation_id": "x2tDJZ8MuCYAkYBTSUaA",
    "caracteres": 331,
    "segundos": 17.63
   },
-  "seg_094": {
+  "seg_100": {
    "session_id": "KVVi1LXMUIMtvcw9dFp9",
    "generation_id": "t4J91hidG0tGK5vYONKa",
    "caracteres": 662,
    "segundos": 36.44
   },
-  "seg_095": {
+  "seg_101": {
    "session_id": "34gLi2ZWqnWNzHKs9TSU",
    "generation_id": "DYXJTVUEb3oSenUQqgfp",
    "caracteres": 612,
    "segundos": 33.49
   },
-  "seg_096": {
+  "seg_102": {
    "session_id": "Xs4JLE0paBMJAtCJSah7",
    "generation_id": "rmjdE14IMr08I79D66lW",
    "caracteres": 770,
    "segundos": 45.56
   },
-  "seg_097": {
+  "seg_103": {
    "session_id": "y7Y79TjHwErviU5bZxn3",
    "generation_id": "NTSeqPIWEUkhYkZ1w7Z4",
    "caracteres": 569,
    "segundos": 32.29
   },
-  "seg_098": {
+  "seg_104": {
    "session_id": "i5w2AKwBl9UOJQgHrXia",
    "generation_id": "400kanILrC6al5xPAhmn",
    "caracteres": 653,
    "segundos": 37.8
   },
-  "seg_099": {
+  "seg_105": {
    "session_id": "EnCHDrdwYY8QLbYiIGOq",
    "generation_id": "ho6pff3Jc5S6qFBtPXQ7",
    "caracteres": 567,
    "segundos": 34.04
   },
-  "seg_100": {
+  "seg_106": {
    "session_id": "ppy5Y2xuLmKpPFZCCCTw",
    "generation_id": "9OsCGwQw1QoQDV41oTYb",
    "caracteres": 857,

@@ -40,7 +40,46 @@ def test_texto_de_voz_sin_cifras_ni_simbolos():
 def test_duracion_cercana_a_una_hora():
     segs = deck.segmentos()
     minutos = sum(g["segundos_estimados"] + deck.PAUSA_ENTRE_SEGMENTOS for g in segs) / 60
-    assert 55 <= minutos <= 63, f"duración estimada: {minutos:.1f} min"
+    assert 58 <= minutos <= 68, f"duración estimada: {minutos:.1f} min"
+
+
+def test_el_indice_cubre_todos_los_capitulos():
+    """La lámina de índice nombra cada capítulo que viene después una sola vez, con sus minutos."""
+    laminas = _laminas()
+    indice = next(s for s in laminas if s["tipo"] == "indice")
+    assert indice["modulo"] == 0
+    claves = [m["clave"] for m in deck.MODULOS]
+    cubiertos = []
+    for parte in indice["partes"]:
+        mods = [c for c, m in zip(claves, deck.MODULOS) if m.get("paso")] if parte["mods"] == "pasos" else parte["mods"]
+        cubiertos += mods
+        assert len(parte["tramos"]) == len(mods) and all(x > 0 for x in parte["tramos"])
+        assert parte["min"] == max(1, round(sum(parte["tramos"])))
+    assert cubiertos == claves[1:], "el índice debe seguir el orden de los capítulos y no saltarse ninguno"
+    minutos = deck.minutos_por_modulo(laminas)
+    assert abs(sum(sum(p["tramos"]) for p in indice["partes"]) - sum(v for k, v in minutos.items() if k)) < 0.2
+    ctx = dict(kicker=indice["kicker"], modulo=0, n_modulos=indice["n_modulos"], avance=indice["avance"])
+    html = pagina(indice, ctx)
+    assert html.count('class="ix"') == len(indice["partes"])
+    assert html.count('<i style="flex:') == len(claves) - 1          # un tramo de la barra por capítulo
+
+
+def test_primeros_pasos_explica_la_descarga_y_los_planes():
+    """Al comienzo, un capítulo dice dónde se usa Claude, cómo se instala y qué planes hay."""
+    laminas = _laminas()
+    assert deck.MODULOS[1]["clave"] == "m01_primeros"
+    cap = [s for s in laminas if s["modulo"] == 1]
+    assert cap[0]["tipo"] == "seccion" and {"accesos", "instalar", "planes"} <= {s["tipo"] for s in cap}
+    html = ""
+    for s in cap:
+        html += pagina(s, dict(kicker=s["kicker"], modulo=s["modulo"], n_modulos=s["n_modulos"], avance=s["avance"]))
+    for esperado in ("claude.ai", "claude.com/download", "claude.com/pricing", "iPhone y Android", "Free", "Pro", "Max",
+                     "Ultra", "Team", "Enterprise", "Education", "sin impuestos"):
+        assert esperado in html, esperado
+    voz = " ".join(g["voz"] for g in deck.segmentos(laminas) if set(g["laminas"]) & {s["id"] for s in cap})
+    assert "$" not in voz and ".com" not in voz and "http" not in voz      # las direcciones y los precios se leen en pantalla
+    for dicho in ("Fri", "Tim", "Énterprais", "aifon", "dólares"):
+        assert dicho in voz, dicho
 
 
 def test_modulos_en_orden_y_capitulos():

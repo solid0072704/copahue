@@ -31,11 +31,17 @@ ETIQUETAS = [
     "análisis de estados financieros", "estados financieros", "análisis financiero", "Claude", "Claude AI",
     "inteligencia artificial en finanzas", "IA para finanzas", "ratios financieros", "flujo de caja",
     "capital de trabajo", "análisis vertical y horizontal", "desviaciones presupuesto", "control de gestión",
-    "informe al directorio", "prompts para finanzas", "CFO", "gerente de finanzas", "pymes", "contabilidad",
-    "curso de finanzas", "artefactos de Claude", "conectores de Claude", "plugins de Claude", "Claude skills", MARCA,
+    "prompts para finanzas", "CFO", "gerente de finanzas", "pymes", "contabilidad",
+    "curso de finanzas", "artefactos de Claude", "conectores de Claude", "plugins de Claude",
+    "cómo descargar Claude", "planes de Claude", MARCA,
 ]
 
+# Páginas oficiales que el capítulo de primeros pasos muestra en pantalla
+DESCARGA_URL = "https://claude.com/download"
+PRECIOS_URL = "https://claude.com/pricing"
+
 APRENDIZAJES = [
+    "Descargar Claude (web, escritorio y teléfono) y elegir tu plan: Free, Pro, Max, Ultra, Team o Enterprise.",
     "Preparar tus estados financieros y darle contexto a Claude (y qué cuidar en confidencialidad).",
     "Verificar que el balance, el estado de resultados y el flujo de efectivo cuadren antes de analizar.",
     "Hacer análisis vertical y horizontal y encontrar qué crece más rápido que las ventas.",
@@ -71,6 +77,8 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
         "el directorio. Con un caso práctico completo y 10 prompts listos para usar.",
         "",
         "📊 Archivo del caso (Excel) y los 10 prompts: [ENLACE A LOS MATERIALES]",
+        f"⬇️ Descarga oficial de Claude: {DESCARGA_URL}",
+        f"💳 Planes y precios vigentes: {PRECIOS_URL}",
         f"💼 LinkedIn de {MARCA}: {LINKEDIN_URL}",
         "",
         "ASESORÍA",
@@ -91,7 +99,9 @@ def publicacion(capitulos: list[str], estimados: bool) -> str:
         "AVISO",
         "Contenido educativo; no constituye asesoría financiera, contable ni tributaria. Verifica siempre los "
         "resultados antes de tomar decisiones. Claude es un producto de Anthropic; este canal no tiene afiliación "
-        "con Anthropic. La narración usa una versión sintetizada de la voz del autor.",
+        "con Anthropic. Los planes y precios de Claude que se muestran son de referencia (noviembre de 2026) y "
+        "pueden cambiar: confírmalos en la página oficial. La narración usa una versión sintetizada de la voz del "
+        "autor.",
         "",
         "#finanzas #inteligenciaartificial #estadosfinancieros",
     ]

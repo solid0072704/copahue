@@ -301,6 +301,92 @@ def _html_libre(s: dict) -> str:
     return s["html"] + _notas(s.get("notas", []))
 
 
+def _sub_pie(n: dict | None) -> str:
+    if not n:
+        return ""
+    return f'<div class="sub-pie"{_p(n)}>{ico(n["icono"]) if n.get("icono") else ""}{rico(n["t"])}</div>'
+
+
+def _indice(s: dict) -> str:
+    """Índice del curso: las partes en lista y, debajo, la barra de capítulos a escala de su duración.
+
+    Cada parte trae `min` (minutos) y `tramos` (minutos de cada capítulo que la forma): los calcula `deck`.
+    El tramo de cada parte se enciende cuando se la nombra y, en el último paso, se enciende la barra entera.
+    """
+    ultimo = len(s["pasos"]) - 1
+    filas, grupos = [], []
+    for i, parte in enumerate(s["partes"], 1):
+        k = parte["p"]
+        tramos = parte.get("tramos") or [1]
+        filas.append(f'<div class="ix" data-p="{k}" data-foco="{k}"><div class="n">{i:02d}</div><b>{esc(parte["t"])}</b>'
+                     f'<span>{rico(parte["d"])}</span><div class="v">≈ {parte.get("min", 1)} min</div></div>')
+        rotulo = f' · {esc(parte["rotulo"])}' if parte.get("rotulo") else ""
+        trozos = "".join(f'<i style="flex:{m:g}"></i>' for m in tramos)
+        grupos.append(f'<div class="g" data-foco="{k},{ultimo}" style="flex:{sum(tramos):g}"><div class="ts">{trozos}</div>'
+                      f'<em>{i:02d}{rotulo}</em></div>')
+    return (f'<div class="indice"><div class="ixs">{"".join(filas)}</div>'
+            f'<div class="tramos" data-p="0" data-foco="{ultimo}">{"".join(grupos)}</div>{_sub_pie(s.get("nota"))}</div>')
+
+
+# Dibujos de línea de los tres lugares donde se usa Claude (se trazan al entrar; `ac` es el trazo de acento)
+_DIBUJOS = {
+    "navegador": ('<rect x="6" y="8" width="188" height="114" rx="10"/><line x1="6" y1="36" x2="194" y2="36"/>'
+                  '<circle cx="23" cy="22" r="3.5"/><circle cx="36" cy="22" r="3.5"/><circle cx="49" cy="22" r="3.5"/>'
+                  '<rect class="ac" x="66" y="15" width="114" height="14" rx="7"/>'
+                  '<line x1="28" y1="56" x2="104" y2="56"/><line x1="28" y1="72" x2="172" y2="72"/>'
+                  '<line x1="28" y1="86" x2="146" y2="86"/><rect class="ac" x="28" y="98" width="144" height="14" rx="7"/>'),
+    "escritorio": ('<rect x="36" y="10" width="128" height="86" rx="8"/><path d="M22 96h156l10 16H12z"/>'
+                   '<line x1="88" y1="104" x2="112" y2="104"/>'
+                   '<line class="ac" x1="100" y1="28" x2="100" y2="62"/><polyline class="ac" points="86 49 100 63 114 49"/>'
+                   '<line class="ac" x1="80" y1="76" x2="120" y2="76"/>'),
+    "telefono": ('<rect x="66" y="5" width="68" height="120" rx="13"/><line x1="92" y1="16" x2="108" y2="16"/>'
+                 '<line x1="90" y1="115" x2="110" y2="115"/>'
+                 '<rect class="ac" x="76" y="32" width="36" height="14" rx="7"/><rect x="88" y="54" width="36" height="14" rx="7"/>'
+                 '<rect class="ac" x="76" y="76" width="28" height="14" rx="7"/>'),
+}
+
+
+def _accesos(s: dict) -> str:
+    cols = "".join(f'<div class="acc"{_p(a)}><svg class="ico dib" viewBox="0 0 200 130">{_DIBUJOS[a["dibujo"]]}</svg>'
+                   f'<div class="k">{esc(a["k"])}</div><b>{esc(a["t"])}</b><span>{rico(a["d"])}</span></div>'
+                   for a in s["accesos"])
+    return f'<div class="accesos">{cols}</div>'
+
+
+def _instalar(s: dict) -> str:
+    """La instalación, en una ventana de navegador esquemática: se escribe la dirección, se pulsa el botón de
+    descarga, baja el instalador y se crea la cuenta. A la derecha, los pasos numerados y un aviso."""
+    d, c, aviso = s["descarga"], s["cuenta"], s.get("aviso")
+    focos = "0" + (f',{aviso["p"]}' if aviso else "")
+    botones = "".join(f'<span class="btn{" sel" if i == 0 else ""}">{ico("descarga") if i == 0 else ""}{esc(b)}</span>'
+                      for i, b in enumerate(s["botones"]))
+    opciones = "".join(f'<span class="co">{ico("correo") if i == 0 else ""}{esc(o)}</span>' for i, o in enumerate(c["opciones"]))
+    ventana = (f'<div class="nav"><div class="nb"><span class="sem"><i></i><i></i><i></i></span>'
+               f'<div class="dir" data-foco="{focos}">{ico("candado")}<span class="u">{esc(s["url"])}</span></div></div>'
+               f'<div class="nc"><div class="nk">{esc(s["rotulo"])}</div><div class="nh">{esc(s["encabezado"])}</div>'
+               f'<div class="nbs">{botones}</div>'
+               f'<div class="baj"{_p(d)}>{ico("doc")}<span>{esc(d["t"])}</span><div class="riel"><i></i></div><b>100 %</b>{ico("ok")}</div>'
+               f'<div class="cta"{_p(c)}><div class="ct">{ico("persona")}{esc(c["t"])}</div><div class="cos">{opciones}</div>'
+               f'<div class="cd">{ico("candado")}{esc(c["d"])}</div></div></div></div>')
+    lis = "".join(f'<li{_p(n)}><span class="marca">{esc(n["gr"])}</span><div class="txt"><b>{rico(n["t"])}</b>'
+                  f'<span>{rico(n["d"])}</span></div></li>' for n in s["notas"])
+    cuidado = f'<div class="aviso"{_p(aviso)}>{ico("alerta")}<span>{rico(aviso["t"])}</span></div>' if aviso else ""
+    return (ventana + f'<div class="columna" style="gap:26px"><ul class="puntos compacto" style="flex:none">{lis}</ul>'
+            f'{cuidado}</div>')
+
+
+def _planes(s: dict) -> str:
+    cols = []
+    for pl in s["planes"]:
+        items = "".join(f'<li>{ico("check")}<span>{rico(x)}</span></li>' for x in pl["items"])
+        cols.append(f'<div class="plan" data-p="{pl["p"]}" data-foco="{pl["p"]}"><div class="pn">{esc(pl["nombre"])}</div>'
+                    f'<div class="lema">{esc(pl["lema"])}</div><div class="val">{esc(pl["precio"])}</div>'
+                    f'<div class="un">{esc(pl.get("unidad", ""))}</div><div class="alt">{esc(pl.get("alt", ""))}</div>'
+                    f'<ul>{items}</ul></div>')
+    return (f'<div class="columna" style="gap:30px"><div class="planes" style="grid-template-columns:repeat({len(cols)},1fr)">'
+            f'{"".join(cols)}</div>{_sub_pie(s.get("nota"))}</div>')
+
+
 # --- Láminas a pantalla completa (tema oscuro) -----------------------------
 _BOCETOS = {
     "balance": '<svg viewBox="0 0 316 150"><rect x="0" y="20" width="150" height="130" rx="8" fill="#2A66CF" opacity=".85"/><rect x="166" y="20" width="150" height="62" rx="8" fill="#E3A72B"/><rect x="166" y="90" width="150" height="60" rx="8" fill="#5B7895"/></svg>',
@@ -357,7 +443,7 @@ def _cierre(s: dict) -> str:
 
 _CON_CABECERA = {"puntos": _puntos, "dos": _dos, "prompt": _prompt, "tabla": _tabla, "respuesta": _respuesta,
                  "cifras": _cifras, "svg": _svg, "metodo": _metodo, "alertas": _alertas, "memo": _memo,
-                 "html": _html_libre}
+                 "html": _html_libre, "indice": _indice, "accesos": _accesos, "instalar": _instalar, "planes": _planes}
 _OSCURAS = {"gancho", "titulo_curso", "chips", "seccion", "cierre"}
 # Imagen de fondo de cada lámina de portada (recortes de las portadas de las presentaciones del autor en Canva).
 # Los inicios de capítulo las van alternando.
