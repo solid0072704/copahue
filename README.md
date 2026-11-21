@@ -13,7 +13,8 @@
 
 > **¿Quieres probarla?** Ábrela en GitHub Codespaces con un clic
 > (<https://codespaces.new/solid0072704/copahue/tree/claude/zen-davinci-dyky36>) e ingresa con
-> `prueba@tucartera.cl` / `prueba1234`. Otras formas (Render, tu computador), el recorrido sugerido y lo que ya
+> `prueba@tucartera.cl` / `prueba1234`. En tu computador: doble clic en **Iniciar Tu Cartera** (abre
+> `http://localhost:8000`). Otras formas (Render), el recorrido sugerido y lo que ya
 > sabemos que falta están en [`docs/prueba.md`](docs/prueba.md). Dentro de la app, **Sugerir una mejora** anota
 > lo que le falta; `python -m tucartera comentarios` las lista.
 

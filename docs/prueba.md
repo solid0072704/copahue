@@ -31,15 +31,18 @@ Para abrirlo en el celular: en la pestaña **Ports**, clic derecho sobre el puer
 En el plan gratuito el servidor se duerme tras 15 minutos sin uso (la primera visita tarda ~1 minuto en
 despertar) y los datos vuelven a cero en cada actualización. Para conservarlos, plan Starter con un disco en `/data`.
 
-**Opción C · En tu computador**
+**Opción C · En tu computador (localhost)**
 
-```bash
-pip install -r requirements.txt
-python -m tucartera prueba tu@correo.cl --clave una-clave-segura
-python -m tucartera
-```
+1. Instala Python 3.11 o superior desde <https://www.python.org/downloads/>
+   (en Windows marca **Add python.exe to PATH** al instalar).
+2. Descarga el código:
+   <https://github.com/solid0072704/copahue/archive/refs/heads/claude/zen-davinci-dyky36.zip> y descomprímelo.
+3. Abre la carpeta y haz doble clic en **Iniciar Tu Cartera.bat** (Windows) o **Iniciar Tu Cartera.command** (Mac;
+   la primera vez, clic derecho → Abrir).
+4. Se abre <http://localhost:8000>. Ingresa con **prueba@tucartera.cl** / **prueba1234**.
 
-Luego abre <http://localhost:8000>.
+Los datos quedan en la carpeta `data/` y siguen ahí la próxima vez. Para abrirla desde el celular en la misma
+red Wi-Fi, inicia con `python iniciar.py --red` y usa la dirección que aparece en la ventana.
 
 ## 2. Recorrido sugerido (20 minutos)
 
