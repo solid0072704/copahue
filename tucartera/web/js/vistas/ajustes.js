@@ -15,7 +15,8 @@ export function aplicarTema(tema) {
 
 export async function render(el, _params, app) {
   el.innerHTML = cargando();
-  const d = await api.get("/api/ajustes");
+  const [d, { comentarios }] = await Promise.all([api.get("/api/ajustes"), api.get("/api/comentarios")]);
+  const TIPOS = { falta: ["naranja", "Le falta"], error: ["rojo", "No funciona"], idea: ["azul", "Idea"] };
   const e = d.estudio;
   const socio = app.sesion.usuario.rol === "socio";
   const instalada = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -85,6 +86,17 @@ export async function render(el, _params, app) {
       </div>
 
       <div class="bloque-form">
+        <div class="grupo-titulo" style="display:flex;justify-content:space-between;align-items:center">Sugerencias anotadas
+          <span>${comentarios.length ? `<button class="boton fantasma pequeno" data-copiar>${icono("documento", "xs")}Copiar todas</button>` : ""}
+          <button class="boton fantasma pequeno" data-nueva-sugerencia>${icono("mas", "xs")}Anotar</button></span></div>
+        <div class="grupo">${comentarios.length ? `<ul class="lista">${comentarios.map((c) => `<li class="fila" style="align-items:flex-start">
+          <span class="pill ${TIPOS[c.tipo]?.[0] || ""}" style="margin-top:1px">${TIPOS[c.tipo]?.[1] || "Idea"}</span>
+          <span class="fila-cuerpo"><div style="font-size:14px;white-space:pre-wrap">${esc(c.texto)}</div>
+          <div class="fila-sub">${esc(c.vista || "General")} · ${esc(c.autor || "")} · ${esc(c.fecha.slice(0, 16).replace("T", " "))}</div></span></li>`).join("")}</ul>`
+          : `<div class="vacio pequeno">Mientras usas Tu Cartera, toca «Sugerir una mejora» en la barra lateral para anotar lo que le falta.</div>`}</div>
+      </div>
+
+      <div class="bloque-form">
         <div class="grupo-titulo">Usar como app</div>
         <div class="grupo"><div class="campo" style="padding-top:8px;padding-bottom:8px">
           <span class="icono-cuadro">${icono("descargar")}</span>
@@ -127,6 +139,12 @@ export async function render(el, _params, app) {
       aviso(`Cuenta de ${b.dataset.nombre} desconectada`);
       render(el, _params, app);
     } catch (err) { aviso(err.message, { error: true }); }
+  });
+  el.querySelector("[data-nueva-sugerencia]").onclick = () => app.sugerir();
+  el.querySelector("[data-copiar]")?.addEventListener("click", async () => {
+    const texto = comentarios.map((c) => `- [${TIPOS[c.tipo]?.[1] || "Idea"}] ${c.vista || "General"}: ${c.texto}`).join("\n");
+    try { await navigator.clipboard.writeText(texto); aviso("Sugerencias copiadas. Pégalas en el chat para trabajarlas."); }
+    catch { aviso("No se pudo copiar automáticamente.", { error: true }); }
   });
   el.querySelector("[data-salir]").onclick = async () => { await api.post("/api/auth/salir"); location.hash = ""; location.reload(); };
   el.querySelector("[data-reiniciar]")?.addEventListener("click", async (ev) => {

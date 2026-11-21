@@ -62,6 +62,10 @@ class Config:
     # Dirección pública del servicio (https://app.tucartera.cl); se usa para las direcciones de retorno.
     url_publica: str = ""
 
+    # Cuenta de prueba persistente para el dueño (se crea al iniciar si ambos están definidos).
+    prueba_email: str = ""
+    prueba_clave: str = ""
+
     # Suscripciones
     dolar_clp: int = 950  # para reportes de costo en pesos
     ventas_email: str = ""  # a dónde llegan las solicitudes de plan y paquetes
@@ -90,7 +94,7 @@ def cargar():
         zona_horaria=_env("ZONA_HORARIA", "America/Santiago"),
         hoy_fijo=_env("TUCARTERA_HOY"),
         sesion_dias=_env_int("TUCARTERA_SESION_DIAS", 14),
-        cookie_segura=_env_bool("TUCARTERA_COOKIE_SEGURA", False),
+        cookie_segura=_env_bool("TUCARTERA_COOKIE_SEGURA", bool(_env("RENDER"))),
         smtp_host=_env("SMTP_HOST"),
         smtp_puerto=_env_int("SMTP_PUERTO", 465),
         smtp_usuario=_env("SMTP_USUARIO"),
@@ -103,7 +107,9 @@ def cargar():
         google_client_secret=_env("GOOGLE_CLIENT_SECRET"),
         microsoft_client_id=_env("MICROSOFT_CLIENT_ID"),
         microsoft_client_secret=_env("MICROSOFT_CLIENT_SECRET"),
-        url_publica=_env("TUCARTERA_URL_PUBLICA").rstrip("/"),
+        url_publica=(_env("TUCARTERA_URL_PUBLICA") or _env("RENDER_EXTERNAL_URL")).rstrip("/"),
+        prueba_email=_env("TUCARTERA_PRUEBA_EMAIL").lower(),
+        prueba_clave=_env("TUCARTERA_PRUEBA_CLAVE"),
         ventas_email=_env("TUCARTERA_VENTAS_EMAIL"),
         intervalo_min=_env_int("TUCARTERA_INTERVALO_MIN", 30),
         demo=_env_bool("TUCARTERA_DEMO", True),

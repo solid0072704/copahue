@@ -1,0 +1,12 @@
+.git
+.github
+.devcontainer
+data
+tests
+PDF
+docs
+scripts
+*.db
+*.db-*
+.env
+__pycache__

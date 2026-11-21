@@ -1,0 +1,6 @@
+# Dependencias de Tu Cartera (servidor web)
+fastapi
+uvicorn
+anthropic>=2
+python-dotenv
+tzdata

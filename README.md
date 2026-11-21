@@ -11,6 +11,12 @@
 
 ## Tu Cartera · gestión de clientes para estudios contables
 
+> **¿Quieres probarla?** Ábrela en GitHub Codespaces con un clic
+> (<https://codespaces.new/solid0072704/copahue/tree/claude/zen-davinci-dyky36>) e ingresa con
+> `prueba@tucartera.cl` / `prueba1234`. Otras formas (Render, tu computador), el recorrido sugerido y lo que ya
+> sabemos que falta están en [`docs/prueba.md`](docs/prueba.md). Dentro de la app, **Sugerir una mejora** anota
+> lo que le falta; `python -m tucartera comentarios` las lista.
+
 SaaS por suscripción para estudios contables (cada estudio ve solo sus datos), con diseño propio de inspiración
 Apple: tipografía del sistema, un solo color de acento y modo claro y oscuro. Funciona en computador, tablet y
 celular, y se puede **instalar como app** (Ajustes → Usar como app, o «Agregar a inicio» en iPhone).
@@ -59,6 +65,8 @@ python -m tucartera plan socio@estudio.cl profesional --meses 1   # activa o ren
 python -m tucartera paquete socio@estudio.cl                      # suma 1.000.000 tokens este mes
 python -m tucartera cancelar socio@estudio.cl
 python -m tucartera uso                                           # tokens, costo, ingreso y margen por estudio
+python -m tucartera prueba tu@correo.cl --clave ...               # tu estudio de prueba (no se borra)
+python -m tucartera comentarios                                   # sugerencias anotadas en la app
 ```
 
 ### Automatizaciones (los agentes)
@@ -111,6 +119,7 @@ tucartera/
   salud.py          puntaje de salud de cada cliente
   planes.py         planes, prueba gratis, cuota de tokens por usuario y modelo fijo
   oauth.py          ingreso con Google y Microsoft (OpenID Connect)
+  prueba.py         estudio de prueba persistente para el dueño
   agentes/          las seis automatizaciones y la ejecución de propuestas aprobadas
   asistente.py      barra de instrucciones (reglas o Claude)
   llm.py            redacción asistida y herramientas para Claude

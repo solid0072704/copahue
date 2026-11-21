@@ -1,6 +1,6 @@
 // Arranque, estructura de la aplicación, navegación y barra de instrucciones (⌘K).
 import { api, configurar } from "./api.js";
-import { LOGO, avatar, aviso, esc, icono } from "./ui.js";
+import { LOGO, avatar, aviso, esc, hoja, icono } from "./ui.js";
 
 const RUTAS = {
   hoy: () => import("./vistas/hoy.js"),
@@ -104,6 +104,7 @@ function montar() {
         <div class="marca-estudio truncar">${esc(s.estudio.nombre)}</div></div></div>
       <button class="buscador" data-paleta>${icono("buscar", "s")}<span>Buscar o pedir algo</span><kbd>⌘K</kbd></button>
       <nav class="nav">${enlaces}</nav>
+      <button class="sugerir" data-sugerir>${icono("mensaje", "s")}Sugerir una mejora</button>
       <div data-aviso-plan>${avisoPlan(s)}</div>
       <a class="perfil" href="#/ajustes">${avatar(s.usuario, "m")}<div class="perfil-texto truncar">
         <div class="perfil-nombre truncar">${esc(s.usuario.nombre)}</div><div class="perfil-cargo truncar">${esc(s.usuario.cargo || "Equipo")}</div></div></a>
@@ -130,6 +131,7 @@ function montar() {
     if (raiz.classList.contains("menu-abierto") && (e.target.closest(".nav a, .perfil") || e.target === raiz)) raiz.classList.remove("menu-abierto");
   });
   document.querySelectorAll("[data-paleta]").forEach((b) => b.onclick = abrirPaleta);
+  document.querySelector("[data-sugerir]").onclick = () => { raiz.classList.remove("menu-abierto"); sugerir(); };
   enrutar();
 }
 
@@ -163,6 +165,38 @@ async function enrutar() {
 }
 
 window.addEventListener("hashchange", enrutar);
+
+// ---------- Sugerencias ----------
+const TIPOS_SUGERENCIA = [["falta", "Le falta algo"], ["error", "Algo no funciona"], ["idea", "Una idea"]];
+
+function sugerir() {
+  const vista = (document.querySelector(".vista .titulo, .detalle-titulo")?.textContent || "General").trim().slice(0, 80);
+  hoja({
+    titulo: "Sugerir una mejora",
+    aceptar: "Enviar",
+    contenido: `
+      <div class="grupo"><div class="campo"><span class="campo-etiqueta">Tipo</span><div class="opciones" data-tipos>
+        ${TIPOS_SUGERENCIA.map(([v, t], i) => `<button type="button" class="opcion" data-tipo="${v}" aria-pressed="${i === 0}">${t}</button>`).join("")}</div></div>
+        <div class="campo alto"><label for="s-texto">Detalle</label><textarea id="s-texto" placeholder="¿Qué esperabas encontrar o qué cambiarías?" style="min-height:130px"></textarea></div>
+      </div>
+      <div class="grupo-pie">Se guarda junto a la pantalla donde estás: <strong>${esc(vista)}</strong>. Las ves todas en Ajustes.</div>`,
+    alAbrir: (c) => c.querySelector("[data-tipos]").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-tipo]");
+      if (!b) return;
+      c.querySelectorAll("[data-tipo]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    }),
+    alAceptar: async (c) => {
+      const texto = c.querySelector("textarea").value.trim();
+      if (texto.length < 3) { aviso("Cuéntanos un poco más.", { error: true }); return false; }
+      const tipo = c.querySelector("[data-tipo][aria-pressed=true]")?.dataset.tipo || "idea";
+      try {
+        await api.post("/api/comentarios", { texto, tipo, vista });
+        aviso("Gracias. Tu sugerencia quedó anotada.");
+      } catch (e) { aviso(e.message, { error: true }); return false; }
+    },
+  });
+}
+app.sugerir = sugerir;
 
 // ---------- Barra de instrucciones ----------
 const DESTINOS = NAV.flatMap(([, items]) => items).map(([ruta, nombre, ico]) => ({ ruta, nombre, ico }));
@@ -218,6 +252,7 @@ function abrirPaleta() {
     if (q && !parecePedido) pedir();
     grupo("Ir a", DESTINOS.filter((d) => !q || norma(d.nombre).includes(nq)).slice(0, q ? 4 : 9).map((d) => ({ accion: "ir", ruta: `#/${d.ruta}`, html: `<span class="icono-cuadro gris">${icono(d.ico)}</span><span>${esc(d.nombre)}</span>` })));
     if (!q) grupo("Sugerencias", SUGERENCIAS.map((t) => ({ accion: "pedir", texto: t, html: `<span class="icono-cuadro">${icono("enviar")}</span><span>${esc(t)}</span>` })));
+    if (!q || /suger|mejora|coment|falta/.test(nq)) grupo("Tu opinión", [{ accion: "sugerir", html: `<span class="icono-cuadro gris">${icono("mensaje")}</span><span>Sugerir una mejora</span>` }]);
     resultados.innerHTML = html || `<div class="vacio pequeno">Sin resultados</div>`;
     indice = Math.min(indice, Math.max(0, opciones.length - 1));
     marcar();
@@ -232,6 +267,7 @@ function abrirPaleta() {
   async function elegir(op) {
     if (!op) return;
     if (op.accion === "ir") { cerrar(); location.hash = op.ruta; return; }
+    if (op.accion === "sugerir") { cerrar(); sugerir(); return; }
     entrada.value = op.texto;
     entrada.disabled = true;
     resultados.remove();

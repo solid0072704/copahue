@@ -449,3 +449,50 @@ def test_estudio_de_ejemplo_no_conecta_cuentas(cfg_oauth):
     c = entrar_demo(TestClient(crear_app(cfg_oauth)))
     r = c.get("/api/auth/google/iniciar?modo=conectar", follow_redirects=False)
     assert r.headers["location"].endswith("#/ajustes") and "aviso=" in r.headers["location"]
+
+
+# --- Cuenta de prueba y sugerencias --------------------------------------------------------------
+def test_cuenta_de_prueba_persistente(tmp_path):
+    cfg = Config(db=str(tmp_path / "p.db"), hoy_fijo=HOY.isoformat(), intervalo_min=0,
+                 prueba_email="Dueno@TuCartera.cl", prueba_clave="clave-segura-1")
+    c = TestClient(crear_app(cfg))
+    r = c.post("/api/auth/ingresar", json={"email": "dueno@tucartera.cl", "clave": "clave-segura-1"}, headers=H)
+    assert r.status_code == 200
+    sesion = c.get("/api/sesion").json()
+    assert sesion["estudio"]["nombre"] == "Estudio de prueba" and sesion["estudio"]["demo"] == 0
+    assert sesion["para_revisar"] > 0
+    crear_app(cfg)  # reiniciar el servidor no duplica ni borra el estudio
+    with conectar(cfg.db) as conn:
+        assert fila(conn, "SELECT COUNT(*) AS n FROM estudios")["n"] == 1
+        from tucartera.demo import limpiar_demos_antiguas
+        limpiar_demos_antiguas(conn, date(2027, 1, 1))
+        assert fila(conn, "SELECT COUNT(*) AS n FROM estudios")["n"] == 1  # no es un ejemplo desechable
+
+
+def test_sugerencias_se_guardan_y_sobreviven_al_reinicio(tmp_path):
+    from tucartera.prueba import asegurar_cuenta_prueba
+
+    cfg = Config(db=str(tmp_path / "s.db"), hoy_fijo=HOY.isoformat(), intervalo_min=0,
+                 prueba_email="dueno@tucartera.cl", prueba_clave="clave-segura-1")
+    c = TestClient(crear_app(cfg))
+    c.post("/api/auth/ingresar", json={"email": "dueno@tucartera.cl", "clave": "clave-segura-1"}, headers=H)
+    assert c.post("/api/comentarios", json={"texto": "Falta importar el RCV", "tipo": "falta", "vista": "Clientes"},
+                  headers=H).status_code == 200
+    assert c.post("/api/comentarios", json={"texto": "x"}, headers=H).status_code == 422
+    with conectar(cfg.db) as conn:
+        asegurar_cuenta_prueba(conn, cfg, HOY, "dueno@tucartera.cl", "clave-segura-1", reiniciar=True)
+    c.post("/api/auth/ingresar", json={"email": "dueno@tucartera.cl", "clave": "clave-segura-1"}, headers=H)
+    lista = c.get("/api/comentarios").json()["comentarios"]
+    assert [x["texto"] for x in lista] == ["Falta importar el RCV"] and lista[0]["tipo"] == "falta"
+    otro = entrar_demo(TestClient(crear_app(cfg)))
+    assert otro.get("/api/comentarios").json()["comentarios"] == []  # cada estudio ve solo las suyas
+
+
+def test_peticiones_simultaneas(cliente_web):
+    from concurrent.futures import ThreadPoolExecutor
+
+    c = entrar_demo(cliente_web)
+    rutas = ["/api/hoy", "/api/ajustes", "/api/comentarios", "/api/clientes", "/api/plan", "/api/propuestas"] * 3
+    with ThreadPoolExecutor(max_workers=6) as grupo:
+        estados = list(grupo.map(lambda r: c.get(r).status_code, rutas))
+    assert estados == [200] * len(rutas)

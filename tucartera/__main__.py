@@ -6,6 +6,8 @@
     python -m tucartera plan socio@estudio.cl profesional --meses 1   # activa o renueva un plan pagado
     python -m tucartera paquete socio@estudio.cl         # suma un paquete de tokens este mes
     python -m tucartera uso                              # consumo, costo y margen por estudio del mes
+    python -m tucartera prueba tu@correo.cl --clave ...  # crea tu estudio de prueba (no se borra)
+    python -m tucartera comentarios                      # sugerencias anotadas en la app, en Markdown
 """
 
 import argparse
@@ -52,6 +54,12 @@ def main():
     cancelar.add_argument("correo")
     uso = sub.add_parser("uso", help="Consumo de IA, costo y margen por estudio.")
     uso.add_argument("--mes", help="AAAA-MM (por defecto, el mes actual)")
+    pr = sub.add_parser("prueba", help="Crea un estudio de prueba con datos de ejemplo que no se borra.")
+    pr.add_argument("correo")
+    pr.add_argument("--clave", required=True, help="Contraseña para ingresar (mínimo 8 caracteres).")
+    pr.add_argument("--nombre", default="", help="Tu nombre (por defecto, Camila Rojas).")
+    pr.add_argument("--reiniciar", action="store_true", help="Borra el estudio de prueba y lo vuelve a crear.")
+    sub.add_parser("comentarios", help="Lista las sugerencias anotadas en la app.")
     # Compatibilidad con la forma anterior: python -m tucartera --puerto 8080
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--puerto", type=int, default=8000)
@@ -107,6 +115,29 @@ def main():
         print(f"{e['nombre']}: suscripción cancelada. Sus datos se conservan.")
         return
 
+    if args.comando == "prueba":
+        from .prueba import asegurar_cuenta_prueba
+
+        if len(args.clave) < 8:
+            raise SystemExit("La contraseña debe tener al menos 8 caracteres.")
+        with conectar(cfg.db) as conn:
+            _, creada = asegurar_cuenta_prueba(conn, cfg, hoy, args.correo, args.clave, args.nombre, args.reiniciar)
+        print(("Estudio de prueba creado." if creada else "El estudio de prueba ya existía (usa --reiniciar para rehacerlo).")
+              + f" Ingresa con {args.correo.lower()}.")
+        return
+
+    if args.comando == "comentarios":
+        with conectar(cfg.db) as conn:
+            lista = filas(conn, """SELECT c.*, u.nombre AS autor, e.nombre AS estudio FROM comentarios c
+                LEFT JOIN usuarios u ON u.id = c.usuario_id LEFT JOIN estudios e ON e.id = c.estudio_id
+                ORDER BY c.fecha""")
+        tipos = {"falta": "Falta", "error": "No funciona", "idea": "Idea"}
+        print(f"# Sugerencias ({len(lista)})\n")
+        for c in lista:
+            print(f"- **{tipos.get(c['tipo'], c['tipo'])}** · {c['vista'] or 'General'} · {c['autor'] or '—'} "
+                  f"({c['estudio'] or '—'}, {c['fecha'][:16].replace('T', ' ')})\n  {c['texto']}")
+        return
+
     if args.comando == "uso":
         periodo = args.mes or planes.periodo(hoy)
         with conectar(cfg.db) as conn:
@@ -136,8 +167,11 @@ def main():
 
     from .api import crear_app
 
-    host = getattr(args, "host", "127.0.0.1")
-    puerto = getattr(args, "puerto", 8000)
+    import os
+
+    # En plataformas como Render el puerto llega en PORT y hay que escuchar en todas las interfaces.
+    puerto = int(os.environ["PORT"]) if os.environ.get("PORT") else getattr(args, "puerto", 8000)
+    host = "0.0.0.0" if os.environ.get("PORT") else getattr(args, "host", "127.0.0.1")
     uvicorn.run(crear_app(cfg), host=host, port=puerto, proxy_headers=True)
 
 

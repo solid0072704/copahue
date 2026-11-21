@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import agentes, asistente, demo, llm, oauth, planes
+from . import agentes, asistente, demo, llm, oauth, planes, prueba
 from . import calendario as cal
 from .agentes.acciones import AccionError, descartar_propuesta, ejecutar_propuesta
 from .agentes.documentos import asegurar_documentos
@@ -42,6 +42,12 @@ def orden(texto):
 def crear_app(cfg=None):
     cfg = cfg or cargar()
     inicializar(cfg.db)
+    if cfg.prueba_email and cfg.prueba_clave:
+        hoy_inicio = date.fromisoformat(cfg.hoy_fijo) if cfg.hoy_fijo else datetime.now(cfg.tz).date()
+        with conectar(cfg.db) as conn:
+            _, creada = prueba.asegurar_cuenta_prueba(conn, cfg, hoy_inicio, cfg.prueba_email, cfg.prueba_clave)
+        if creada:
+            log.info("Cuenta de prueba lista: %s", cfg.prueba_email)
     claude = llm.crear(cfg)
     app = FastAPI(title="Tu Cartera", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.cfg = cfg
@@ -917,6 +923,28 @@ def crear_app(cfg=None):
             "rol": "contador", "cargo": datos.cargo.strip(), "color": COLORES[n % len(COLORES)], "creado": cal.ahora(cfg.tz),
         })
         return {"id": uid}
+
+    # --- Sugerencias ---------------------------------------------------------------------------
+    class Comentario(BaseModel):
+        texto: str = Field(min_length=3, max_length=4000)
+        tipo: str = Field("idea", max_length=20)
+        vista: str = Field("", max_length=80)
+
+    @app.post("/api/comentarios")
+    def comentar(datos: Comentario, s=Depends(sesion)):
+        conn = s["conn"]
+        tipo = datos.tipo if datos.tipo in ("falta", "error", "idea") else "idea"
+        cid = insertar(conn, "comentarios", {
+            "estudio_id": s["estudio"]["id"], "usuario_id": s["usuario"]["id"], "tipo": tipo,
+            "vista": datos.vista.strip(), "texto": datos.texto.strip(), "fecha": cal.ahora(cfg.tz),
+        })
+        return {"id": cid}
+
+    @app.get("/api/comentarios")
+    def ver_comentarios(s=Depends(sesion)):
+        return {"comentarios": filas(s["conn"], """
+            SELECT c.*, u.nombre AS autor FROM comentarios c LEFT JOIN usuarios u ON u.id = c.usuario_id
+            WHERE c.estudio_id = ? ORDER BY c.fecha DESC, c.id DESC""", s["estudio"]["id"])}
 
     # --- Plan y uso ---------------------------------------------------------------------------
     @app.get("/api/plan")

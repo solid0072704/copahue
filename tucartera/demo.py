@@ -108,7 +108,7 @@ def _momento(cfg, d, hora=10, minuto=0):
     return datetime.combine(d, time(hora, minuto), tzinfo=cfg.tz).isoformat(timespec="seconds")
 
 
-def crear_demo(conn, cfg, hoy):
+def crear_demo(conn, cfg, hoy, uso_ilustrativo=True):
     rnd = random.Random(20261120)
     sufijo = secrets.token_hex(4)
     ahora = cal.ahora(cfg.tz)
@@ -159,7 +159,8 @@ def crear_demo(conn, cfg, hoy):
             "estado": "abierta", "origen": "manual", "creada": _momento(cfg, hoy - timedelta(days=3), 9, 30),
         })
 
-    _uso_ilustrativo(conn, rnd, cfg, eid, equipo, hoy)
+    if uso_ilustrativo:
+        _uso_ilustrativo(conn, rnd, cfg, eid, equipo, hoy)
     agentes.asegurar_configuracion(conn, eid)
     agentes.ejecutar(conn, cfg, eid, hoy)
     return eid
@@ -331,7 +332,8 @@ def limpiar_demos_antiguas(conn, hoy, dias=2):
 
 
 def eliminar_estudio(conn, eid):
-    for tabla in ("propuestas", "correos", "actividad", "automatizaciones", "tareas", "facturas", "documentos", "obligaciones"):
+    for tabla in ("propuestas", "correos", "actividad", "automatizaciones", "tareas", "facturas", "documentos", "obligaciones",
+                  "uso_ia", "paquetes_ia", "comentarios"):
         conn.execute(f"DELETE FROM {tabla} WHERE estudio_id = ?", (eid,))
     conn.execute("DELETE FROM indicadores WHERE cliente_id IN (SELECT id FROM clientes WHERE estudio_id = ?)", (eid,))
     conn.execute("DELETE FROM clientes WHERE estudio_id = ?", (eid,))

@@ -1,0 +1,21 @@
+# Plano para Render (https://render.com): crea el servicio web de Tu Cartera desde este repositorio.
+# En el plan gratuito el servidor se duerme tras 15 minutos sin uso y los datos se reinician al
+# redesplegar. Para que los datos persistan usa el plan Starter y agrega un disco montado en /data.
+services:
+  - type: web
+    name: tu-cartera
+    runtime: docker
+    plan: free
+    branch: claude/zen-davinci-dyky36
+    healthCheckPath: /api/auth/proveedores
+    envVars:
+      - key: TUCARTERA_PRUEBA_EMAIL
+        sync: false
+      - key: TUCARTERA_PRUEBA_CLAVE
+        sync: false
+      - key: TUCARTERA_VENTAS_EMAIL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TUCARTERA_COOKIE_SEGURA
+        value: "1"

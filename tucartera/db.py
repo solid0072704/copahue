@@ -204,6 +204,15 @@ CREATE TABLE IF NOT EXISTS paquetes_ia (
     fecha TEXT NOT NULL,
     nota TEXT DEFAULT ''
 );
+CREATE TABLE IF NOT EXISTS comentarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    estudio_id INTEGER NOT NULL,
+    usuario_id INTEGER,
+    tipo TEXT DEFAULT 'idea',
+    vista TEXT DEFAULT '',
+    texto TEXT NOT NULL,
+    fecha TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS ix_uso_ia ON uso_ia(estudio_id, periodo);
 CREATE INDEX IF NOT EXISTS ix_clientes_estudio ON clientes(estudio_id);
 CREATE INDEX IF NOT EXISTS ix_obligaciones_estudio ON obligaciones(estudio_id, vence);
@@ -243,7 +252,9 @@ def inicializar(ruta):
 
 @contextmanager
 def conectar(ruta):
-    conn = sqlite3.connect(ruta, timeout=30)
+    # FastAPI abre la conexión en un hilo y ejecuta el endpoint en otro: cada petición tiene su propia
+    # conexión y la usa de forma secuencial, por eso se permite cambiar de hilo.
+    conn = sqlite3.connect(ruta, timeout=30, check_same_thread=False)
     conn.row_factory = _dict
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
