@@ -26,8 +26,8 @@ from django.utils import timezone
 from .models import Moneda
 
 registro = logging.getLogger(__name__)
-VIGENCIA = timedelta(hours=24)          # la fuente publica una vez al día
-ESPERA = 3600                           # segundos entre dos intentos de un mismo proceso cuando no llegó nada nuevo
+VIGENCIA = timedelta(hours=25)          # la fuente publica cada 24 horas y unos minutos: se le pregunta cuando ya lo hizo
+ESPERA = 3600                           # segundos entre dos intentos de un mismo proceso: la fuente pide no pasar de uno por hora
 SALTO = Decimal("0.30")                 # una diferencia mayor que esta con el valor guardado no se aplica sola
 TOPE = Decimal(10) ** 11                # ninguna moneda vale tanto por dólar: un número así es un error de la fuente
 ATRIBUCION = ("Rates By Exchange Rate API", "https://www.exchangerate-api.com")       # el texto y el enlace que pide la fuente
