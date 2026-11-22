@@ -17,6 +17,7 @@ import requests
 from django.conf import settings
 from django.urls import reverse
 
+from .. import precios
 from ..models import Orden
 
 ESTADOS = {1: "pendiente", 2: "pagada", 3: "rechazada", 4: "anulada"}
@@ -42,7 +43,7 @@ class Flow:
 
     def iniciar(self, orden: Orden, request) -> str:
         r = self._llamar("POST", "payment/create", dict(
-            commerceOrder=orden.codigo, subject=orden.curso.titulo[:140], currency=orden.moneda, amount=orden.monto, email=orden.usuario.email,
+            commerceOrder=orden.codigo, subject=orden.curso.titulo[:140], currency=orden.moneda, amount=precios.para_pasarela(orden.monto), email=orden.usuario.email,
             urlConfirmation=settings.SITIO_URL + reverse("pago_confirmacion", args=[self.clave]),
             urlReturn=settings.SITIO_URL + reverse("pago_retorno", args=[self.clave])))
         orden.referencia = r["token"]
@@ -58,7 +59,7 @@ class Flow:
         if not orden:
             return None
         resultado = ESTADOS.get(estado.get("status"))
-        if resultado == "pagada" and int(estado.get("amount", 0)) == orden.monto:
+        if resultado == "pagada" and precios.mismo_monto(estado.get("amount"), orden.monto):
             orden.pagar(referencia=str(estado.get("flowOrder", token)), detalle=dict(flow=estado))
         elif resultado in ("rechazada", "anulada"):
             orden.cerrar(resultado, dict(flow=estado))

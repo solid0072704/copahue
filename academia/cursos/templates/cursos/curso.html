@@ -1,7 +1,7 @@
-{% extends "base.html" %}{% load academia %}
+{% extends "base.html" %}{% load dinero %}
 {% block titulo %}{{ curso.titulo }} · {{ SITIO_NOMBRE }}{% endblock %}
 {% block descripcion %}{{ curso.bajada }}{% endblock %}
-{% block contenido %}
+{% block contenido %}{% precio curso as p %}
 <header class="franja"><div class="caja">
   <div class="portada">
     <div>
@@ -12,9 +12,10 @@
       <div class="acciones">
         {% if inscrito %}<a class="btn pri" href="{% url 'aprender' curso.slug %}">Ir al curso</a>
         {% elif curso.gratuito %}<form method="post" action="{% url 'comprar' curso.slug %}">{% csrf_token %}<button class="btn pri" type="submit">Inscribirme gratis</button></form>
-        {% else %}<a class="btn pri" href="{% url 'comprar' curso.slug %}">Comprar por ${{ curso.precio|miles }}</a>{% endif %}
+        {% else %}<a class="btn pri" href="{% url 'comprar' curso.slug %}">Comprar por {{ p.usd }}</a>{% endif %}
         <a class="btn sec" href="#programa">Ver el programa</a>
       </div>
+      {% if p.local and not inscrito %}<p class="en-tu-moneda">En tu moneda: <b>{{ p.en_su_moneda }}</b></p>{% endif %}
     </div>
     {% if curso.muestra_video %}
     <div class="reproductor">
@@ -96,10 +97,11 @@
 <section class="seccion"><div class="caja">
   <div class="panel compra">
     <div><h3>{{ curso.titulo }}</h3><p>{{ resumen.modulos }} módulos, {{ resumen.lecciones }} lecciones, evaluaciones y certificado. Acceso sin fecha de término.</p></div>
-    <div class="precio-grande">{% if curso.gratuito %}Gratis{% else %}${{ curso.precio|miles }} <small>{{ MONEDA }}</small>{% endif %}</div>
+    <div class="precio-grande">{% if p.gratuito %}Gratis{% else %}{{ p.usd }}{% if p.local %}<small>{{ p.en_su_moneda }}</small>{% endif %}{% endif %}</div>
     {% if curso.gratuito %}<form method="post" action="{% url 'comprar' curso.slug %}">{% csrf_token %}<button class="btn pri" type="submit">Inscribirme gratis</button></form>
     {% else %}<a class="btn pri" href="{% url 'comprar' curso.slug %}">Comprar el curso</a>{% endif %}
   </div>
+  {% if not p.gratuito %}{% nota_de_precios %}{% endif %}
 </div></section>
 {% endif %}
 {% endblock %}

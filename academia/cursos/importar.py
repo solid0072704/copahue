@@ -2,8 +2,8 @@
 
 El paquete trae `CURSO` (título, dirección, instructor…), `programa` (bloques, módulos y lecciones) y `evaluaciones`
 (diagnóstico y bancos de preguntas). Importar de nuevo actualiza lo que cambió sin tocar lo que hicieron los alumnos:
-los módulos, las lecciones y las evaluaciones se reconocen por su clave. El precio, la publicación y los videos se
-manejan en el panel de administración y no se pisan.
+los módulos, las lecciones y las evaluaciones se reconocen por su clave. El precio (en dólares), la publicación y los
+videos se manejan en el panel de administración y no se pisan.
 """
 
 from __future__ import annotations

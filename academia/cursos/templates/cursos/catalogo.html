@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load academia %}
+{% extends "base.html" %}{% load dinero %}
 {% block contenido %}
 <header class="franja"><div class="caja">
   <div class="rotulo">{{ SITIO_BAJADA }}</div>
@@ -17,7 +17,7 @@
       <b>{{ destacado.titulo }}</b>
       <span class="d">{{ destacado.descripcion|default:destacado.bajada }}</span>
       <span class="abajo"><span class="num">{{ destacado.datos.modulos }} módulos · {{ destacado.datos.lecciones }} lecciones · {% widthratio destacado.datos.minutos 60 1 %} h</span>
-        <span class="precio">{% if destacado.mio %}Inscrito{% elif destacado.gratuito %}Gratis{% else %}${{ destacado.precio|miles }}{% endif %}</span></span>
+        <span class="precio">{% if destacado.mio %}Inscrito{% else %}{% precio destacado as p %}{% if p.gratuito %}Gratis{% else %}{{ p.usd }}{% if p.local %}<small>{{ p.en_su_moneda }}</small>{% endif %}{% endif %}{% endif %}</span></span>
     </span>
   </a>
   {% endif %}
@@ -30,11 +30,12 @@
       <b>{{ c.titulo }}</b>
       <span class="d">{{ c.bajada }}</span>
       <span class="abajo"><span class="num">{{ c.datos.modulos }} módulos · {{ c.datos.lecciones }} lecciones</span>
-        <span class="precio">{% if c.mio %}Inscrito{% elif c.gratuito %}Gratis{% else %}${{ c.precio|miles }}{% endif %}</span></span>
+        <span class="precio">{% if c.mio %}Inscrito{% else %}{% precio c as p %}{% if p.gratuito %}Gratis{% else %}{{ p.usd }}{% if p.local %}<small>{{ p.en_su_moneda }}</small>{% endif %}{% endif %}{% endif %}</span></span>
     </a>
     {% endif %}{% endfor %}
   </div>
   {% endif %}
   {% if not cursos %}<p class="entrada">Todavía no hay cursos publicados.</p>{% endif %}
+  {% if de_pago %}{% nota_de_precios %}{% endif %}
 </div></section>
 {% endblock %}

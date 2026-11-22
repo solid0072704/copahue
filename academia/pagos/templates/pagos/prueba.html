@@ -1,9 +1,9 @@
-{% extends "base.html" %}{% load academia %}
+{% extends "base.html" %}
 {% block titulo %}Pago de prueba{% endblock %}
 {% block contenido %}
 <header class="franja chica"><div class="caja">
   <div class="rotulo">Pasarela de prueba · no se cobra nada</div>
-  <h1>Simular el pago de ${{ orden.monto|miles }} {{ orden.moneda }}</h1>
+  <h1>Simular el pago de {{ orden.cobrado }}</h1>
   <p class="bajada">{{ orden.curso.titulo }}. Esta página reemplaza a la pasarela real mientras se prueba la academia.</p>
 </div></header>
 <section class="seccion"><div class="caja">

@@ -1,10 +1,10 @@
-{% extends "base.html" %}{% load academia %}
+{% extends "base.html" %}
 {% block titulo %}Tu compra · {{ SITIO_NOMBRE }}{% endblock %}
 {% block contenido %}
 <header class="franja chica"><div class="caja">
   <div class="rotulo">Orden <span class="num">{{ orden.codigo }}</span></div>
   <h1>{% if orden.estado == "pagada" %}Pago recibido: ya estás inscrito{% elif orden.estado == "pendiente" %}Estamos confirmando tu pago{% elif orden.estado == "rechazada" %}El pago fue rechazado{% else %}La compra se anuló{% endif %}</h1>
-  <p class="bajada">{{ orden.curso.titulo }} · ${{ orden.monto|miles }} {{ orden.moneda }}</p>
+  <p class="bajada">{{ orden.curso.titulo }} · {{ orden.cobrado }}{% if orden.en_dolares %} ({{ orden.en_dolares }}){% endif %}</p>
   <div class="acciones">
     {% if orden.estado == "pagada" %}<a class="btn pri" href="{% url 'aprender' orden.curso.slug %}">Ir al curso</a>
     {% elif orden.estado == "pendiente" %}<a class="btn sec" href="{% url 'orden' orden.codigo %}">Actualizar</a>

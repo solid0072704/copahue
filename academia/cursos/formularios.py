@@ -1,20 +1,38 @@
-"""Formularios: el registro de alumnos y los campos que hacen cómodo cargar un curso a mano en el panel."""
+"""Formularios: el registro y los datos de los alumnos, y los campos que hacen cómodo cargar un curso a mano en el panel."""
 
 from __future__ import annotations
 
 from django import forms
 
-from .models import Curso, Modulo, Pregunta
+from . import paises
+from .models import Curso, Modulo, Perfil, Pregunta
 
 
-class Registro(forms.Form):
-    """Lo que se pide al crear la cuenta, además del correo y la contraseña: el nombre que irá en los certificados."""
+class Cuenta(forms.Form):
+    """Los datos del alumno: el nombre que irá en sus certificados y el país, que decide en qué moneda ve los precios."""
     nombre = forms.CharField(label="Nombre y apellido", max_length=150, widget=forms.TextInput(attrs={"autocomplete": "name"}))
-    field_order = ["nombre", "email", "password1", "password2"]
+    pais = forms.ChoiceField(label="País", choices=[("", "Elige tu país")] + paises.OPCIONES, widget=forms.Select(attrs={"autocomplete": "country"}),
+                             error_messages={"required": "Elige tu país."})
+
+    def guardar(self, usuario) -> None:
+        usuario.first_name, usuario.last_name = self.cleaned_data["nombre"].strip(), ""     # el nombre completo va en un solo campo
+        usuario.save(update_fields=["first_name", "last_name"])
+        Perfil.guardar_pais(usuario, self.cleaned_data["pais"])
+
+
+class Registro(Cuenta):
+    """Lo que se pide al crear la cuenta, además del correo y la contraseña. Es también el formulario de quien llega por
+    primera vez con Google: ese no escribe contraseña, y su nombre ya viene escrito."""
+    field_order = ["nombre", "email", "pais", "password1", "password2"]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        de_google = " ".join(x for x in (self.initial.get("first_name"), self.initial.get("last_name")) if x)
+        if de_google:
+            self.initial.setdefault("nombre", de_google)
 
     def signup(self, request, user) -> None:
-        user.first_name = self.cleaned_data["nombre"].strip()
-        user.save(update_fields=["first_name"])
+        self.guardar(user)
 
 
 class Lineas(forms.CharField):
@@ -48,6 +66,7 @@ class CursoForm(forms.ModelForm):
     class Meta:
         model = Curso
         fields = "__all__"
+        localized_fields = ("precio_usd",)          # se puede escribir «49,90», con coma
 
 
 class ModuloForm(forms.ModelForm):

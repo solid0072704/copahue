@@ -14,4 +14,4 @@ class Command(BaseCommand):
         r = curso.resumen()
         self.stdout.write(self.style.SUCCESS(
             f'«{curso.titulo}»: {r["modulos"]} módulos, {r["lecciones"]} lecciones, {curso.evaluaciones.count()} evaluaciones. '
-            + ("Publicado." if curso.publicado else "Sin publicar: define el precio y publícalo en el panel de administración.")))
+            + ("Publicado." if curso.publicado else "Sin publicar: define el precio en dólares y publícalo en el panel de administración.")))

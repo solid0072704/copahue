@@ -14,10 +14,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from . import acceso, pruebas
-from .models import Avance, Certificado, Curso, Evaluacion, Inscripcion, Intento, Leccion
+from .formularios import Cuenta
+from .models import Avance, Certificado, Curso, Evaluacion, Inscripcion, Intento, Leccion, Perfil
 
 
 # --- Archivos ---------------------------------------------------------------
@@ -85,7 +87,8 @@ def catalogo(request):
     mios = set(Inscripcion.objects.filter(usuario=request.user).values_list("curso_id", flat=True)) if request.user.is_authenticated else set()
     for c in cursos:
         c.datos, c.mio = c.resumen(), c.id in mios
-    return render(request, "cursos/catalogo.html", dict(cursos=cursos, destacado=next((c for c in cursos if c.destacado), None)))
+    return render(request, "cursos/catalogo.html", dict(cursos=cursos, destacado=next((c for c in cursos if c.destacado), None),
+                                                        de_pago=any(not c.gratuito and not c.mio for c in cursos)))
 
 
 def curso(request, slug: str):
@@ -105,6 +108,21 @@ def mi_aprendizaje(request):
     for c in cursos:
         c.datos, c.avance = c.resumen(), acceso.avance_del_curso(request.user, c)
     return render(request, "cursos/mi_aprendizaje.html", dict(cursos=cursos, pendientes=request.user.ordenes.filter(estado="pendiente")[:3]))
+
+
+@login_required
+def cuenta(request):
+    """Los datos del alumno. Quien llega desde un aviso («indica tu país») vuelve a la página en que estaba."""
+    siguiente = request.POST.get("siguiente") or request.GET.get("siguiente", "")
+    if not url_has_allowed_host_and_scheme(siguiente, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        siguiente = ""
+    datos = dict(nombre=request.user.get_full_name() or request.user.first_name, pais=Perfil.pais_de(request.user))
+    form = Cuenta(request.POST or None, initial=datos)
+    if request.method == "POST" and form.is_valid():
+        form.guardar(request.user)
+        messages.success(request, "Guardamos tus datos.")
+        return redirect(siguiente or "cuenta")
+    return render(request, "cursos/cuenta.html", dict(form=form, siguiente=siguiente))
 
 
 def _aula(request, slug: str) -> Curso | None:

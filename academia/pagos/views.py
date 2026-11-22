@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 from academia.cursos.acceso import inscrito
 from academia.cursos.models import Curso, Inscripcion
 
-from . import pasarelas
+from . import cambio, pasarelas, precios
 from .models import Orden
 
 registro = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ def comprar(request, slug: str):
     if inscrito(request.user, curso) and not request.user.is_staff:
         return redirect("aprender", slug=curso.slug)
     disponibles = pasarelas.activas()
+    cobro = None if curso.gratuito else precios.cobro(curso, request)      # lo que se cobra hoy, en la moneda de las pasarelas
     if request.method == "POST":
         if curso.gratuito:
             Inscripcion.objects.get_or_create(usuario=request.user, curso=curso, defaults=dict(origen="gratis"))
@@ -36,7 +37,14 @@ def comprar(request, slug: str):
         if not elegida:
             messages.error(request, "Elige un medio de pago para continuar.")
             return redirect("comprar", slug=curso.slug)
-        orden = Orden.objects.create(usuario=request.user, curso=curso, monto=curso.precio, moneda=settings.MONEDA, pasarela=elegida.clave)
+        if not cobro:
+            messages.error(request, "En este momento no podemos calcular el precio del curso. No se hizo ningún cobro: inténtalo de nuevo en unos minutos.")
+            return redirect("comprar", slug=curso.slug)
+        if request.POST.get("monto", str(cobro.monto)) != str(cobro.monto):          # el tipo de cambio se movió entre ver la página y pagar
+            messages.info(request, f"El valor del dólar se actualizó mientras revisabas la compra: el curso queda en {cobro}. No se hizo ningún cobro.")
+            return redirect("comprar", slug=curso.slug)
+        orden = Orden.objects.create(usuario=request.user, curso=curso, monto=cobro.monto, moneda=cobro.moneda.codigo,
+                                     precio_usd=curso.precio_usd, cambio=cobro.cambio, pasarela=elegida.clave)
         try:
             return redirect(elegida.iniciar(orden, request))
         except (requests.RequestException, KeyError, ValueError) as e:
@@ -44,7 +52,11 @@ def comprar(request, slug: str):
             orden.cerrar("anulada", dict(error=str(e)[:300]))
             messages.error(request, f"No pudimos conectar con {elegida.nombre}. No se hizo ningún cobro: inténtalo de nuevo en unos minutos.")
             return redirect("comprar", slug=curso.slug)
-    return render(request, "pagos/comprar.html", dict(curso=curso, pasarelas=disponibles, resumen=curso.resumen()))
+    precio = precios.precio(curso, request.user, request)
+    return render(request, "pagos/comprar.html", dict(
+        curso=curso, pasarelas=disponibles, resumen=curso.resumen(), precio=precio, cobro=cobro, monto=str(cobro.monto) if cobro else "",
+        de_cobro=precios.moneda(settings.MONEDA, request), en_su_moneda=bool(precio.moneda) and not precio.aproximado,
+        fuente=cambio.ATRIBUCION if cobro and cobro.moneda.automatica else None))
 
 
 @csrf_exempt

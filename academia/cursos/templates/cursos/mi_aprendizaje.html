@@ -24,6 +24,6 @@
     {% endfor %}
   </div>
   {% else %}<a class="btn pri" href="{% url 'catalogo' %}">Ver los cursos</a>{% endif %}
-  <p class="abajo-cuenta" style="justify-content:flex-start;margin-top:36px"><span>Tu cuenta: {{ user.email }}</span><a href="{% url 'account_change_password' %}">Cambiar la contraseña</a><a href="{% url 'account_email' %}">Cambiar el correo</a></p>
+  <p class="abajo-cuenta" style="justify-content:flex-start;margin-top:36px"><span>Tu cuenta: {{ user.email }}</span><a href="{% url 'cuenta' %}">Mi nombre y mi país</a><a href="{% url 'account_change_password' %}">Cambiar la contraseña</a><a href="{% url 'account_email' %}">Cambiar el correo</a></p>
 </div></section>
 {% endblock %}

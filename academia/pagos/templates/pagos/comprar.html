@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load academia %}
+{% extends "base.html" %}{% load tz %}
 {% block titulo %}Comprar · {{ curso.titulo }}{% endblock %}
 {% block contenido %}
 <header class="franja chica"><div class="caja">
@@ -11,21 +11,31 @@
     {% if curso.gratuito %}
       <p class="entrada">Este curso es gratuito.</p>
       <div class="pie-prueba"><span></span><button class="btn pri" type="submit">Inscribirme</button></div>
-    {% elif pasarelas %}
+    {% elif not pasarelas %}
+      <p class="mensaje info">Los pagos todavía no están habilitados en la academia. Vuelve pronto.</p>
+    {% elif not cobro %}
+      <p class="mensaje info">En este momento no podemos calcular el precio en {{ de_cobro.nombre }}, que es la moneda en que se procesa el pago. Vuelve a intentarlo en unos minutos.</p>
+    {% else %}
+      <input type="hidden" name="monto" value="{{ monto }}">
       <fieldset class="item"><legend><span class="pregunta">¿Cómo quieres pagar?</span></legend>
         <div class="opciones">{% for p in pasarelas %}
           <label class="opcion"><input type="radio" name="pasarela" value="{{ p.clave }}"{% if forloop.first %} checked{% endif %} required><span><b>{{ p.nombre }}</b><br>{{ p.descripcion }}</span></label>{% endfor %}
         </div>
       </fieldset>
-      <div class="pie-prueba"><span class="ayuda">Te llevaremos a la página de pago y volverás aquí al terminar.</span><button class="btn pri" type="submit">Pagar ${{ curso.precio|miles }}</button></div>
-    {% else %}
-      <p class="mensaje info">Los pagos todavía no están habilitados en la academia. Vuelve pronto.</p>
+      <div class="pie-prueba"><span class="ayuda">Te llevaremos a la página de pago y volverás aquí al terminar.</span><button class="btn pri" type="submit">Pagar {{ cobro }}</button></div>
     {% endif %}
   </form>
   <aside><div class="panel">
     <h3>{{ curso.titulo }}</h3>
     <p>{{ resumen.modulos }} módulos · {{ resumen.lecciones }} lecciones · acceso sin fecha de término.</p>
-    <div class="precio-grande" style="margin-top:14px">{% if curso.gratuito %}Gratis{% else %}${{ curso.precio|miles }} <small>{{ MONEDA }}</small>{% endif %}</div>
+    <div class="precio-grande" style="margin-top:14px">{% if curso.gratuito %}Gratis{% else %}{{ precio.usd }}{% endif %}</div>
+    {% if cobro %}
+    <dl class="desglose">
+      {% if cobro.moneda.codigo != "USD" %}<div><dt>Se cobra en {{ cobro.moneda.nombre }}</dt><dd>{{ cobro }}</dd></div>{% endif %}
+      {% if precio.aproximado %}<div><dt>En {{ precio.moneda.nombre }}, cerca de</dt><dd>{{ precio.local }}</dd></div>{% endif %}
+    </dl>
+    <p class="ayuda">{% if cobro.tipo_de_cambio %}Tipo de cambio: {{ cobro.tipo_de_cambio }}{% if cobro.moneda.automatica %}, del {{ cobro.moneda.actualizada|utc|date:"j \d\e F" }}{% endif %}.{% endif %}{% if not en_su_moneda %} La conversión a tu moneda la hace tu banco o tu tarjeta.{% endif %}{% if fuente %} <a href="{{ fuente.1 }}" target="_blank" rel="noopener">{{ fuente.0 }}</a>{% endif %}</p>
+    {% endif %}
     <p class="ayuda">Inscripción a nombre de {{ user.email }}.</p>
   </div></aside>
 </div></div></section>

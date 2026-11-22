@@ -18,6 +18,7 @@ import requests
 from django.conf import settings
 from django.urls import reverse
 
+from .. import precios
 from ..models import Orden
 
 API = "https://api.mercadopago.com"
@@ -44,7 +45,7 @@ class MercadoPago:
     def iniciar(self, orden: Orden, request) -> str:
         retorno = settings.SITIO_URL + reverse("pago_retorno", args=[self.clave]) + f"?orden={orden.codigo}"
         r = requests.post(f"{API}/checkout/preferences", headers=self._cabeceras(), timeout=20, json=dict(
-            items=[dict(title=orden.curso.titulo, quantity=1, unit_price=orden.monto, currency_id=orden.moneda)],
+            items=[dict(title=orden.curso.titulo, quantity=1, unit_price=precios.para_pasarela(orden.monto), currency_id=orden.moneda)],
             payer=dict(email=orden.usuario.email), external_reference=orden.codigo,
             back_urls=dict(success=retorno, pending=retorno, failure=retorno), auto_return="approved",
             notification_url=settings.SITIO_URL + reverse("pago_confirmacion", args=[self.clave])))
@@ -65,7 +66,7 @@ class MercadoPago:
             return None
         resultado = ESTADOS.get(pago.get("status"))
         resumen = dict(mercadopago={k: pago.get(k) for k in ("id", "status", "status_detail", "transaction_amount", "currency_id", "date_approved")})
-        if resultado == "pagada" and round(float(pago.get("transaction_amount", 0))) == orden.monto and pago.get("currency_id") == orden.moneda:
+        if resultado == "pagada" and precios.mismo_monto(pago.get("transaction_amount"), orden.monto) and pago.get("currency_id") == orden.moneda:
             orden.pagar(referencia=str(pago["id"]), detalle=resumen)
         elif resultado in ("rechazada", "anulada"):
             orden.cerrar(resultado, resumen)

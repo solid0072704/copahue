@@ -272,7 +272,18 @@ form { margin: 0; }
 .portada-curso span { max-width: 17ch; padding-top: 12px; border-top: 3px solid var(--acento-fuerte); font-family: var(--f-titulo); font-weight: 800; font-size: 1.22rem; letter-spacing: -.03em; line-height: 1.15; text-wrap: balance; }
 .tarjeta .precio { margin-left: auto; font-family: var(--f-titulo); font-weight: 800; font-size: 1.1rem; letter-spacing: -.02em; }
 .precio-grande { font-family: var(--f-titulo); font-weight: 800; font-size: 2rem; letter-spacing: -.03em; white-space: nowrap; }
-.precio-grande small { font-size: .9rem; font-weight: 600; color: var(--tinta-3); }
+.precio-grande small { display: block; margin-top: 2px; font-size: .95rem; font-weight: 600; letter-spacing: 0; color: var(--tinta-2); }
+/* el precio en la moneda del país del alumno, junto al precio en dólares */
+.tarjeta .precio { text-align: right; white-space: nowrap; }
+.tarjeta .precio small { display: block; font-family: var(--f-texto); font-size: .86rem; font-weight: 600; letter-spacing: 0; color: var(--tinta-2); }
+.franja .en-tu-moneda { margin-top: 14px; color: var(--sobre-noche-2); font-size: .98rem; }
+.franja .en-tu-moneda b { color: var(--sobre-noche); font-weight: 600; white-space: nowrap; }
+.nota-precio { max-width: 88ch; margin-top: 16px; color: var(--tinta-3); font-size: .92rem; }
+.nota-precio a, .ayuda a { color: var(--acento); font-weight: 600; }
+.desglose { display: grid; gap: 6px; margin: 12px 0 0; }
+.desglose div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 14px; padding-top: 6px; border-top: 1px solid var(--linea); }
+.desglose dt { color: var(--tinta-2); }
+.desglose dd { margin: 0; font-weight: 600; white-space: nowrap; }
 .panel.compra { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 28px; align-items: center; }
 @media (min-width: 760px) { .panel.compra { grid-template-columns: minmax(0, 1fr) auto auto; } }
 .panel.compra .btn { margin-top: 0; }
@@ -288,7 +299,7 @@ form { margin: 0; }
 .cuenta form { display: grid; gap: 14px; margin-top: 22px; }
 .campo-form { display: grid; gap: 6px; }
 .campo-form label, .cuenta.generica label { font-weight: 600; font-size: .95rem; }
-.campo-form input, .cuenta.generica input:not([type="checkbox"]):not([type="radio"]) { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--superficie); color: var(--tinta); font: 400 1rem var(--f-texto); }
+.campo-form input, .campo-form select, .cuenta.generica input:not([type="checkbox"]):not([type="radio"]) { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--superficie); color: var(--tinta); font: 400 1rem var(--f-texto); }
 .campo-form .error, .cuenta .errorlist { margin: 0; padding: 0; list-style: none; color: var(--rojo); font-size: .9rem; }
 .casilla { display: flex; align-items: center; gap: 10px; }
 .casilla input { width: 18px; height: 18px; accent-color: var(--acento-fuerte); }

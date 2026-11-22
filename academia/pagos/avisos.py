@@ -18,7 +18,7 @@ def compra_confirmada(orden) -> None:
     try:
         send_mail(
             f"Tu inscripción en «{orden.curso.titulo}»",
-            f"{nombre}:\n\nRecibimos tu pago de {orden.moneda} {orden.monto:,}".replace(",", ".") + f" (orden {orden.codigo}).\n"
+            f"{nombre}:\n\nRecibimos tu pago de {orden.cobrado}" + (f" ({orden.en_dolares})" if orden.en_dolares else "") + f". Orden {orden.codigo}.\n"
             f"Ya puedes entrar al curso:\n{enlace}\n\n{settings.SITIO_NOMBRE}",
             settings.DEFAULT_FROM_EMAIL, [orden.usuario.email])
     except Exception:          # noqa: BLE001 — cualquier falla del servicio de correo

@@ -10,9 +10,42 @@ from __future__ import annotations
 import secrets
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+
+from . import paises
+
+
+class Perfil(models.Model):
+    """Lo que la academia sabe del alumno además de su cuenta: el país, que decide en qué moneda ve los precios."""
+    usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="perfil")
+    pais = models.CharField("país", max_length=2, blank=True, help_text="El código del país, de la lista de `paises.py`")
+
+    class Meta:
+        verbose_name_plural = "perfiles"
+
+    def __str__(self) -> str:
+        return f"{self.usuario} · {self.nombre_del_pais or 'sin país'}"
+
+    @property
+    def nombre_del_pais(self) -> str:
+        return paises.NOMBRES.get(self.pais, self.pais)
+
+    @staticmethod
+    def pais_de(usuario) -> str:
+        """El país que indicó el alumno; vacío si no lo ha dicho o si no hay sesión. Se consulta una vez por página."""
+        if usuario is None or not usuario.is_authenticated:
+            return ""
+        if not hasattr(usuario, "_pais"):
+            usuario._pais = Perfil.objects.filter(usuario=usuario).values_list("pais", flat=True).first() or ""
+        return usuario._pais
+
+    @staticmethod
+    def guardar_pais(usuario, pais: str) -> None:
+        Perfil.objects.update_or_create(usuario=usuario, defaults=dict(pais=pais))
+        usuario._pais = pais
 
 
 class Instructor(models.Model):
@@ -39,7 +72,8 @@ class Curso(models.Model):
     preguntas = models.JSONField("preguntas frecuentes", default=list, blank=True, help_text="Lista de pares [pregunta, respuesta]")
     instructor = models.ForeignKey(Instructor, on_delete=models.PROTECT, related_name="cursos")
     imagen = models.ImageField(upload_to="publico/cursos/", blank=True, help_text="Portada del curso en el catálogo (16:9)")
-    precio = models.PositiveIntegerField(default=0, help_text="En la moneda del sitio, sin decimales. Con 0 el curso es gratuito.")
+    precio_usd = models.DecimalField("precio en dólares", max_digits=8, decimal_places=2, default=0, validators=[MinValueValidator(0)],
+                                     help_text="En dólares (USD). Cada alumno lo ve además en la moneda de su país. Con 0 el curso es gratuito.")
     publicado = models.BooleanField(default=False, help_text="Se ve en el catálogo y se puede comprar")
     destacado = models.BooleanField(default=False)
     orden = models.PositiveIntegerField(default=0)
@@ -63,7 +97,7 @@ class Curso(models.Model):
 
     @property
     def gratuito(self) -> bool:
-        return self.precio == 0
+        return not self.precio_usd
 
     def lecciones(self):
         return Leccion.objects.filter(modulo__curso=self).select_related("modulo")

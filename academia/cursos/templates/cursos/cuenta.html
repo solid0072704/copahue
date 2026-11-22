@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titulo %}Mi cuenta · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<section class="seccion"><div class="caja"><div class="cuenta">
+  <div class="rotulo">Tu cuenta</div>
+  <h1>Tu nombre y tu país</h1>
+  <p class="entrada">El nombre es el que irá en tus certificados. El país decide en qué moneda ves los precios, además del dólar.</p>
+  <form method="post" action="{% url 'cuenta' %}">{% csrf_token %}
+    {% include "account/_campos.html" %}
+    {% if siguiente %}<input type="hidden" name="siguiente" value="{{ siguiente }}">{% endif %}
+    <button class="btn pri" type="submit">Guardar</button>
+  </form>
+  <p class="abajo-cuenta"><span>{{ user.email }}</span><a href="{% url 'account_change_password' %}">Cambiar la contraseña</a><a href="{% url 'account_email' %}">Cambiar el correo</a></p>
+</div></div></section>
+{% endblock %}

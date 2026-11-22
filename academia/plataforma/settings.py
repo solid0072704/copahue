@@ -31,7 +31,12 @@ SITIO_URL = entorno("ACADEMIA_URL", "http://localhost:8000").rstrip("/")     # l
 # Lo que se ve
 SITIO_NOMBRE = entorno("ACADEMIA_NOMBRE", "Academia Rodrigo Barceló")
 SITIO_BAJADA = "Finanzas y contabilidad con inteligencia artificial"
-MONEDA = entorno("ACADEMIA_MONEDA", "CLP")             # los precios no llevan decimales
+
+# Precios. Cada curso tiene su precio en dólares; cada alumno lo ve además en la moneda de su país. El cobro se hace
+# en la moneda de las pasarelas, al tipo de cambio guardado, que se trae una vez al día de una fuente pública.
+MONEDA = entorno("ACADEMIA_MONEDA", "CLP")             # la moneda en que cobran las pasarelas
+CAMBIO_URL = entorno("ACADEMIA_CAMBIO_URL", "https://open.er-api.com/v6/latest/USD")
+CAMBIO_AUTOMATICO = entorno("ACADEMIA_CAMBIO_AUTOMATICO", "1") == "1"     # con 0, solo `manage.py actualizar_monedas` o el panel
 
 INSTALLED_APPS = [
     "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
@@ -71,7 +76,7 @@ AUTH_PASSWORD_VALIDATORS = [{"NAME": f"django.contrib.auth.password_validation.{
                             ("UserAttributeSimilarityValidator", "MinimumLengthValidator", "CommonPasswordValidator", "NumericPasswordValidator")]
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-ACCOUNT_SIGNUP_FORM_CLASS = "academia.cursos.formularios.Registro"       # agrega el nombre, que va en el certificado
+ACCOUNT_SIGNUP_FORM_CLASS = "academia.cursos.formularios.Registro"       # agrega el nombre (va en el certificado) y el país (decide la moneda)
 ACCOUNT_EMAIL_VERIFICATION = entorno("ACADEMIA_VERIFICAR_CORREO", "optional")   # «mandatory» cuando haya correo saliente configurado
 ACCOUNT_USER_DISPLAY = lambda u: u.first_name or u.email                  # noqa: E731
 ACCOUNT_SESSION_REMEMBER = True
@@ -86,6 +91,7 @@ CON_GOOGLE = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
 SOCIALACCOUNT_PROVIDERS = {"google": {"APPS": [{"client_id": GOOGLE_CLIENT_ID, "secret": GOOGLE_CLIENT_SECRET, "key": ""}] if CON_GOOGLE else [],
                                       "SCOPE": ["profile", "email"], "AUTH_PARAMS": {"access_type": "online"}}}
 SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = False         # quien llega por primera vez con Google también pasa por el registro: ahí indica su país
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{# Quien entra por primera vez con Google pasa por aquí: confirma su nombre y dice su país, como en el registro con correo. #}
+{% block titulo %}Completa tu cuenta · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<section class="seccion"><div class="caja"><div class="cuenta">
+  <div class="rotulo">Tu cuenta</div>
+  <h1>Un último paso</h1>
+  <p class="entrada">Vas a entrar con tu cuenta de Google. Confirma tu nombre, que irá en tus certificados, y dinos tu país.</p>
+  <form method="post" action="{% url 'socialaccount_signup' %}">{% csrf_token %}
+    {% include "account/_campos.html" %}
+    {{ redirect_field }}
+    <button class="btn pri" type="submit">Crear cuenta</button>
+  </form>
+</div></div></section>
+{% endblock %}

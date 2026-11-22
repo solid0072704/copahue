@@ -6,6 +6,7 @@
   <div class="campo-form">
     <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
     {{ campo }}
+    {% if campo.name == "pais" %}<p class="ayuda">Verás los precios en dólares y también en la moneda de tu país.</p>{% endif %}
     {% for e in campo.errors %}<p class="error">{{ e }}</p>{% endfor %}
   </div>
   {% endif %}
