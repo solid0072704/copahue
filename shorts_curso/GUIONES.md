@@ -15,6 +15,15 @@ Distribuidora Alerce (empresa ficticia, cifras en millones de pesos).
 | 3 | `short-3-el-prompt-del-analista-esceptico.mp4` | 53 s | El Prompt 8: señales de alerta |
 | 4 | `short-4-5-repreguntas-que-siempre-sirven.mp4` | 45 s | Las 5 repreguntas |
 
+Subidos al canal «Rodrigo Barceló» (@solid007007) el 22-11-2026 como **ocultos** (solo con el link):
+
+| # | Link |
+|---|---|
+| 1 | https://youtube.com/shorts/YC_a04qDb0U |
+| 2 | https://youtube.com/shorts/SoBHdVP8L3o |
+| 3 | https://youtube.com/shorts/Ub-s9MUJalc |
+| 4 | https://youtube.com/shorts/XryaUL4PMpA |
+
 Orden sugerido de publicación: 1 → 4 → 2 → 3 (primero el gancho del caso, después lo más fácil de guardar).
 
 ---
