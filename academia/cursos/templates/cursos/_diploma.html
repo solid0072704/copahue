@@ -1,0 +1,10 @@
+<div class="diploma">
+  <div class="rotulo">Certificado de aprobación</div>
+  <h3>{{ certificado.nombre }}</h3>
+  <p>aprobó el curso <b>{{ certificado.curso.titulo }}</b>, de {{ certificado.horas }} horas de clases, con sus evaluaciones.</p>
+  <div class="firma">
+    <div><b>{{ certificado.curso.instructor.nombre }}</b>{{ certificado.curso.instructor.titulo }}</div>
+    <div><b>Emitido</b>{{ certificado.emitido|date:"j \d\e F \d\e Y" }}</div>
+    <div><b>Código de verificación</b><span class="num">{{ certificado.codigo }}</span></div>
+  </div>
+</div>

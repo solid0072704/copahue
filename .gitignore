@@ -12,3 +12,5 @@ __pycache__/
 storage_vectorial/
 # Curso de YouTube: carpeta de trabajo (HTML, imágenes, audio y video generados)
 curso_youtube/_trabajo/
+# Academia: base de datos local, medios subidos y estáticos reunidos
+academia/datos/

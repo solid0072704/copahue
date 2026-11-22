@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Verificación de certificado · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <div class="rotulo">Verificación de certificado</div>
+  <h1>{% if certificado %}Este certificado es auténtico{% else %}No existe un certificado con ese código{% endif %}</h1>
+  <p class="bajada">Código consultado: <span class="num">{{ codigo }}</span></p>
+</div></header>
+<section class="seccion"><div class="caja">
+  {% if certificado %}{% include "cursos/_diploma.html" %}
+  {% else %}<p class="entrada">Revisa que el código esté bien escrito. Si lo recibiste de otra persona, pídele la dirección de verificación completa.</p>{% endif %}
+</div></section>
+{% endblock %}

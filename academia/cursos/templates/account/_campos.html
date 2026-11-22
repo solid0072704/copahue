@@ -1,0 +1,12 @@
+{% for e in form.non_field_errors %}<p class="mensaje error">{{ e }}</p>{% endfor %}
+{% for campo in form %}
+  {% if campo.is_hidden %}{{ campo }}
+  {% elif campo.field.widget.input_type == "checkbox" %}<label class="casilla">{{ campo }}<span>{{ campo.label }}</span></label>
+  {% else %}
+  <div class="campo-form">
+    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {{ campo }}
+    {% for e in campo.errors %}<p class="error">{{ e }}</p>{% endfor %}
+  </div>
+  {% endif %}
+{% endfor %}

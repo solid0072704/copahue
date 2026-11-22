@@ -6,7 +6,7 @@
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
 | `curso_youtube/` | **Curso de YouTube de 1 hora** «Análisis de estados financieros con Claude»: guion, láminas, caso práctico y armado del video | ver [`curso_youtube/README.md`](curso_youtube/README.md) |
-| `academia/` | **Programa de pago** «Claude para Finanzas y Contabilidad»: temario de 16 módulos, evaluaciones y la plataforma web | ver [`academia/README.md`](academia/README.md) |
+| `academia/` | **Academia en línea**: catálogo de cursos, cuentas (Google o correo), compra con pasarela de pago, aula, evaluaciones y certificados. Primer curso: «Claude para Finanzas y Contabilidad» | `python academia/manage.py runserver` · ver [`academia/README.md`](academia/README.md) |
 
 ---
 

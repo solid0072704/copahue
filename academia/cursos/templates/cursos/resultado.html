@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Resultado · {{ evaluacion.nombre }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <nav class="miga" aria-label="Ubicación">{% if inscrito %}<a href="{% url 'aprender' curso.slug %}">{{ curso.titulo }}</a>{% else %}<a href="{% url 'curso' curso.slug %}">{{ curso.titulo }}</a>{% endif %}</nav>
+  <div class="rotulo">Resultado</div>
+  <h1>{{ evaluacion.nombre }}</h1>
+</div></header>
+<section class="seccion"><div class="caja"><div class="prueba">
+  <div class="panel"><div class="nota">
+    <div class="aro" style="--p:{{ intento.nota }};--c:{% if not evaluacion.lleva_nota or intento.aprobado %}var(--verde){% else %}var(--rojo){% endif %}"><b>{% if evaluacion.lleva_nota %}{{ intento.nota }} %{% else %}{{ intento.buenas }}/{{ intento.total }}{% endif %}</b></div>
+    <div>
+      <h3>{% if not evaluacion.lleva_nota %}Tu punto de partida{% elif intento.aprobado %}Aprobada{% else %}No aprobada{% endif %}</h3>
+      <p>{{ intento.buenas }} de {{ intento.total }} correctas.
+        {% if not evaluacion.lleva_nota %}{{ recomendacion }}
+        {% elif intento.aprobado %}Aprobaste con {{ intento.nota }} %.
+        {% else %}Te faltó para el {{ evaluacion.aprobacion }} %. Revisa las explicaciones y vuelve a intentarlo: el próximo intento trae otras preguntas.{% endif %}</p>
+      {% if reforzar %}<p style="margin-top:10px">Para reforzar: {% for m in reforzar %}módulo {{ m.numero }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
+        <form method="post" action="{% url 'prueba' curso.slug evaluacion.pk %}">{% csrf_token %}<button class="btn sec" type="submit">{% if evaluacion.lleva_nota %}Intentar de nuevo{% else %}Repetir{% endif %}</button></form>
+        {% if inscrito %}<a class="btn pri" href="{% url 'aprender' curso.slug %}">Volver al curso</a>{% else %}<a class="btn pri" href="{% url 'curso' curso.slug %}">Conocer el curso</a>{% endif %}
+      </div>
+    </div>
+  </div></div>
+  <ol class="revision">
+    {% for r in revision %}
+    <li class="{% if not r.ok %}mal{% endif %}">
+      <b>{{ r.n }}. {{ r.pregunta.enunciado }}</b>
+      <div class="tuya"><span class="pastilla {% if r.ok %}ok{% else %}mal{% endif %}">{% if r.ok %}Correcta{% else %}Incorrecta{% endif %}</span> Tu respuesta: {{ r.tuya }}</div>
+      {% if not r.ok %}<div class="buena">Respuesta correcta: <b style="display:inline">{{ r.buena }}</b></div>{% endif %}
+      <div class="exp">{{ r.pregunta.explicacion }}{% if r.pregunta.leccion and inscrito %} <a href="{% url 'leccion' curso.slug r.pregunta.leccion.pk %}">Lección {{ r.pregunta.leccion.modulo.numero }}.{{ r.pregunta.leccion.numero }}</a>{% endif %}</div>
+    </li>
+    {% endfor %}
+  </ol>
+</div></div></section>
+{% endblock %}

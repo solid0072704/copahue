@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Certificado · {{ curso.titulo }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <nav class="miga" aria-label="Ubicación"><a href="{% url 'aprender' curso.slug %}">{{ curso.titulo }}</a></nav>
+  <div class="rotulo">Certificado</div>
+  <h1>{% if certificado %}Tu certificado{% else %}Lo que falta para tu certificado{% endif %}</h1>
+  <p class="bajada">{% if certificado %}Cualquiera puede comprobar que es auténtico con su código de verificación.{% else %}Se emite solo cuando cumples todos los requisitos.{% endif %}</p>
+</div></header>
+<section class="seccion"><div class="caja"><div class="dos" style="margin-top:0">
+  <div>
+    {% if certificado %}{% include "cursos/_diploma.html" %}
+    <p class="ayuda" style="margin-top:14px">Dirección de verificación: <a href="{% url 'verificar' certificado.codigo %}">{{ request.scheme }}://{{ request.get_host }}{% url 'verificar' certificado.codigo %}</a></p>
+    {% else %}<div class="en-produccion"><div><b>Todavía no está disponible</b><span>Completa los requisitos de la derecha y el certificado aparecerá aquí, con tu nombre y un código de verificación.</span></div></div>{% endif %}
+  </div>
+  <aside>
+    <div class="rotulo" style="color:var(--acento)">Requisitos</div>
+    <ul class="requisitos" style="margin-top:8px">{% for r in requisitos %}<li class="{% if r.listo %}ok{% endif %}"><span>{{ r.texto }}</span></li>{% endfor %}</ul>
+  </aside>
+</div></div></section>
+{% endblock %}

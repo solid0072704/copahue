@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% load academia %}
+{% block titulo %}Tu compra · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <div class="rotulo">Orden <span class="num">{{ orden.codigo }}</span></div>
+  <h1>{% if orden.estado == "pagada" %}Pago recibido: ya estás inscrito{% elif orden.estado == "pendiente" %}Estamos confirmando tu pago{% elif orden.estado == "rechazada" %}El pago fue rechazado{% else %}La compra se anuló{% endif %}</h1>
+  <p class="bajada">{{ orden.curso.titulo }} · ${{ orden.monto|miles }} {{ orden.moneda }}</p>
+  <div class="acciones">
+    {% if orden.estado == "pagada" %}<a class="btn pri" href="{% url 'aprender' orden.curso.slug %}">Ir al curso</a>
+    {% elif orden.estado == "pendiente" %}<a class="btn sec" href="{% url 'orden' orden.codigo %}">Actualizar</a>
+    {% else %}<a class="btn pri" href="{% url 'comprar' orden.curso.slug %}">Intentar de nuevo</a>{% endif %}
+  </div>
+</div></header>
+<section class="seccion"><div class="caja">
+  {% if orden.estado == "pagada" %}<p class="entrada">Te enviamos la confirmación a {{ orden.usuario.email }}. El curso queda en «Mi aprendizaje».</p>
+  {% elif orden.estado == "pendiente" %}<p class="entrada" data-recargar="6">La confirmación del medio de pago suele tardar unos segundos; esta página se actualiza sola. Si ya pagaste y sigue pendiente después de unos minutos, escríbenos con el número de orden.</p>
+  {% else %}<p class="entrada">No se hizo ningún cobro. Puedes intentarlo de nuevo con el mismo medio de pago o con otro.</p>{% endif %}
+</div></section>
+{% endblock %}

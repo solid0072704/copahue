@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load academia %}
+{% block titulo %}Comprar · {{ curso.titulo }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <nav class="miga" aria-label="Ubicación"><a href="{% url 'curso' curso.slug %}">{{ curso.titulo }}</a></nav>
+  <div class="rotulo">Compra</div>
+  <h1>Confirma tu inscripción</h1>
+</div></header>
+<section class="seccion"><div class="caja"><div class="dos" style="margin-top:0">
+  <form method="post" class="prueba">{% csrf_token %}
+    {% if curso.gratuito %}
+      <p class="entrada">Este curso es gratuito.</p>
+      <div class="pie-prueba"><span></span><button class="btn pri" type="submit">Inscribirme</button></div>
+    {% elif pasarelas %}
+      <fieldset class="item"><legend><span class="pregunta">¿Cómo quieres pagar?</span></legend>
+        <div class="opciones">{% for p in pasarelas %}
+          <label class="opcion"><input type="radio" name="pasarela" value="{{ p.clave }}"{% if forloop.first %} checked{% endif %} required><span><b>{{ p.nombre }}</b><br>{{ p.descripcion }}</span></label>{% endfor %}
+        </div>
+      </fieldset>
+      <div class="pie-prueba"><span class="ayuda">Te llevaremos a la página de pago y volverás aquí al terminar.</span><button class="btn pri" type="submit">Pagar ${{ curso.precio|miles }}</button></div>
+    {% else %}
+      <p class="mensaje info">Los pagos todavía no están habilitados en la academia. Vuelve pronto.</p>
+    {% endif %}
+  </form>
+  <aside><div class="panel">
+    <h3>{{ curso.titulo }}</h3>
+    <p>{{ resumen.modulos }} módulos · {{ resumen.lecciones }} lecciones · acceso sin fecha de término.</p>
+    <div class="precio-grande" style="margin-top:14px">{% if curso.gratuito %}Gratis{% else %}${{ curso.precio|miles }} <small>{{ MONEDA }}</small>{% endif %}</div>
+    <p class="ayuda">Inscripción a nombre de {{ user.email }}.</p>
+  </div></aside>
+</div></div></section>
+{% endblock %}

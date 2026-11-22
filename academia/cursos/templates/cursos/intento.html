@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}{{ evaluacion.nombre }} · {{ curso.titulo }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <div class="rotulo">Evaluación · {{ preguntas|length }} preguntas</div>
+  <h1>{{ evaluacion.nombre }}</h1>
+  <p class="bajada">Responde todas y entrega al final. Puedes volver atrás antes de entregar.</p>
+</div></header>
+<section class="seccion"><div class="caja">
+  <form method="post" class="prueba">{% csrf_token %}
+    {% for x in preguntas %}
+    <fieldset class="item">
+      <legend><span class="num">{{ x.n }} de {{ preguntas|length }}</span><span class="pregunta">{{ x.pregunta.enunciado }}</span></legend>
+      {% if x.pregunta.tipo == "unica" %}
+        <div class="opciones">{% for k, texto in x.opciones %}<label class="opcion"><input type="radio" name="{{ x.campo }}" value="{{ k }}" required><span>{{ texto }}</span></label>{% endfor %}</div>
+      {% elif x.pregunta.tipo == "multiple" %}
+        <p class="ayuda">Puede haber más de una correcta.</p>
+        <div class="opciones">{% for k, texto in x.opciones %}<label class="opcion"><input type="checkbox" name="{{ x.campo }}" value="{{ k }}"><span>{{ texto }}</span></label>{% endfor %}</div>
+      {% elif x.pregunta.tipo == "numero" %}
+        <div class="campo"><label for="{{ x.campo }}" class="rotulo">Tu respuesta</label><input id="{{ x.campo }}" name="{{ x.campo }}" inputmode="decimal" autocomplete="off" required>{% if x.pregunta.unidad %}<span>{{ x.pregunta.unidad }}</span>{% endif %}</div>
+      {% else %}
+        <p class="ayuda">Ordena con las flechas.</p>
+        <ol class="ordenable" data-campo="{{ x.campo }}">{% for k, texto in x.opciones %}
+          <li data-k="{{ k }}"><span>{{ texto }}</span><button type="button" data-mover="-1" aria-label="Subir">↑</button><button type="button" data-mover="1" aria-label="Bajar">↓</button></li>{% endfor %}
+        </ol>
+        <input type="hidden" name="{{ x.campo }}" value="{{ x.orden }}">
+      {% endif %}
+    </fieldset>
+    {% endfor %}
+    <div class="pie-prueba"><span class="ayuda">Al entregar no se puede cambiar este intento.</span><button class="btn pri" type="submit">Entregar</button></div>
+  </form>
+</div></section>
+{% endblock %}

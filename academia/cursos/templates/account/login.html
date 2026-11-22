@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<section class="seccion"><div class="caja"><div class="cuenta">
+  <div class="rotulo">Tu cuenta</div>
+  <h1>Entra a la academia</h1>
+  {% include "account/_google.html" with texto="Entrar con Google" %}
+  <form method="post" action="{% url 'account_login' %}">{% csrf_token %}
+    {% include "account/_campos.html" %}
+    {{ redirect_field }}
+    <button class="btn pri" type="submit">Entrar</button>
+  </form>
+  <p class="abajo-cuenta"><a href="{% url 'account_reset_password' %}">Olvidé mi contraseña</a><span>¿No tienes cuenta? <a href="{{ signup_url }}">Créala</a></span></p>
+</div></div></section>
+{% endblock %}

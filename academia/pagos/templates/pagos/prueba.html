@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load academia %}
+{% block titulo %}Pago de prueba{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <div class="rotulo">Pasarela de prueba · no se cobra nada</div>
+  <h1>Simular el pago de ${{ orden.monto|miles }} {{ orden.moneda }}</h1>
+  <p class="bajada">{{ orden.curso.titulo }}. Esta página reemplaza a la pasarela real mientras se prueba la academia.</p>
+</div></header>
+<section class="seccion"><div class="caja">
+  <form method="post" action="{% url 'resolver_prueba' %}" style="display:flex;flex-wrap:wrap;gap:12px">{% csrf_token %}
+    <input type="hidden" name="orden" value="{{ orden.codigo }}">
+    <button class="btn pri" type="submit" name="resultado" value="aprobar">Aprobar el pago</button>
+    <button class="btn sec" type="submit" name="resultado" value="rechazar">Rechazar el pago</button>
+  </form>
+</div></section>
+{% endblock %}

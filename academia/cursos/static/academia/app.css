@@ -1,4 +1,4 @@
-/* Plataforma del programa «Claude para Finanzas y Contabilidad».
+/* La academia: catálogo, página de cada curso, aula, pruebas, certificado, cuenta y compra.
    Disposición: una franja azul noche abre cada vista con su título; debajo, el contenido en una columna de lectura
    con una lateral cuando hay ancho. La identidad es la del curso: azul noche, crema y dorado; Montserrat para
    títulos, Source Sans 3 para texto, Newsreader en itálica para el énfasis y Geist Mono para rótulos y cifras. */
@@ -241,3 +241,69 @@ em { font-family: var(--f-serif); font-style: italic; font-weight: 500; letter-s
 .requisitos li::before { content: "○"; color: var(--tinta-3); }
 .requisitos li.ok::before { content: "●"; color: var(--verde); }
 @media (prefers-reduced-motion: no-preference) { .avance i { transition: width .5s ease; } .tarjeta, .opcion, .btn { transition: border-color .15s ease, background-color .15s ease, filter .15s ease; } }
+
+/* ---- Lo que agrega la academia con cuentas y pagos ---------------------------------------------------------- */
+.barra nav form { display: contents; }
+.barra nav button { padding: 7px 12px; border: 0; border-radius: 999px; background: none; color: var(--sobre-noche-2); font-size: .95rem; }
+.barra nav button:hover { color: var(--sobre-noche); background: var(--noche-2); }
+.barra nav a.btn { color: var(--sobre-acento); }
+.btn.chico { min-height: 38px; padding: 6px 14px; font-size: .88rem; }
+form { margin: 0; }
+.mensajes { background: var(--hundido); border-bottom: 1px solid var(--linea); }
+.mensajes .caja { display: grid; gap: 6px; padding-block: 10px; }
+.mensaje { padding: 10px 14px; border-radius: 10px; background: var(--acento-suave); color: var(--tinta); font-size: .96rem; }
+.mensaje.error { background: var(--rojo-suave); }
+.mensaje.success { background: var(--verde-suave); }
+.mensaje a { color: var(--acento); font-weight: 600; }
+
+/* Catálogo */
+.rejilla.cursos { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 22px; margin-top: 24px; }
+.tarjeta.curso { padding: 0 0 18px; overflow: hidden; }
+.tarjeta.curso > * { margin-inline: 18px; }
+.tarjeta.curso > img, .tarjeta.curso > .portada-curso { width: 100%; height: auto; margin: 0; aspect-ratio: 16 / 9; object-fit: cover; }
+/* el curso destacado: la portada a un lado y el texto al otro cuando hay ancho */
+.tarjeta.curso.ancha { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; margin-top: 24px; }
+.tarjeta.curso.ancha > * { margin: 0; }
+.tarjeta.curso.ancha .cuerpo { display: flex; flex-direction: column; gap: 10px; padding: 22px; }
+.tarjeta.curso.ancha b { font-size: 1.35rem; }
+@media (min-width: 760px) { .tarjeta.curso.ancha { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: stretch; } .tarjeta.curso.ancha > img, .tarjeta.curso.ancha > .portada-curso { height: 100%; } }
+.portada-curso { display: grid; align-items: end; padding: 18px; color: var(--sobre-noche);
+  background: radial-gradient(420px 240px at 105% 120%, rgba(63, 98, 148, .45), transparent 62%), var(--noche); }
+.portada-curso span { max-width: 17ch; padding-top: 12px; border-top: 3px solid var(--acento-fuerte); font-family: var(--f-titulo); font-weight: 800; font-size: 1.22rem; letter-spacing: -.03em; line-height: 1.15; text-wrap: balance; }
+.tarjeta .precio { margin-left: auto; font-family: var(--f-titulo); font-weight: 800; font-size: 1.1rem; letter-spacing: -.02em; }
+.precio-grande { font-family: var(--f-titulo); font-weight: 800; font-size: 2rem; letter-spacing: -.03em; white-space: nowrap; }
+.precio-grande small { font-size: .9rem; font-weight: 600; color: var(--tinta-3); }
+.panel.compra { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 28px; align-items: center; }
+@media (min-width: 760px) { .panel.compra { grid-template-columns: minmax(0, 1fr) auto auto; } }
+.panel.compra .btn { margin-top: 0; }
+.franja .reproductor { box-shadow: 0 0 0 1px var(--linea-noche), 0 -4px 0 0 var(--acento-fuerte), 0 30px 60px -30px rgba(0, 0, 0, .8); }
+.franja .reproductor .pie-muestra { display: block; padding: 10px 14px; background: #0B1420; color: var(--sobre-noche-2); font-family: var(--f-mono); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; }
+.franja .acciones form { display: contents; }
+
+/* Cuenta: entrar, registrarse y las demás páginas de la cuenta */
+.cuenta { max-width: 460px; margin-inline: auto; }
+.cuenta > .rotulo { color: var(--acento); }
+.cuenta h1 { margin-top: 8px; font-family: var(--f-titulo); font-weight: 800; font-size: 1.9rem; letter-spacing: -.03em; line-height: 1.1; }
+.cuenta .entrada { margin-top: 10px; color: var(--tinta-2); }
+.cuenta form { display: grid; gap: 14px; margin-top: 22px; }
+.campo-form { display: grid; gap: 6px; }
+.campo-form label, .cuenta.generica label { font-weight: 600; font-size: .95rem; }
+.campo-form input, .cuenta.generica input:not([type="checkbox"]):not([type="radio"]) { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--superficie); color: var(--tinta); font: 400 1rem var(--f-texto); }
+.campo-form .error, .cuenta .errorlist { margin: 0; padding: 0; list-style: none; color: var(--rojo); font-size: .9rem; }
+.casilla { display: flex; align-items: center; gap: 10px; }
+.casilla input { width: 18px; height: 18px; accent-color: var(--acento-fuerte); }
+.btn.google { width: 100%; margin-top: 22px; background: var(--superficie); color: var(--tinta); border-color: var(--linea); }
+.btn.google:hover { border-color: var(--acento-fuerte); }
+.btn.google svg { width: 20px; height: 20px; flex: none; }
+.o { display: flex; align-items: center; gap: 12px; margin-top: 18px; color: var(--tinta-3); font-size: .88rem; }
+.o::before, .o::after { content: ""; flex: 1; height: 1px; background: var(--linea); }
+.abajo-cuenta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 18px; margin-top: 18px; color: var(--tinta-2); font-size: .95rem; }
+.abajo-cuenta a, .cuenta.generica a { color: var(--acento); font-weight: 600; }
+.cuenta.generica p { margin-top: 12px; color: var(--tinta-2); }
+.cuenta.generica button { min-height: 46px; padding: 10px 20px; border: 0; border-radius: 999px; background: var(--acento-fuerte); color: var(--sobre-acento); font-family: var(--f-titulo); font-weight: 700; font-size: .95rem; }
+
+/* Pruebas: todas las preguntas en una página */
+fieldset.item { min-width: 0; margin: 0 0 32px; padding: 0; border: 0; }
+fieldset.item legend { display: grid; gap: 6px; padding: 0; }
+fieldset.item legend .num { color: var(--tinta-3); font-size: .8rem; }
+.pie-prueba { align-items: center; }

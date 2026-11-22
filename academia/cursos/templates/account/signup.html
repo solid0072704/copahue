@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Crear cuenta · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<section class="seccion"><div class="caja"><div class="cuenta">
+  <div class="rotulo">Tu cuenta</div>
+  <h1>Crea tu cuenta</h1>
+  <p class="entrada">Con ella compras cursos, guardas tu avance y obtienes tus certificados.</p>
+  {% include "account/_google.html" with texto="Continuar con Google" %}
+  <form method="post" action="{% url 'account_signup' %}">{% csrf_token %}
+    {% include "account/_campos.html" %}
+    {{ redirect_field }}
+    <button class="btn pri" type="submit">Crear cuenta</button>
+  </form>
+  <p class="abajo-cuenta"><span>¿Ya tienes cuenta? <a href="{{ login_url }}">Entra</a></span></p>
+</div></div></section>
+{% endblock %}

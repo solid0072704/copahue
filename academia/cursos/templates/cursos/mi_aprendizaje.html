@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Mi aprendizaje · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <div class="rotulo">Mi aprendizaje</div>
+  <h1>{% if user.first_name %}Hola, {{ user.first_name }}{% else %}Tus cursos{% endif %}</h1>
+  <p class="bajada">{% if cursos %}Sigue donde quedaste.{% else %}Todavía no estás inscrito en ningún curso.{% endif %}</p>
+</div></header>
+<section class="seccion"><div class="caja">
+  {% for o in pendientes %}<p class="mensaje info">Tienes un pago pendiente por «{{ o.curso.titulo }}». <a href="{% url 'orden' o.codigo %}">Ver el estado</a></p>{% endfor %}
+  {% if cursos %}
+  <div class="rejilla cursos">
+    {% for c in cursos %}
+    <div class="tarjeta curso">
+      {% if c.imagen %}<img src="{{ c.imagen.url }}" alt="" width="640" height="360">{% else %}<span class="portada-curso"><span>{{ c.titulo }}</span></span>{% endif %}
+      <b>{{ c.titulo }}</b>
+      <span class="d">{{ c.avance.completadas }} de {{ c.avance.publicadas }} lecciones publicadas vistas</span>
+      <div class="avance" style="--p:{{ c.avance.porcentaje }}"><i></i></div>
+      <span class="abajo">
+        {% if c.avance.siguiente %}<a class="btn pri chico" href="{% url 'leccion' c.slug c.avance.siguiente.pk %}">Continuar</a>{% endif %}
+        <a class="btn sec chico" href="{% url 'aprender' c.slug %}">Ver el curso</a>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<a class="btn pri" href="{% url 'catalogo' %}">Ver los cursos</a>{% endif %}
+  <p class="abajo-cuenta" style="justify-content:flex-start;margin-top:36px"><span>Tu cuenta: {{ user.email }}</span><a href="{% url 'account_change_password' %}">Cambiar la contraseña</a><a href="{% url 'account_email' %}">Cambiar el correo</a></p>
+</div></section>
+{% endblock %}

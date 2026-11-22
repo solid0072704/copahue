@@ -1,10 +1,8 @@
-"""El programa de pago: temario, evaluaciones y la plataforma que sale de ellos."""
+"""El contenido del primer curso de la academia: su temario y sus evaluaciones."""
 
-import json
 import re
-from pathlib import Path
 
-from academia import evaluaciones, programa, sitio
+from academia.contenido.claude_finanzas import CURSO, evaluaciones, programa
 
 
 def test_el_programa_tiene_modulos_numerados_y_lecciones_con_duracion_razonable():
@@ -46,18 +44,7 @@ def test_las_evaluaciones_son_validas_y_cada_pregunta_apunta_a_su_modulo():
     assert umbrales == sorted(umbrales) and umbrales[0] == 0
 
 
-def test_la_plataforma_recibe_todo_lo_que_usa():
-    """Los datos se pueden escribir como JSON y traen cada cosa que la aplicación lee; la vista previa no lleva envoltorio."""
-    d = sitio.datos(dict(sitio.MUESTRA, video="muestra.mp4", poster="muestra.jpg", vtt="muestra.vtt", min=3))
-    json.dumps(d)
-    app = (Path(sitio.__file__).parent / "web" / "app.js").read_text(encoding="utf-8")
-    assert set(re.findall(r"\bD\.(\w+)", app)) <= set(d)
-    assert set(re.findall(r"D\.evaluaciones\.(\w+)", app)) <= set(d["evaluaciones"])
-    previa, completa = sitio.pagina(d, completa=False), sitio.pagina(d, completa=True)
-    assert previa.startswith("<title>") and "<html" not in previa and "<body" not in previa
-    assert completa.startswith("<!doctype html>") and '<main id="vista">' in completa and "</html>" in completa
-    assert "</script><script>" in previa.replace("\n", "") and "<\\/" not in programa.NOMBRE
-    # las rutas de la barra existen en la aplicación, con nombres simples (letras, cifras y guiones)
-    rutas = set(re.findall(r'href="#([^"]+)"', previa.split("<script>")[0]))
-    assert rutas >= {"inicio", "programa", "curso"} and all(re.fullmatch(r"[a-z0-9-]+", r) for r in rutas)
-    assert all(f"'{r}'" in app or f"#{r}" in app or f'id="{r}"' in app for r in rutas)
+def test_la_ficha_del_curso_trae_lo_que_la_academia_necesita_para_importarlo():
+    assert re.fullmatch(r"[a-z0-9-]+", CURSO["slug"]) and CURSO["titulo"] == programa.NOMBRE and CURSO["logros"] == programa.LOGROS
+    assert CURSO["instructor"]["nombre"] == programa.AUTOR["nombre"] and all(len(x) == 2 for x in CURSO["preguntas"])
+    assert "precio" not in CURSO and "publicado" not in CURSO                    # eso se decide en el panel, no en el contenido

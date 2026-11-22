@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}{{ leccion.titulo }} · {{ curso.titulo }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <nav class="miga" aria-label="Ubicación">{% if inscrito %}<a href="{% url 'aprender' curso.slug %}">{{ curso.titulo }}</a>{% else %}<a href="{% url 'curso' curso.slug %}">{{ curso.titulo }}</a>{% endif %}<span>›</span><span>Módulo {{ modulo.numero }}</span></nav>
+  <div class="rotulo">{{ leccion.get_tipo_display }} {{ modulo.numero }}.{{ leccion.numero }} · {{ leccion.minutos }} min{% if leccion.muestra and not inscrito %} · vista previa gratuita{% endif %}</div>
+  <h1>{{ leccion.titulo }}</h1>
+  <p class="bajada">{{ leccion.descripcion }}</p>
+</div></header>
+<section class="seccion"><div class="caja"><div class="dos" style="margin-top:0">
+  <div>
+    {% if leccion.publicada %}
+    <div class="reproductor">
+      <video id="video" controls playsinline preload="metadata"{% if leccion.poster %} poster="{{ leccion.poster.url }}"{% endif %}
+             src="{% if leccion.video %}{% url 'video' leccion.pk %}{% else %}{{ leccion.video_url }}{% endif %}"
+             {% if user.is_authenticated %}data-avance="{% url 'guardar_avance' leccion.pk %}" data-desde="{{ avance.segundos|default:0 }}"{% endif %}>
+        {% if leccion.subtitulos %}<track kind="subtitles" srclang="es" label="Español" src="{% url 'subtitulos' leccion.pk %}" default>{% endif %}
+      </video>
+    </div>
+    {% else %}
+    <div class="en-produccion"><div><b>Esta lección está en producción</b><span>Se publica con el módulo {{ modulo.numero }}. Te avisaremos por correo cuando esté disponible.</span></div></div>
+    {% endif %}
+    <div class="bajo-video">
+      {% if leccion.publicada and user.is_authenticated %}
+      <form method="post" action="{% url 'marcar' leccion.pk %}">{% csrf_token %}<button class="btn liso" type="submit" id="marcar">{% if avance.completada %}Vista ✓ (desmarcar){% else %}Marcar como vista{% endif %}</button></form>
+      {% endif %}
+      <span class="espacio"></span>
+      {% if anterior %}<a class="btn liso" href="{% url 'leccion' curso.slug anterior.pk %}">← Anterior</a>{% endif %}
+      {% if siguiente %}<a class="btn liso" href="{% url 'leccion' curso.slug siguiente.pk %}">Siguiente →</a>
+      {% elif prueba and inscrito %}<a class="btn pri" href="{% url 'prueba' curso.slug prueba.pk %}">Ir a la prueba</a>{% endif %}
+    </div>
+    {% if not inscrito %}<p class="mensaje info" style="margin-top:18px">Estás viendo una vista previa. <a href="{% url 'curso' curso.slug %}">Conoce el curso completo</a></p>{% endif %}
+    {% if modulo.logros %}<div class="texto"><h3>En este módulo vas a poder</h3><ul>{% for x in modulo.logros %}<li>{{ x }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if leccion.recursos.all and inscrito %}<div class="texto"><h3>Archivos de la lección</h3><ul>{% for r in leccion.recursos.all %}<li><a href="{% url 'recurso' r.pk %}">{{ r.titulo }}</a></li>{% endfor %}</ul></div>{% endif %}
+  </div>
+  <aside class="lateral">
+    <h4>Módulo {{ modulo.numero }} · {{ modulo.titulo }}</h4>
+    <ol>{% for x in hermanas %}<li><a href="{% url 'leccion' curso.slug x.pk %}"{% if x.pk == leccion.pk %} aria-current="page"{% endif %}><span class="n">{{ x.numero }}</span><span>{{ x.titulo }}</span></a></li>{% endfor %}</ol>
+  </aside>
+</div></div></section>
+{% endblock %}

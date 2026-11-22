@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% load academia %}
+{% block contenido %}
+<header class="franja"><div class="caja">
+  <div class="rotulo">{{ SITIO_BAJADA }}</div>
+  <h1>Cursos para usar la IA en finanzas, <em>con método</em></h1>
+  <p class="bajada">Lecciones cortas con casos reales, prácticas con datos y evaluaciones. Compras un curso una vez y lo tienes para siempre.</p>
+  {% if not user.is_authenticated %}<div class="acciones"><a class="btn pri" href="{% url 'account_signup' %}">Crear cuenta</a><a class="btn sec" href="{% url 'account_login' %}">Ya tengo cuenta</a></div>{% endif %}
+</div></header>
+<section class="seccion"><div class="caja">
+  <div class="rotulo">Catálogo</div>
+  <h2>{% if cursos|length == 1 %}El primer curso de la academia{% else %}{{ cursos|length }} cursos disponibles{% endif %}</h2>
+  {% if destacado %}
+  <a class="tarjeta curso ancha" href="{% url 'curso' destacado.slug %}">
+    {% if destacado.imagen %}<img src="{{ destacado.imagen.url }}" alt="" width="640" height="360">{% elif destacado.muestra_poster %}<img src="{{ destacado.muestra_poster.url }}" alt="" width="640" height="360">{% else %}<span class="portada-curso"><span>{{ destacado.titulo }}</span></span>{% endif %}
+    <span class="cuerpo">
+      <span class="n">{% if destacado.categoria %}{{ destacado.categoria }} · {% endif %}Destacado</span>
+      <b>{{ destacado.titulo }}</b>
+      <span class="d">{{ destacado.descripcion|default:destacado.bajada }}</span>
+      <span class="abajo"><span class="num">{{ destacado.datos.modulos }} módulos · {{ destacado.datos.lecciones }} lecciones · {% widthratio destacado.datos.minutos 60 1 %} h</span>
+        <span class="precio">{% if destacado.mio %}Inscrito{% elif destacado.gratuito %}Gratis{% else %}${{ destacado.precio|miles }}{% endif %}</span></span>
+    </span>
+  </a>
+  {% endif %}
+  {% if cursos|length > 1 or not destacado %}
+  <div class="rejilla cursos">
+    {% for c in cursos %}{% if c != destacado %}
+    <a class="tarjeta curso" href="{% url 'curso' c.slug %}">
+      {% if c.imagen %}<img src="{{ c.imagen.url }}" alt="" width="640" height="360">{% else %}<span class="portada-curso"><span>{{ c.titulo }}</span></span>{% endif %}
+      {% if c.categoria %}<span class="n">{{ c.categoria }}</span>{% endif %}
+      <b>{{ c.titulo }}</b>
+      <span class="d">{{ c.bajada }}</span>
+      <span class="abajo"><span class="num">{{ c.datos.modulos }} módulos · {{ c.datos.lecciones }} lecciones</span>
+        <span class="precio">{% if c.mio %}Inscrito{% elif c.gratuito %}Gratis{% else %}${{ c.precio|miles }}{% endif %}</span></span>
+    </a>
+    {% endif %}{% endfor %}
+  </div>
+  {% endif %}
+  {% if not cursos %}<p class="entrada">Todavía no hay cursos publicados.</p>{% endif %}
+</div></section>
+{% endblock %}

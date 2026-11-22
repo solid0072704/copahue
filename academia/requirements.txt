@@ -1,0 +1,11 @@
+# La academia (aplicación web). Para las pruebas se agregan pytest y pytest-django.
+Django>=5.2,<6
+django-allauth[socialaccount]>=65
+whitenoise>=6
+gunicorn>=22
+dj-database-url>=2
+psycopg[binary]>=3.2
+requests>=2.31
+Pillow>=10
+django-storages[s3]>=1.14
+python-dotenv>=1

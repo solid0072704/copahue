@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block titulo %}{{ curso.titulo }} · {{ SITIO_NOMBRE }}{% endblock %}
+{% block contenido %}
+<header class="franja chica"><div class="caja">
+  <nav class="miga" aria-label="Ubicación"><a href="{% url 'mi_aprendizaje' %}">Mi aprendizaje</a></nav>
+  <div class="rotulo">Tu avance</div>
+  <h1>{{ curso.titulo }}</h1>
+  <p class="bajada">{{ avance.completadas }} de {{ avance.publicadas }} lecciones publicadas vistas · {{ aprobadas }} de {{ con_prueba }} pruebas publicadas aprobadas</p>
+  <div class="avance" style="margin-top:18px;max-width:520px;--p:{{ avance.porcentaje }}"><i></i></div>
+  {% if avance.siguiente %}<div class="acciones"><a class="btn pri" href="{% url 'leccion' curso.slug avance.siguiente.pk %}">Continuar: {{ avance.siguiente.titulo }}</a></div>{% endif %}
+</div></header>
+<section class="seccion"><div class="caja">
+  <div class="dos par" style="margin-top:0">
+    {% if diagnostico %}
+    <div class="panel"><h3>Diagnóstico inicial</h3>
+      <p>{% if ultimo_diagnostico %}Tu último resultado: {{ ultimo_diagnostico.buenas }} de {{ ultimo_diagnostico.total }} correctas. {{ recomendacion }}{% else %}Unas pocas preguntas para saber por dónde te conviene partir. No lleva nota.{% endif %}</p>
+      <a class="btn {% if ultimo_diagnostico %}sec{% else %}pri{% endif %}" href="{% url 'prueba' curso.slug diagnostico.pk %}">{% if ultimo_diagnostico %}Repetir el diagnóstico{% else %}Hacer el diagnóstico{% endif %}</a></div>
+    {% endif %}
+    <div class="panel"><h3>Certificado</h3><p>Revisa qué te falta para obtenerlo.</p><a class="btn sec" href="{% url 'certificado' curso.slug %}">Ver los requisitos</a></div>
+  </div>
+  {% for g in grupos %}
+  <section class="bloque">
+    {% if g.titulo %}<header><h3>{{ g.titulo }}</h3><span class="rotulo">Etapa {{ g.etapa }}</span></header>{% endif %}
+    {% for m in g.modulos %}
+    <details class="mod"{% if m.con_video or m.prueba %} open{% endif %}>
+      <summary><span class="n">{{ m.numero|stringformat:"02d" }}</span><b>{{ m.titulo }}</b>
+        <span class="meta">{% if m.con_video %}{{ m.con_video }} de {{ m.filas|length }} lecciones{% else %}En producción{% endif %}</span><span class="d">{{ m.descripcion }}</span></summary>
+      <div class="dentro">
+        <ol class="lecciones">{% for f in m.filas %}
+          <li><a href="{% url 'leccion' curso.slug f.leccion.pk %}" style="display:contents"><b>{{ f.leccion.numero }}. {{ f.leccion.titulo }}</b>
+            <span class="min">{{ f.leccion.get_tipo_display }} · {{ f.leccion.minutos }} min</span><span>{{ f.leccion.descripcion }}</span></a>
+            <span style="margin-top:4px">{% if f.hecha %}<span class="pastilla ok">Vista</span>{% elif f.leccion.publicada %}<span class="pastilla oro">Disponible</span>{% else %}<span class="pastilla">En producción</span>{% endif %}</span></li>{% endfor %}
+        </ol>
+        {% if m.practica %}<div class="practica"><b>Práctica del módulo</b>{{ m.practica }}</div>{% endif %}
+        {% if m.prueba %}
+        <div class="practica"><b>Prueba del módulo</b>{{ m.prueba.preguntas_por_intento }} preguntas, se aprueba con {{ m.prueba.aprobacion }} %.
+          {% if m.prueba_aprobada %}<span class="pastilla ok">Aprobada · {{ m.mejor_nota }} %</span>{% elif m.mejor_nota is not None %}<span class="pastilla mal">Mejor nota: {{ m.mejor_nota }} %</span>{% endif %}
+          <a class="btn {% if m.prueba_aprobada %}sec{% else %}pri{% endif %} chico" style="margin-left:8px" href="{% url 'prueba' curso.slug m.prueba.pk %}">{% if m.mejor_nota is not None %}Rendirla de nuevo{% else %}Rendir la prueba{% endif %}</a></div>
+        {% endif %}
+      </div>
+    </details>
+    {% endfor %}
+  </section>
+  {% endfor %}
+  {% if curso.recursos.all %}
+  <section class="bloque"><header><h3>Archivos del curso</h3></header>
+    <ul class="lecciones">{% for r in curso.recursos.all %}<li><a href="{% url 'recurso' r.pk %}"><b>{{ r.titulo }}</b></a></li>{% endfor %}</ul></section>
+  {% endif %}
+</div></section>
+{% endblock %}

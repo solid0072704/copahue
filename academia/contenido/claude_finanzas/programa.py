@@ -1,10 +1,10 @@
 """El programa del curso de pago «Claude para Finanzas y Contabilidad».
 
-Es la única fuente del temario: de aquí salen la página de venta, el mapa del curso en la plataforma, las horas de
-cada módulo y el presupuesto de narración. Cada lección dura lo que dice `min` (minutos de narración); al producirla,
-ese número se reemplaza por la duración real.
+Es la única fuente del temario: de aquí salen los módulos y las lecciones que la academia muestra (se cargan con
+`manage.py importar_curso`), las horas de cada módulo y el presupuesto de narración. Cada lección dura lo que dice
+`min` (minutos de narración); al producirla, ese número se reemplaza por la duración real.
 
-    python -m academia.programa            # resumen: módulos, lecciones, horas y créditos de voz por etapa
+    python -m academia.contenido.claude_finanzas.programa     # módulos, lecciones, horas y créditos de voz por etapa
 
 Las funciones de Claude cambian con frecuencia. Lo que el temario nombra se verificó el 22 de noviembre de 2026
 (directorio de conectores de Claude, documentación de Microsoft sobre los servidores MCP de Power BI, notas de versión
