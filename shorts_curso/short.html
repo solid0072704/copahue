@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Shorts · Análisis de estados financieros con Claude</title>
+<style>
+  :root{
+    --bg:#0A0E13; --ink:#F5F2EA; --mut:#98A2B3; --line:#263040; --card:#121923;
+    --acc:#FF8A4C; --up:#36D68C; --dn:#FF5D5D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#000;overflow:hidden}
+  #stage{
+    position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--bg);
+    color:var(--ink);font-family:'Inter',sans-serif;transform-origin:0 0;
+    --gx:20%; --gy:15%; --hx:85%; --hy:80%;
+  }
+  #stage::before{content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(720px 720px at var(--gx) var(--gy), rgba(255,138,76,.22), transparent 70%),
+      radial-gradient(820px 820px at var(--hx) var(--hy), rgba(64,120,255,.16), transparent 70%);}
+  #stage::after{content:"";position:absolute;inset:0;opacity:.5;
+    background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:90px 90px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 45%,#000 20%,transparent 75%);}
+
+  /* cabecera fija */
+  #bars{position:absolute;left:84px;right:84px;top:132px;display:flex;gap:10px;z-index:5}
+  #bars i{flex:1;height:7px;border-radius:9px;background:rgba(255,255,255,.16);overflow:hidden;display:block}
+  #bars i b{display:block;height:100%;width:100%;background:var(--ink);transform-origin:0 50%;transform:scaleX(0)}
+  #brand{position:absolute;left:84px;top:166px;z-index:5;font:700 27px 'Inter';letter-spacing:.13em;text-transform:uppercase;color:rgba(245,242,234,.72);display:flex;align-items:center;gap:14px}
+  #brand::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--acc)}
+
+  /* escenas */
+  .scene{position:absolute;inset:0;z-index:2;padding:280px 110px 390px 84px;display:none;flex-direction:column;justify-content:center;gap:38px}
+  .k{font:700 31px 'Inter';letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+  .h1{font:800 126px/1.0 'Inter Display','Inter';letter-spacing:-.035em}
+  .h2{font:800 104px/1.03 'Inter Display','Inter';letter-spacing:-.03em}
+  .h3{font:700 62px/1.12 'Inter Display','Inter';letter-spacing:-.02em}
+  .p{font:500 52px/1.28 'Inter';color:var(--mut)}
+  .p b,.p strong{color:var(--ink);font-weight:700}
+  .acc{color:var(--acc)} .up{color:var(--up)} .dn{color:var(--dn)} .mut{color:var(--mut)}
+  .foot{position:absolute;left:84px;right:150px;bottom:400px;font:500 30px/1.3 'Inter';color:rgba(152,162,179,.85)}
+  .tight{gap:22px}
+  .line{display:block}
+  .hl{position:relative;display:inline-block;white-space:nowrap}
+  .hl u{position:absolute;left:-6px;right:-6px;bottom:.04em;height:.2em;background:var(--acc);opacity:.9;border-radius:6px;transform-origin:0 50%;z-index:-1}
+
+  /* filas de cifras */
+  .stat{border-top:2px solid var(--line);padding-top:28px;display:grid;grid-template-columns:1fr auto;align-items:center;row-gap:10px}
+  .stat .lab{font:600 44px 'Inter';color:var(--mut)}
+  .stat .val{grid-column:1/3;display:flex;align-items:baseline;gap:22px;font:800 136px/1 'Inter Display','Inter';letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .stat .val .from{font-size:62px;color:var(--mut);font-weight:600;letter-spacing:-.01em}
+  .stat .val .arr{font-size:56px;color:var(--mut);font-weight:500}
+  .chip{font:800 44px 'Inter';padding:12px 24px;border-radius:18px;white-space:nowrap}
+  .chip.up{background:rgba(54,214,140,.14);color:var(--up)}
+  .chip.dn{background:rgba(255,93,93,.16);color:var(--dn)}
+
+  /* bloques de capital de trabajo */
+  .blk{background:var(--card);border:2px solid var(--line);border-radius:30px;padding:32px 36px 34px}
+  .blk .lab{font:600 38px 'Inter';color:var(--mut)}
+  .blk .big{font:800 108px/1.05 'Inter Display','Inter';letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .blk .sub{font:600 38px 'Inter';color:var(--ink)}
+  .blk .sub span{color:var(--mut);font-weight:500}
+  .bar{height:14px;border-radius:9px;background:rgba(255,255,255,.08);margin:16px 0 18px;overflow:hidden}
+  .bar b{display:block;height:100%;border-radius:9px;background:var(--dn);transform-origin:0 50%}
+
+  /* tarjeta de prompt */
+  .card{background:#0F151D;border:2px solid var(--line);border-radius:32px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  .card .top{display:flex;align-items:center;gap:12px;padding:24px 30px;border-bottom:2px solid var(--line);font:700 27px 'Inter';letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+  .card .top i{width:16px;height:16px;border-radius:50%;background:#2B3545;display:block}
+  .card .top span{margin-left:10px}
+  .card .txt{padding:38px 36px 44px;font:500 50px/1.36 'DejaVu Sans Mono','Liberation Mono',monospace;letter-spacing:-.02em;color:var(--ink);white-space:pre-wrap}
+  .caret{display:inline-block;width:0;height:1em;border-left:5px solid var(--acc);margin-right:-5px;vertical-align:-.14em}
+
+  /* número gigante de fondo */
+  .num{position:absolute;right:96px;top:250px;font:800 600px/1 'Inter Display','Inter';color:transparent;-webkit-text-stroke:4px rgba(255,255,255,.15)}
+  .numsolid{font:800 150px/1 'Inter Display','Inter';color:var(--acc);letter-spacing:-.04em}
+
+  /* listas */
+  .li{display:flex;gap:28px;align-items:flex-start;font:600 56px/1.18 'Inter';letter-spacing:-.01em}
+  .li i{flex:none;width:72px;height:72px;border-radius:50%;background:var(--acc);color:#14100C;font:800 40px/72px 'Inter Display','Inter';text-align:center;font-style:normal;margin-top:-2px}
+  .flag{border-left:8px solid var(--dn);padding:4px 0 6px 32px}
+  .flag .lab{font:600 40px/1.2 'Inter';color:var(--mut)}
+  .flag .big{font:800 96px/1.1 'Inter Display','Inter';letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .flag .big span.s{font-size:54px;color:var(--mut);font-weight:600;letter-spacing:-.01em}
+  .flag small{display:block;font:500 38px/1.3 'Inter';color:var(--ink)}
+  .chk{background:var(--card);border:2px solid var(--line);border-radius:26px;padding:26px 32px}
+  .chk .eq{font:500 36px/1.25 'Inter';color:var(--mut)}
+  .chk .nums{font:800 66px/1.15 'Inter Display','Inter';letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:22px;margin-top:8px}
+  .ok{display:inline-block;width:62px;height:62px;border-radius:50%;background:var(--up);color:#06140D;font:800 40px/62px 'Inter';text-align:center}
+
+  /* cierre */
+  .chips{display:flex;flex-wrap:wrap;gap:16px}
+  .chips span{font:700 38px 'Inter';padding:16px 26px;border-radius:999px;border:2px solid var(--line);background:rgba(255,255,255,.04)}
+  .cta{align-self:flex-start;font:800 46px 'Inter';padding:28px 40px;border-radius:999px;background:var(--acc);color:#14100C;letter-spacing:-.01em}
+  .by{font:600 38px 'Inter';color:var(--mut)}
+  .by b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bars"></div>
+  <div id="brand">Estados financieros con Claude</div>
+</div>
+<script src="contenido.js"></script>
+<script>
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const id = qs.get('id') || '1';
+  const short = window.SHORTS[id];
+  const stage = document.getElementById('stage');
+  const bars = document.getElementById('bars');
+  const clamp = (x) => Math.max(0, Math.min(1, x));
+  const outCubic = (p) => 1 - Math.pow(1 - p, 3);
+  const outBack = (p) => { const c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+  const fmt = (v) => {
+    const n = Math.round(Math.abs(v)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return (v < 0 ? '−' : '') + n;
+  };
+
+  let t0 = 0;
+  const scenes = short.scenes.map((sc) => {
+    const el = document.createElement('section');
+    el.className = 'scene ' + (sc.cls || '');
+    el.innerHTML = sc.html;
+    el._s = t0; el._d = sc.d; t0 += sc.d;
+    stage.appendChild(el);
+    const seg = document.createElement('i'); seg.innerHTML = '<b></b>'; seg.style.flex = sc.d; bars.appendChild(seg);
+    el._seg = seg.firstChild;
+    el.querySelectorAll('[data-fx="type"]').forEach((n) => { n._full = n.textContent; });
+    return el;
+  });
+  const TOTAL = t0;
+  window.TOTAL = TOTAL;
+  window.SCENES = scenes.map((s) => [s._s, s._d]);
+  document.title = short.titulo;
+
+  window.seek = (t) => {
+    stage.style.setProperty('--gx', (20 + 14 * Math.sin(t * 0.35)) + '%');
+    stage.style.setProperty('--gy', (16 + 8 * Math.cos(t * 0.27)) + '%');
+    stage.style.setProperty('--hx', (84 + 10 * Math.cos(t * 0.31)) + '%');
+    stage.style.setProperty('--hy', (78 + 9 * Math.sin(t * 0.22)) + '%');
+    scenes.forEach((el, i) => {
+      const last = i === scenes.length - 1;
+      const lt = t - el._s;
+      el._seg.style.transform = 'scaleX(' + clamp(lt / el._d) + ')';
+      const on = lt >= 0 && (lt < el._d || last);
+      el.style.display = on ? 'flex' : 'none';
+      if (!on) return;
+      const pin = outCubic(clamp(lt / 0.28));
+      const pout = last ? 0 : clamp((lt - (el._d - 0.2)) / 0.2);
+      el.style.opacity = pin * (1 - pout);
+      el.style.transform = 'translateY(' + ((1 - pin) * 36 - pout * 28) + 'px)';
+      el.querySelectorAll('[data-in]').forEach((n) => {
+        const at = parseFloat(n.dataset.in);
+        const dur = parseFloat(n.dataset.dur || '0.5');
+        const raw = clamp((lt - at) / dur);
+        const p = outCubic(raw);
+        const fx = n.dataset.fx || 'rise';
+        if (fx === 'rise') { n.style.opacity = p; n.style.transform = 'translateY(' + (1 - p) * 56 + 'px)'; }
+        else if (fx === 'left') { n.style.opacity = p; n.style.transform = 'translateX(' + (p - 1) * 90 + 'px)'; }
+        else if (fx === 'fade') { n.style.opacity = p; }
+        else if (fx === 'pop') {
+          const s = raw <= 0 ? 0.6 : 0.6 + 0.4 * outBack(raw);
+          n.style.opacity = clamp(raw * 3); n.style.transform = 'scale(' + s + ')';
+        }
+        else if (fx === 'shake') {
+          const k = lt - at;
+          const dx = k > 0 && k < 0.7 ? Math.sin(k * 46) * 16 * (1 - k / 0.7) : 0;
+          n.style.opacity = clamp(raw * 3);
+          n.style.transform = 'translateX(' + dx + 'px) scale(' + (raw <= 0 ? 0.6 : 0.6 + 0.4 * outBack(raw)) + ')';
+        }
+        else if (fx === 'grow') { n.style.transform = 'scaleX(' + p * parseFloat(n.dataset.to || '1') + ')'; }
+        else if (fx === 'count') {
+          const [a, b] = n.dataset.count.split(',').map(Number);
+          const v = a + (b - a) * p;
+          n.textContent = (n.dataset.pre || '') + (n.dataset.sign && v > 0 ? '+' : '') + fmt(v) + (n.dataset.post || '');
+        }
+        else if (fx === 'type') {
+          const full = n._full; const c = Math.round(full.length * raw);
+          const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+          n.innerHTML = '<span>' + esc(full.slice(0, c)) + '</span>' +
+            (raw > 0 && raw < 1 ? '<span class="caret"></span>' : '') +
+            '<span style="opacity:0">' + esc(full.slice(c)) + '</span>';
+        }
+      });
+    });
+  };
+
+  seek(0);
+  if (!qs.has('render')) {
+    // vista previa en el navegador: escala a la ventana y reproduce en bucle
+    const fit = () => { const s = Math.min(innerWidth / 1080, innerHeight / 1920); stage.style.transform = 'scale(' + s + ')'; };
+    fit(); addEventListener('resize', fit);
+    const start = performance.now();
+    const loop = (now) => { seek(((now - start) / 1000) % (TOTAL + 1)); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>
