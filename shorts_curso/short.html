@@ -104,6 +104,7 @@
   <div id="brand">Estados financieros con Claude</div>
 </div>
 <script src="contenido.js"></script>
+<script src="tiempos.js"></script>
 <script>
 (() => {
   const qs = new URLSearchParams(location.search);
@@ -120,11 +121,26 @@
   };
 
   let t0 = 0;
-  const scenes = short.scenes.map((sc) => {
+  const TIEMPOS = (window.TIEMPOS || {})[id];
+  const scenes = short.scenes.map((sc, i) => {
     const el = document.createElement('section');
     el.className = 'scene ' + (sc.cls || '');
     el.innerHTML = sc.html;
-    el._s = t0; el._d = sc.d; t0 += sc.d;
+    // con voz en off, tiempos.js fija la duración real de cada escena y anclas [diseño, real]:
+    // el tiempo de diseño se deforma por tramos para que cada elemento entre cuando se nombra
+    const real = TIEMPOS && TIEMPOS[i];
+    el._d = real ? real.d : sc.d;
+    const pts = [[0, 0], ...(real ? real.a : []), [sc.d, el._d]];
+    el._w = (t) => {
+      for (let j = 1; j < pts.length; j++) {
+        if (t <= pts[j][0] || j === pts.length - 1) {
+          const [a0, b0] = pts[j - 1], [a1, b1] = pts[j];
+          return b0 + (t - a0) * (b1 - b0) / Math.max(1e-6, a1 - a0);
+        }
+      }
+      return t;
+    };
+    el._s = t0; t0 += el._d;
     stage.appendChild(el);
     const seg = document.createElement('i'); seg.innerHTML = '<b></b>'; seg.style.flex = sc.d; bars.appendChild(seg);
     el._seg = seg.firstChild;
@@ -153,11 +169,12 @@
       el.style.opacity = pin * (1 - pout);
       el.style.transform = 'translateY(' + ((1 - pin) * 36 - pout * 28) + 'px)';
       el.querySelectorAll('[data-in]').forEach((n) => {
-        const at = parseFloat(n.dataset.in);
-        const dur = parseFloat(n.dataset.dur || '0.5');
+        const fx = n.dataset.fx || 'rise';
+        const at0 = parseFloat(n.dataset.in), dur0 = parseFloat(n.dataset.dur || '0.5');
+        const at = el._w(at0);
+        const dur = fx === 'type' ? el._w(at0 + dur0) - at : dur0;
         const raw = clamp((lt - at) / dur);
         const p = outCubic(raw);
-        const fx = n.dataset.fx || 'rise';
         if (fx === 'rise') { n.style.opacity = p; n.style.transform = 'translateY(' + (1 - p) * 56 + 'px)'; }
         else if (fx === 'left') { n.style.opacity = p; n.style.transform = 'translateX(' + (p - 1) * 90 + 'px)'; }
         else if (fx === 'fade') { n.style.opacity = p; }

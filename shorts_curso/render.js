@@ -27,14 +27,19 @@ async function abrir(browser, id) {
 async function video(browser, id) {
   const { page, total, archivo } = await abrir(browser, id);
   const destino = path.join(OUT, archivo + '.mp4');
+  // voz en off: audio/short-N.m4a (ya sincronizado con tiempos.js); si no existe, pista en silencio
+  const voz = path.join(DIR, 'audio', `short-${id}.m4a`);
+  const audio = fs.existsSync(voz)
+    ? ['-i', voz, '-af', 'apad', '-t', total.toFixed(3)]
+    : ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-shortest'];
   const ff = spawn('ffmpeg', [
     '-y', '-loglevel', 'error',
     '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
-    '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo',
+    ...audio,
     '-vf', 'scale=1080:1920:out_color_matrix=bt709:out_range=tv,format=yuv420p',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-r', String(FPS),
     '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709',
-    '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', destino,
+    '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', destino,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
   const fin = new Promise((ok, mal) => ff.on('close', (c) => (c === 0 ? ok() : mal(new Error('ffmpeg ' + c)))));
   const frames = Math.round(total * FPS);
