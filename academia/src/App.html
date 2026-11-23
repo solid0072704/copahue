@@ -6,7 +6,7 @@
   var D = window.DATOS_INICIALES;
   var MARCA = window.MARCA || {};
   var vista = { tipo: 'inicio' };
-  var evaluacion = null;   // { moduloId, preguntas, respuestas, puntajeAprobacion }
+  var evaluacion = null;   // { tipo: 'mini'|'final', moduloId, leccionId, preguntas, respuestas, puntajeAprobacion }
   var panel = null;        // datos del panel de administración
   var permisos = null;     // resultado de la verificación de permisos
   var detalle = null;      // avance detallado de un colaborador (panel)
@@ -137,20 +137,49 @@
   }
 
   function estadoModulo(m) {
+    if (m.completo && m.practicaPendiente) return { clase: 'ok', texto: 'Completado · práctica pendiente', icono: 'check' };
     if (m.completo) return { clase: 'ok', texto: 'Completado', icono: 'check' };
     if (m.bloqueado) return { clase: 'bloqueado', texto: 'Bloqueado', icono: 'candado' };
-    if (m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) return { clase: 'pendiente', texto: 'Evaluación pendiente', icono: 'pregunta' };
-    if (m.leccionesCompletas && m.practica && !m.practica.aprobada) return { clase: 'pendiente', texto: 'Evaluación práctica pendiente', icono: 'reloj' };
+    if (m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) return { clase: 'pendiente', texto: 'Evaluación final pendiente', icono: 'pregunta' };
     if (m.progreso > 0) return { clase: 'curso', texto: 'En curso', icono: 'ruta' };
     return { clase: 'curso', texto: 'Por comenzar', icono: 'ruta' };
   }
 
-  /** Orden de recorrido dentro de un módulo: lecciones, evaluación y evaluación práctica. */
+  /** Orden de recorrido dentro de un módulo: lecciones, evaluación final y evaluación práctica. */
   function pasosModulo(m) {
     var pasos = m.lecciones.map(function (l) { return { tipo: 'leccion', moduloId: m.id, leccionId: l.id }; });
     if (m.evaluacion) pasos.push({ tipo: 'evaluacion', moduloId: m.id });
     if (m.practica) pasos.push({ tipo: 'practica', moduloId: m.id });
     return pasos;
+  }
+
+  /** Qué hacer después de aprobar la mini evaluación de una lección. */
+  function pasoTrasLeccion(m, l) {
+    var siguienteLeccion = m.lecciones[m.lecciones.indexOf(l) + 1];
+    if (siguienteLeccion) return { destino: { tipo: 'leccion', moduloId: m.id, leccionId: siguienteLeccion.id }, texto: 'Siguiente lección' };
+    if (m.evaluacion && !m.evaluacion.aprobada) {
+      return m.evaluacionDisponible
+        ? { destino: { tipo: 'evaluacion', moduloId: m.id }, texto: 'Rendir la evaluación final' }
+        : { destino: { tipo: 'modulo', moduloId: m.id }, texto: 'Ver lo que falta del módulo' };
+    }
+    var sig = moduloSiguiente(m);
+    if (m.completo && sig) return { destino: { tipo: 'modulo', moduloId: sig.id }, texto: 'Ir al siguiente módulo' };
+    return { destino: { tipo: 'modulo', moduloId: m.id }, texto: 'Volver al módulo' };
+  }
+
+  function botonIr(destino, texto, clase, ico) {
+    return '<button class="boton' + (clase ? ' ' + clase : '') + '" type="button" data-ir="' + esc(destino.tipo) + '"' +
+      (destino.moduloId ? ' data-modulo="' + esc(destino.moduloId) + '"' : '') +
+      (destino.leccionId ? ' data-leccion="' + esc(destino.leccionId) + '"' : '') + '>' +
+      (ico ? icono(ico) : '') + esc(texto) + (ico ? '' : icono('flechaDer')) + '</button>';
+  }
+
+  function moduloConPracticaPendiente() {
+    return D.programa.modulos.filter(function (m) { return m.practicaPendiente; })[0] || null;
+  }
+
+  function correctasParaAprobar(total, umbral) {
+    return Math.ceil(total * umbral / 100 - 1e-9);
   }
 
   function moduloSiguiente(m) {
@@ -162,7 +191,8 @@
   /* ---------------------------------------------------------------- navegación */
 
   function ir(nueva, sinHistorial) {
-    if (nueva.tipo === 'evaluacion' && (!evaluacion || evaluacion.moduloId !== nueva.moduloId)) evaluacion = null;
+    if (nueva.tipo === 'evaluacion' && (!evaluacion || evaluacion.moduloId !== nueva.moduloId ||
+      (evaluacion.leccionId || '') !== (nueva.leccionId || ''))) evaluacion = null;
     if (nueva.tipo === 'colaborador') detalle = null; // siempre datos frescos al abrir el detalle
     vista = nueva;
     render();
@@ -188,7 +218,10 @@
     if (el.getAttribute('data-email')) destino.email = el.getAttribute('data-email');
     if (destino.tipo === 'continuar') {
       var s = D.programa.siguiente;
-      if (!s) destino = { tipo: D.certificado.disponible ? 'certificado' : 'inicio' };
+      var pendientePractica = moduloConPracticaPendiente();
+      if (!s && D.certificado.disponible) destino = { tipo: 'certificado' };
+      else if (!s && pendientePractica) destino = { tipo: 'practica', moduloId: pendientePractica.id };
+      else if (!s) destino = { tipo: 'inicio' };
       else if (s.leccionId) destino = { tipo: 'leccion', moduloId: s.moduloId, leccionId: s.leccionId };
       else if (s.evaluacion) destino = { tipo: 'evaluacion', moduloId: s.moduloId };
       else destino = { tipo: 'modulo', moduloId: s.moduloId };
@@ -240,13 +273,16 @@
   function vistaInicio() {
     var p = D.programa;
     var totalLecciones = 0;
-    var evaluaciones = 0;
-    var evaluacionesOk = 0;
+    var minis = 0;
+    var minisOk = 0;
+    var finales = 0;
+    var finalesOk = 0;
     p.modulos.forEach(function (m) {
       totalLecciones += m.lecciones.length;
-      if (m.evaluacion) { evaluaciones++; if (m.evaluacion.aprobada) evaluacionesOk++; }
-      if (m.practica) { evaluaciones++; if (m.practica.aprobada) evaluacionesOk++; }
+      m.lecciones.forEach(function (l) { if (l.miniEvaluacion) { minis++; if (l.miniEvaluacion.aprobada) minisOk++; } });
+      if (m.evaluacion) { finales++; if (m.evaluacion.aprobada) finalesOk++; }
     });
+    var pendientePractica = moduloConPracticaPendiente();
     var circ = 2 * Math.PI * 52;
     var saludo = primerNombre() ? 'Hola, ' + primerNombre() : 'Hola';
     var textoBoton = p.avance > 0 ? 'Continuar donde quedé' : 'Comenzar la academia';
@@ -256,12 +292,16 @@
         '<div class="hero__saludo">' + esc(saludo) + '</div>' +
         '<h1>' + esc(p.terminado ? '¡Completaste ' + D.academia.nombre + '!' : 'Tu ruta en ' + D.academia.nombre) + '</h1>' +
         '<p class="muted">' + esc((D.academia.bajada ? D.academia.bajada.replace(/\.?\s*$/, '. ') : '') +
-          (p.terminado ? 'Ya puedes descargar tu certificado.' :
-            'Avanza módulo a módulo: cada evaluación se aprueba con ' + D.academia.puntajeAprobacion + '% o más.')) + '</p>' +
+          (D.certificado.disponible ? 'Ya puedes descargar tu certificado.' :
+            D.certificado.esperaPractica ? 'Terminaste el 100% de los cursos. Tu certificado se habilita cuando tu tutora o supervisor registre tu evaluación práctica.' :
+            'Cada video tiene una mini evaluación de 4 preguntas y cada módulo cierra con una evaluación final (se aprueba con ' +
+              D.academia.puntajeAprobacion + '% o más).')) + '</p>' +
         '<div class="hero__acciones">' +
-          (p.terminado
+          (D.certificado.disponible
             ? '<button class="boton boton--acento" type="button" data-ir="certificado">' + icono('premio') + 'Ver mi certificado</button>'
-            : '<button class="boton" type="button" data-ir="continuar">' + esc(textoBoton) + icono('flechaDer') + '</button>') +
+            : p.terminado && pendientePractica
+              ? botonIr({ tipo: 'practica', moduloId: pendientePractica.id }, 'Ver mi evaluación práctica', 'boton--secundario', 'usuarios')
+              : '<button class="boton" type="button" data-ir="continuar">' + esc(textoBoton) + icono('flechaDer') + '</button>') +
         '</div>' +
       '</div>' +
       '<div class="anillo" role="img" aria-label="Avance total ' + p.avance + '%">' +
@@ -271,10 +311,11 @@
       '</div>' +
     '</section>';
 
-    html += '<div class="metricas">' +
+    html += '<div class="metricas metricas--4">' +
       '<div class="metrica"><strong>' + p.modulosCompletos + ' / ' + p.totalModulos + '</strong><span>módulos completados</span></div>' +
-      '<div class="metrica"><strong>' + p.leccionesCompletadas + ' / ' + totalLecciones + '</strong><span>lecciones vistas</span></div>' +
-      '<div class="metrica"><strong>' + evaluacionesOk + ' / ' + evaluaciones + '</strong><span>evaluaciones aprobadas</span></div>' +
+      '<div class="metrica"><strong>' + p.leccionesCompletadas + ' / ' + totalLecciones + '</strong><span>lecciones completadas</span></div>' +
+      '<div class="metrica"><strong>' + minisOk + ' / ' + minis + '</strong><span>mini evaluaciones de video</span></div>' +
+      '<div class="metrica"><strong>' + finalesOk + ' / ' + finales + '</strong><span>evaluaciones finales de módulo</span></div>' +
     '</div>';
 
     var semanas = [];
@@ -298,14 +339,16 @@
   function tarjetaModulo(m) {
     var est = estadoModulo(m);
     var duracion = m.lecciones.reduce(function (s, l) { return s + (l.duracion || 0); }, 0);
+    var minisModulo = m.lecciones.filter(function (l) { return l.miniEvaluacion; }).length;
     return '<button type="button" class="tarjeta modulo" data-ir="modulo" data-modulo="' + esc(m.id) + '"' +
       (m.bloqueado ? ' aria-disabled="true" title="Se desbloquea al completar el módulo anterior"' : '') + '>' +
       '<div class="fila"><span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.pilar || 'Módulo') + '</span><span class="espaciador"></span>' +
       '<span class="insignia insignia--' + est.clase + '">' + icono(est.icono, 'icono--chico') + esc(est.texto) + '</span></div>' +
       '<h3>' + esc(m.titulo) + '</h3>' +
       '<p class="modulo__desc">' + esc(m.descripcion) + '</p>' +
-      '<div class="modulo__pie"><span>' + m.lecciones.length + ' lecciones' + (m.evaluacion ? ' · evaluación' : '') +
-        (m.practica ? ' · práctica' : '') + (duracion ? ' · ' + minutos(duracion) : '') + '</span></div>' +
+      '<div class="modulo__pie"><span>' + m.lecciones.length + ' lecciones' +
+        (minisModulo ? ' · ' + minisModulo + (minisModulo === 1 ? ' mini evaluación' : ' mini evaluaciones') : '') +
+        (m.evaluacion ? ' · evaluación final' : '') + (m.practica ? ' · práctica' : '') + (duracion ? ' · ' + minutos(duracion) : '') + '</span></div>' +
       '<div class="modulo__pie"><div class="barra"><div class="barra__relleno" style="width:' + m.progreso + '%"></div></div><strong>' + m.progreso + '%</strong></div>' +
     '</button>';
   }
@@ -345,23 +388,24 @@
       var actual = vista.tipo === 'leccion' && vista.leccionId === l.id;
       html += '<button type="button" class="temario__item" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(l.id) + '"' + (actual ? ' aria-current="true"' : '') + '>' +
         '<span class="temario__check' + (l.completada ? ' temario__check--ok' : '') + '">' + (l.completada ? icono('check') : '') + '</span>' +
-        '<span>' + esc(l.titulo) + '<span class="temario__meta">' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.duracion ? ' · ' + minutos(l.duracion) : '') + (l.obligatoria ? '' : ' · opcional') + '</span></span></button>';
+        '<span>' + esc(l.titulo) + '<span class="temario__meta">' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.duracion ? ' · ' + minutos(l.duracion) : '') +
+          (l.miniEvaluacion ? ' · mini evaluación' + (l.miniEvaluacion.aprobada ? ' aprobada' : '') : '') + (l.obligatoria ? '' : ' · opcional') + '</span></span></button>';
     });
     if (m.evaluacion) {
       var ev = m.evaluacion;
       var metaEv = ev.aprobada ? 'Aprobada · mejor puntaje ' + ev.mejorPuntaje + '%' :
-        (m.evaluacionDisponible ? ev.preguntas + ' preguntas · aprobación ' + D.academia.puntajeAprobacion + '%' : 'Completa las lecciones para rendirla');
-      html += '<div class="temario__seccion">Evaluación</div><button type="button" class="temario__item" data-ir="evaluacion" data-modulo="' + esc(m.id) + '"' +
-        (m.evaluacionDisponible ? '' : ' disabled') + (vista.tipo === 'evaluacion' ? ' aria-current="true"' : '') + '>' +
+        (m.evaluacionDisponible ? ev.preguntas + ' preguntas · aprobación ' + D.academia.puntajeAprobacion + '%' : 'Completa las lecciones y sus mini evaluaciones para rendirla');
+      html += '<div class="temario__seccion">Evaluación final</div><button type="button" class="temario__item" data-ir="evaluacion" data-modulo="' + esc(m.id) + '"' +
+        (m.evaluacionDisponible ? '' : ' disabled') + (vista.tipo === 'evaluacion' && !vista.leccionId ? ' aria-current="true"' : '') + '>' +
         '<span class="temario__check' + (ev.aprobada ? ' temario__check--ok' : '') + '">' + (ev.aprobada ? icono('check') : icono('pregunta')) + '</span>' +
-        '<span>Evaluación del módulo<span class="temario__meta">' + esc(metaEv) + '</span></span></button>';
+        '<span>Evaluación final del módulo<span class="temario__meta">' + esc(metaEv) + '</span></span></button>';
     }
     if (m.practica) {
       var pr = m.practica;
-      html += (m.evaluacion ? '' : '<div class="temario__seccion">Evaluación</div>') +
+      html += '<div class="temario__seccion">Con tu tutora</div>' +
         '<button type="button" class="temario__item" data-ir="practica" data-modulo="' + esc(m.id) + '"' + (vista.tipo === 'practica' ? ' aria-current="true"' : '') + '>' +
         '<span class="temario__check' + (pr.aprobada ? ' temario__check--ok' : '') + '">' + (pr.aprobada ? icono('check') : icono('usuarios')) + '</span>' +
-        '<span>Evaluación práctica<span class="temario__meta">' + esc(pr.aprobada ? 'Aprobada · ' + pr.puntaje + '%' : (pr.registrada ? 'Por reforzar · ' + pr.puntaje + '%' : 'La registra tu tutora o supervisor')) + '</span></span></button>';
+        '<span>Evaluación práctica<span class="temario__meta">' + esc(pr.aprobada ? 'Aprobada · ' + pr.puntaje + '%' : (pr.registrada ? 'Por reforzar · ' + pr.puntaje + '%' : 'La registra tu tutora o supervisor · no afecta tu avance')) + '</span></span></button>';
     }
     return html + '</aside>';
   }
@@ -377,18 +421,21 @@
       accion = '<button class="boton" type="button" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(primera.id) + '">' +
         (m.completadas ? 'Continuar con «' + esc(primera.titulo) + '»' : 'Comenzar el módulo') + icono('flechaDer') + '</button>';
     } else if (m.evaluacionDisponible && !m.evaluacion.aprobada) {
-      accion = '<button class="boton boton--acento" type="button" data-ir="evaluacion" data-modulo="' + esc(m.id) + '">' + icono('pregunta') + 'Rendir la evaluación</button>';
+      accion = '<button class="boton boton--acento" type="button" data-ir="evaluacion" data-modulo="' + esc(m.id) + '">' + icono('pregunta') + 'Rendir la evaluación final</button>';
     } else if (m.completo && moduloSiguiente(m)) {
       accion = '<button class="boton" type="button" data-ir="modulo" data-modulo="' + esc(moduloSiguiente(m).id) + '">Ir al siguiente módulo' + icono('flechaDer') + '</button>';
-    } else if (m.practica && !m.practica.aprobada) {
+    } else if (m.practicaPendiente) {
       accion = '<button class="boton boton--secundario" type="button" data-ir="practica" data-modulo="' + esc(m.id) + '">Ver la evaluación práctica</button>';
     }
+    var minisModulo = m.lecciones.filter(function (l) { return l.miniEvaluacion; }).length;
     return '<section class="tarjeta">' +
       '<div class="fila"><span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.semana || m.pilar) + '</span><span class="insignia insignia--' + est.clase + '">' + icono(est.icono, 'icono--chico') + esc(est.texto) + '</span></div>' +
       '<h1 style="margin-top:12px">' + esc(m.titulo) + '</h1>' +
       '<p class="muted">' + esc(m.descripcion) + '</p>' + objetivos +
-      '<p class="chico muted">' + m.lecciones.length + ' lecciones' + (m.evaluacion ? ' · evaluación de ' + m.evaluacion.preguntas + ' preguntas (aprobación ' + D.academia.puntajeAprobacion + '%)' : '') +
-        (m.practica ? ' · evaluación práctica con tu tutora o supervisor' : '') + '</p>' +
+      '<p class="chico muted">' + m.lecciones.length + ' lecciones' +
+        (minisModulo ? ' · ' + minisModulo + (minisModulo === 1 ? ' video con mini evaluación' : ' videos con mini evaluación') + ' de 4 preguntas' : '') +
+        (m.evaluacion ? ' · evaluación final de ' + m.evaluacion.preguntas + ' preguntas (aprobación ' + D.academia.puntajeAprobacion + '%)' : '') +
+        (m.practica ? ' · evaluación práctica con tu tutora o supervisor (no afecta tu avance' + (D.academia.certificadoRequierePractica ? '; habilita tu certificado)' : ')') : '') + '</p>' +
       '<div class="acciones-leccion">' + accion + '</div>' +
     '</section>';
   }
@@ -414,16 +461,35 @@
 
     var pasos = pasosModulo(m);
     var i = -1;
-    pasos.forEach(function (p, j) { if (p.leccionId === l.id) i = j; });
+    pasos.forEach(function (p, j) { if (p.tipo === 'leccion' && p.leccionId === l.id) i = j; });
     var anterior = i > 0 ? pasos[i - 1] : null;
     var siguiente = i < pasos.length - 1 ? pasos[i + 1] : null;
     var sigModulo = moduloSiguiente(m);
+    var mini = l.miniEvaluacion;
+
+    var cajaMini = '';
+    if (mini) {
+      var umbralMini = D.academia.puntajeAprobacionMini;
+      var necesarias = correctasParaAprobar(mini.preguntas, umbralMini);
+      cajaMini = '<section class="tarjeta mini-eval' + (mini.aprobada ? ' mini-eval--ok' : '') + '">' +
+        '<span class="mini-eval__icono">' + icono(mini.aprobada ? 'check' : 'pregunta') + '</span>' +
+        '<div class="mini-eval__texto"><h2>' + (mini.aprobada ? 'Mini evaluación aprobada' : 'Mini evaluación del video') + '</h2>' +
+          '<p class="muted chico">' + (mini.aprobada
+            ? 'Mejor puntaje: ' + mini.mejorPuntaje + '%. Esta lección ya cuenta en tu avance.'
+            : mini.preguntas + ' preguntas sobre lo que acabas de ver. Apruebas con ' + necesarias + ' de ' + mini.preguntas +
+              ' correctas (' + umbralMini + '%) y la lección queda completada.' +
+              (mini.intentos ? ' Mejor puntaje hasta ahora: ' + mini.mejorPuntaje + '% · ' + mini.intentos + (mini.intentos === 1 ? ' intento.' : ' intentos.') : '')) + '</p></div>' +
+        botonIr({ tipo: 'evaluacion', moduloId: m.id, leccionId: l.id }, mini.aprobada ? 'Volver a rendirla' : (mini.intentos ? 'Intentar nuevamente' : 'Rendir mini evaluación'),
+          mini.aprobada ? 'boton--fantasma' : 'boton--acento', 'pregunta') +
+      '</section>';
+    }
 
     var botonSiguiente = '';
     if (siguiente) {
-      var deshabilitado = siguiente.tipo === 'evaluacion' && !(m.evaluacionDisponible || (l.obligatoria && !l.completada && m.obligatorias - m.completadas === 1));
+      var deshabilitado = siguiente.tipo === 'evaluacion' &&
+        !(m.evaluacionDisponible || (!mini && l.obligatoria && !l.completada && m.obligatorias - m.completadas === 1));
       botonSiguiente = '<button class="boton boton--secundario" type="button" id="btn-siguiente" data-paso="' + esc(JSON.stringify(siguiente)) + '"' + (deshabilitado ? ' disabled title="Completa las lecciones para rendir la evaluación"' : '') + '>' +
-        (siguiente.tipo === 'evaluacion' ? 'Ir a la evaluación' : siguiente.tipo === 'practica' ? 'Evaluación práctica' : 'Siguiente') + icono('flechaDer') + '</button>';
+        (siguiente.tipo === 'evaluacion' ? 'Ir a la evaluación final' : siguiente.tipo === 'practica' ? 'Evaluación práctica' : 'Siguiente') + icono('flechaDer') + '</button>';
     } else if (sigModulo) {
       botonSiguiente = '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(sigModulo.id) + '">Siguiente módulo' + icono('flechaDer') + '</button>';
     }
@@ -435,11 +501,14 @@
         '<h1 style="margin-top:10px">' + esc(l.titulo) + '</h1>' +
         (l.descripcion && l.tipo !== 'Texto' ? '<p class="muted" style="max-width:760px">' + esc(l.descripcion) + '</p>' : '') +
       '</div></div>' +
-      cuerpo +
+      cuerpo + cajaMini +
       '<div class="acciones-leccion">' +
-        (l.completada
-          ? '<button class="boton boton--exito" type="button" id="btn-completar" data-leccion="' + esc(l.id) + '" data-valor="false" title="Haz clic para desmarcar">' + icono('check') + 'Completada</button>'
-          : '<button class="boton" type="button" id="btn-completar" data-leccion="' + esc(l.id) + '" data-valor="true">' + icono('check') + 'Marcar como completada</button>') +
+        (mini
+          ? (mini.aprobada ? '<span class="insignia insignia--ok">' + icono('check', 'icono--chico') + 'Lección completada</span>'
+            : '<span class="insignia insignia--pendiente">' + icono('pregunta', 'icono--chico') + 'Se completa al aprobar la mini evaluación</span>')
+          : l.completada
+            ? '<button class="boton boton--exito" type="button" id="btn-completar" data-leccion="' + esc(l.id) + '" data-valor="false" title="Haz clic para desmarcar">' + icono('check') + 'Completada</button>'
+            : '<button class="boton" type="button" id="btn-completar" data-leccion="' + esc(l.id) + '" data-valor="true">' + icono('check') + 'Marcar como completada</button>') +
         (l.abrir && l.tipo !== 'Texto' ? '<a class="boton boton--fantasma" href="' + esc(l.abrir) + '" target="_blank" rel="noopener">' + icono('externo') + 'Abrir en pestaña nueva</a>' : '') +
         '<span class="espaciador"></span>' +
         (anterior ? '<button class="boton boton--fantasma" type="button" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(anterior.leccionId) + '">' + icono('flechaIzq') + 'Anterior</button>' : '') +
@@ -458,15 +527,16 @@
       estado = '<div class="resultado resultado--no"><div class="insignia insignia--pendiente">' + icono('reloj', 'icono--chico') + 'Por reforzar</div>' +
         '<div class="resultado__puntaje">' + pr.puntaje + '%</div><p class="muted">Tu tutora o supervisor coordinará contigo una nueva instancia.</p></div>';
     } else {
-      estado = '<div class="destacado"><strong>Pendiente.</strong> ' + (m.leccionesCompletas
-        ? 'Ya completaste el material: coordina con tu tutora o supervisor la fecha de tu evaluación práctica.'
+      estado = '<div class="destacado"><strong>Pendiente.</strong> ' + (m.completo
+        ? 'Ya completaste el módulo: coordina con tu tutora o supervisor la fecha de tu evaluación práctica.'
         : 'Primero completa las lecciones de este módulo; luego coordina la evaluación con tu tutora o supervisor.') + '</div>';
     }
     return '<section class="tarjeta contenido-texto">' +
       '<span class="chip" data-pilar="Evaluación">Evaluación práctica</span>' +
       '<h1 style="margin-top:12px">Evaluación práctica · ' + esc(m.titulo) + '</h1>' +
       '<p>Esta evaluación no se rinde en la plataforma: la realiza tu tutora o supervisor y queda registrada aquí. ' +
-      'Se aprueba con ' + D.academia.puntajeAprobacion + '% o más.</p>' + estado +
+      'Se aprueba con ' + D.academia.puntajeAprobacion + '% o más. No cuenta en tu barra de avance' +
+      (D.academia.certificadoRequierePractica ? ': al aprobarla se habilita tu certificado.' : '.') + '</p>' + estado +
       (pr.comentario ? '<h2>Retroalimentación</h2>' + parrafos(pr.comentario) : '') +
     '</section>';
   }
@@ -475,18 +545,23 @@
 
   function vistaEvaluacion() {
     var m = moduloPorId(vista.moduloId);
-    if (!m || !m.evaluacion) return vistaNoEncontrada();
+    var l = m && vista.leccionId ? leccionPorId(m, vista.leccionId) : null;
+    if (!m || (vista.leccionId ? !(l && l.miniEvaluacion) : !m.evaluacion)) return vistaNoEncontrada();
+    var nombre = l ? 'Mini evaluación' : 'Evaluación final';
     var migas = '<nav class="migas" aria-label="Ruta"><button type="button" data-ir="inicio">Mi ruta</button><span>›</span>' +
-      '<button type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">' + esc(m.titulo) + '</button><span>›</span><span>Evaluación</span></nav>';
+      '<button type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">' + esc(m.titulo) + '</button><span>›</span>' +
+      (l ? '<button type="button" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(l.id) + '">' + esc(l.titulo) + '</button><span>›</span>' : '') +
+      '<span>' + nombre + '</span></nav>';
     if (!evaluacion) {
-      cargarEvaluacion(m.id);
-      return migas + '<div class="cargando" role="status"><span class="spinner" aria-hidden="true"></span> Preparando la evaluación…</div>';
+      cargarEvaluacion(m.id, l ? l.id : '');
+      return migas + '<div class="cargando" role="status"><span class="spinner" aria-hidden="true"></span> Preparando la ' + nombre.toLowerCase() + '…</div>';
     }
     var respondidas = Object.keys(evaluacion.respuestas).length;
     var total = evaluacion.preguntas.length;
-    var html = migas + '<div class="eval-cabeza"><div><span class="chip" data-pilar="' + pilarDe(m) + '">Evaluación</span>' +
-      '<h1 style="margin-top:10px">' + esc(m.titulo) + '</h1>' +
+    var html = migas + '<div class="eval-cabeza"><div><span class="chip" data-pilar="' + pilarDe(m) + '">' + nombre + '</span>' +
+      '<h1 style="margin-top:10px">' + esc(l ? l.titulo : m.titulo) + '</h1>' +
       '<p class="muted" style="margin:0">' + total + ' preguntas · se aprueba con ' + evaluacion.puntajeAprobacion + '%' +
+      (l ? ' (' + correctasParaAprobar(total, evaluacion.puntajeAprobacion) + ' de ' + total + ' correctas)' : '') +
       (evaluacion.intentosMaximos ? ' · intento ' + (evaluacion.intentos + 1) + ' de ' + evaluacion.intentosMaximos : (evaluacion.intentos ? ' · intento ' + (evaluacion.intentos + 1) : '')) + '</p></div>' +
       '<div class="tarjeta" style="padding:12px 16px"><strong id="contador">' + respondidas + '</strong> de ' + total + ' respondidas</div></div>' +
       '<form id="form-evaluacion" novalidate>';
@@ -499,17 +574,18 @@
         }).join('') + '</fieldset></div>';
     });
     html += '<div class="acciones-leccion"><button class="boton" type="submit" id="btn-enviar"' + (respondidas < total ? ' disabled' : '') + '>Enviar respuestas' + icono('flechaDer') + '</button>' +
-      '<button class="boton boton--fantasma" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Volver al módulo</button></div></form>';
+      (l ? '<button class="boton boton--fantasma" type="button" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(l.id) + '">Volver al video</button>'
+        : '<button class="boton boton--fantasma" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Volver al módulo</button>') + '</div></form>';
     return html;
   }
 
-  function cargarEvaluacion(idModulo) {
-    llamar('obtenerEvaluacion', idModulo).then(function (datos) {
-      evaluacion = Object.assign({ respuestas: {} }, datos);
-      if (vista.tipo === 'evaluacion' && vista.moduloId === idModulo) render();
+  function cargarEvaluacion(idModulo, idLeccion) {
+    llamar('obtenerEvaluacion', idModulo, idLeccion || '').then(function (datos) {
+      evaluacion = Object.assign({ respuestas: {} }, datos, { moduloId: idModulo, leccionId: idLeccion || '' });
+      if (vista.tipo === 'evaluacion' && vista.moduloId === idModulo && (vista.leccionId || '') === (idLeccion || '')) render();
     }).catch(function (e) {
       aviso((e && e.message) || 'No se pudo cargar la evaluación.', 'error');
-      ir({ tipo: 'modulo', moduloId: idModulo });
+      ir(idLeccion ? { tipo: 'leccion', moduloId: idModulo, leccionId: idLeccion } : { tipo: 'modulo', moduloId: idModulo });
     });
   }
 
@@ -517,22 +593,34 @@
     var m = moduloPorId(vista.moduloId);
     var r = vista.resultado;
     if (!m || !r) return vistaNoEncontrada();
+    var l = vista.leccionId ? leccionPorId(m, vista.leccionId) : null;
+    var umbral = r.umbral !== undefined && r.umbral !== null ? r.umbral : D.academia.puntajeAprobacion;
     var siguiente = moduloSiguiente(m);
     var preguntas = {};
     (evaluacion ? evaluacion.preguntas : []).forEach(function (p) { preguntas[p.n] = p; });
+    var mensaje;
+    var botones;
+    if (!r.aprobado) {
+      mensaje = l ? 'Vuelve a ver el video y repasa los puntos clave antes de intentarlo otra vez.' : 'Repasa el material y vuelve a intentarlo.';
+      botones = '<button class="boton" type="button" id="btn-reintentar" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(l ? l.id : '') + '">Intentar nuevamente</button>' +
+        (l ? botonIr({ tipo: 'leccion', moduloId: m.id, leccionId: l.id }, 'Volver a ver el video', 'boton--secundario', 'play')
+          : '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Repasar el módulo</button>');
+    } else if (l) {
+      var paso = pasoTrasLeccion(m, l);
+      mensaje = 'La lección «' + esc(l.titulo) + '» quedó completada.' + (m.completo ? ' ¡Completaste este módulo!' : '');
+      botones = botonIr(paso.destino, paso.texto) + '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Volver al módulo</button>';
+    } else {
+      mensaje = m.completo ? (m.practicaPendiente ? 'Completaste el módulo. Tu tutora o supervisor registrará la evaluación práctica.' : 'Completaste este módulo.') : '';
+      botones = D.certificado.disponible ? '<button class="boton boton--acento" type="button" data-ir="certificado">' + icono('premio') + 'Ver mi certificado</button>'
+        : (siguiente && !siguiente.bloqueado ? '<button class="boton" type="button" data-ir="modulo" data-modulo="' + esc(siguiente.id) + '">Ir al siguiente módulo' + icono('flechaDer') + '</button>' : '') +
+          '<button class="boton boton--secundario" type="button" data-ir="inicio">Volver a mi ruta</button>';
+    }
     var html = '<section class="tarjeta resultado ' + (r.aprobado ? 'resultado--ok' : 'resultado--no') + '">' +
-      '<span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(m.titulo) + '</span>' +
+      '<span class="chip" data-pilar="' + pilarDe(m) + '">' + esc(l ? 'Mini evaluación · ' + l.titulo : 'Evaluación final · ' + m.titulo) + '</span>' +
       '<div class="resultado__puntaje">' + r.puntaje + '%</div>' +
-      '<h1>' + (r.aprobado ? '¡Aprobaste la evaluación!' : 'Aún no alcanzas el ' + D.academia.puntajeAprobacion + '%') + '</h1>' +
-      '<p class="muted">' + r.correctas + ' de ' + r.total + ' respuestas correctas. ' +
-        (r.aprobado ? (m.completo ? 'Completaste este módulo.' : (m.practica ? 'Solo te falta la evaluación práctica.' : '')) : 'Repasa el material y vuelve a intentarlo.') + '</p>' +
-      '<div class="fila" style="justify-content:center;margin-top:14px">' +
-        (r.aprobado
-          ? (D.certificado.disponible ? '<button class="boton boton--acento" type="button" data-ir="certificado">' + icono('premio') + 'Ver mi certificado</button>'
-            : (siguiente && !siguiente.bloqueado ? '<button class="boton" type="button" data-ir="modulo" data-modulo="' + esc(siguiente.id) + '">Ir al siguiente módulo' + icono('flechaDer') + '</button>' : '') +
-              '<button class="boton boton--secundario" type="button" data-ir="inicio">Volver a mi ruta</button>')
-          : '<button class="boton" type="button" id="btn-reintentar" data-modulo="' + esc(m.id) + '">Intentar nuevamente</button>' +
-            '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(m.id) + '">Repasar el módulo</button>') +
+      '<h1>' + (r.aprobado ? (l ? '¡Aprobaste la mini evaluación!' : '¡Aprobaste la evaluación final!') : 'Aún no alcanzas el ' + umbral + '%') + '</h1>' +
+      '<p class="muted">' + r.correctas + ' de ' + r.total + ' respuestas correctas. ' + mensaje + '</p>' +
+      '<div class="fila" style="justify-content:center;margin-top:14px">' + botones +
       '</div></section><h2 style="margin-top:28px">Revisión de tus respuestas</h2>';
     r.detalle.forEach(function (d, i) {
       var p = preguntas[d.n];
@@ -553,7 +641,13 @@
 
   function vistaCertificado() {
     if (!D.certificado.disponible) {
-      return '<div class="tarjeta sin-visor">' + icono('premio') + '<h1>Tu certificado te espera</h1><p class="muted">Completa todos los módulos y evaluaciones para obtenerlo. Llevas un ' +
+      if (D.certificado.esperaPractica) {
+        var pendiente = moduloConPracticaPendiente();
+        return '<div class="tarjeta sin-visor">' + icono('premio') + '<h1>¡Terminaste los cursos!</h1><p class="muted">Completaste el 100% del programa en línea. ' +
+          'Tu certificado se habilita cuando tu tutora o supervisor registre tu evaluación práctica aprobada.</p>' +
+          (pendiente ? botonIr({ tipo: 'practica', moduloId: pendiente.id }, 'Ver mi evaluación práctica', '', 'usuarios') : '') + '</div>';
+      }
+      return '<div class="tarjeta sin-visor">' + icono('premio') + '<h1>Tu certificado te espera</h1><p class="muted">Completa todos los módulos, sus mini evaluaciones y evaluaciones finales para obtenerlo. Llevas un ' +
         D.programa.avance + '% del programa.</p><button class="boton" type="button" data-ir="continuar">Continuar mi ruta' + icono('flechaDer') + '</button></div>';
     }
     var pilares = [];
@@ -629,24 +723,27 @@
           return '<th class="th-modulo" title="' + esc(m.titulo) + '"><span>' + esc((m.semana || '').replace('Semana ', 'S')) + '</span>' + esc(m.corto) + '</th>';
         }).join('') + '<th>Último ingreso</th></tr></thead><tbody id="cuerpo-colaboradores"></tbody></table></div>' +
         '<div class="leyenda chico muted"><span><i class="celda celda--completo"></i>Completado</span><span><i class="celda celda--curso"></i>En curso</span>' +
-        '<span><i class="celda celda--evaluacion"></i>Evaluación o práctica pendiente</span><span><i class="celda celda--pendiente"></i>Sin comenzar</span>' +
+        '<span><i class="celda celda--evaluacion"></i>Evaluación final pendiente</span><span><i class="celda celda--practica"></i>Completado, práctica por registrar</span>' +
+        '<span><i class="celda celda--pendiente"></i>Sin comenzar</span>' +
         '<span><i class="celda celda--bloqueado"></i>Bloqueado</span><span>· Haz clic en una persona para ver su detalle.</span></div>';
     }
     html += '</section>';
 
     html += '<section class="tarjeta"><div class="fila"><h2 style="margin:0">Programa publicado</h2><span class="espaciador"></span>' +
       '<a class="boton boton--fantasma boton--chico" href="' + esc(panel.urlCarpeta) + '" target="_blank" rel="noopener">' + icono('carpeta', 'icono--chico') + 'Carpeta TPDV ACADEMY</a></div>' +
-      '<div class="tabla-envoltura"><table class="tabla"><thead><tr><th>Módulo</th><th>ID</th><th>Lecciones</th><th>Preguntas</th><th>Tipo</th></tr></thead><tbody>' +
+      '<div class="tabla-envoltura"><table class="tabla"><thead><tr><th>Módulo</th><th>ID</th><th>Lecciones</th><th>Mini evaluaciones</th><th>Evaluación final</th><th>Tipo</th></tr></thead><tbody>' +
       panel.modulos.map(function (m) {
-        return '<tr><td>' + esc(m.titulo) + '</td><td class="chico muted">' + esc(m.id) + '</td><td>' + m.lecciones + '</td><td>' + m.preguntas + '</td><td class="chico">' + (m.tipo === 'practica' ? 'Con evaluación práctica' : 'Contenido') + '</td></tr>';
+        return '<tr><td>' + esc(m.titulo) + '</td><td class="chico muted">' + esc(m.id) + '</td><td>' + m.lecciones + '</td><td>' + (m.minis || 0) + '</td>' +
+          '<td>' + (m.preguntas ? m.preguntas + ' preguntas' : '<span class="muted">—</span>') + '</td><td class="chico">' + (m.tipo === 'practica' ? 'Con evaluación práctica' : 'Contenido') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      '<p class="chico muted" style="margin-top:12px">Para cambiar títulos, orden, visibilidad o preguntas edita las hojas «Módulos», «Lecciones» y «Preguntas» de la planilla. ' +
+      '<p class="chico muted" style="margin-top:12px">Para cambiar títulos, orden, visibilidad o preguntas edita las hojas «Módulos», «Lecciones» y «Preguntas» de la planilla ' +
+      '(una pregunta con «ID lección» pertenece a la mini evaluación de ese video; sin «ID lección», a la evaluación final del módulo). ' +
       'Los archivos nuevos de la carpeta aparecen en «Por clasificar»: asígnales un ID de módulo, escribe SI en «Incluir» y vuelve a sincronizar.</p></section>';
     return html;
   }
 
   var ESTADOS_MODULO = {
-    completo: 'Completado', curso: 'En curso', evaluacion: 'Evaluación pendiente', practica: 'Práctica pendiente',
+    completo: 'Completado', curso: 'En curso', evaluacion: 'Evaluación final pendiente', practica: 'Completado · práctica por registrar',
     pendiente: 'Sin comenzar', bloqueado: 'Bloqueado'
   };
   var CLASE_INSIGNIA = { completo: 'ok', curso: 'curso', evaluacion: 'pendiente', practica: 'pendiente', pendiente: 'curso', bloqueado: 'bloqueado' };
@@ -683,7 +780,8 @@
         '<td><div class="mini-barra"><div class="barra"><div class="barra__relleno" style="width:' + c.avance + '%"></div></div><strong>' + c.avance + '%</strong></div></td>' +
         c.modulos.map(function (m) {
           return '<td class="td-celda"><span class="celda celda--' + m.estado + '" title="' + esc(cortos[m.id] + ': ' + ESTADOS_MODULO[m.estado] + ' · ' + m.progreso + '%') + '">' +
-            (m.estado === 'completo' ? icono('check', 'icono--chico') : m.estado === 'bloqueado' ? icono('candado', 'icono--chico') : m.progreso + '%') + '</span></td>';
+            (m.estado === 'completo' ? icono('check', 'icono--chico') : m.estado === 'bloqueado' ? icono('candado', 'icono--chico') :
+              m.estado === 'practica' ? icono('usuarios', 'icono--chico') : m.progreso + '%') + '</span></td>';
         }).join('') +
         '<td class="chico" style="white-space:nowrap">' + esc(fechaCorta(c.ultimoIngreso)) + (inactivo ? '<br><span class="insignia insignia--pendiente">hace ' + c.diasSinIngreso + ' días</span>' : '') + '</td></tr>';
     }).join('') : '<tr><td colspan="' + (panel.modulos.length + 3) + '" class="muted">Nadie coincide con el filtro.</td></tr>';
@@ -718,13 +816,16 @@
     var p = d.perfil;
     var nombre = p.nombre || p.email.split('@')[0];
     var iniciales2 = nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(function (t) { return t.charAt(0); }).join('').toUpperCase();
-    var actual = d.modulos.filter(function (m) { return m.estado !== 'completo'; })[0];
-    var evaluacionesOk = 0;
-    var evaluacionesTotal = 0;
+    var actual = d.modulos.filter(function (m) { return m.estado !== 'completo' && m.estado !== 'practica'; })[0];
+    var minisOk = 0;
+    var minisTotal = 0;
+    var finalesOk = 0;
+    var finalesTotal = 0;
     d.modulos.forEach(function (m) {
-      if (m.evaluacion) { evaluacionesTotal++; if (m.evaluacion.aprobada) evaluacionesOk++; }
-      if (m.practica) { evaluacionesTotal++; if (m.practica.aprobada) evaluacionesOk++; }
+      m.lecciones.forEach(function (l) { if (l.miniEvaluacion) { minisTotal++; if (l.miniEvaluacion.aprobada) minisOk++; } });
+      if (m.evaluacion) { finalesTotal++; if (m.evaluacion.aprobada) finalesOk++; }
     });
+    var practicaPendiente = d.modulos.filter(function (m) { return m.estado === 'practica'; })[0];
 
     var html = migas + '<section class="hero perfil">' +
       '<div style="position:relative;z-index:1">' +
@@ -732,7 +833,9 @@
           '<h1 style="margin:0">' + esc(nombre) + '</h1>' +
           '<div class="muted">' + esc(p.email) + (p.area ? ' · ' + esc(p.area) : '') + '</div></div></div>' +
         '<div class="fila" style="margin-top:14px">' +
-          (d.terminado ? '<span class="insignia insignia--ok">' + icono('premio', 'icono--chico') + 'Programa completo' + (p.certificado ? ' · ' + esc(fecha(p.certificado)) : '') + '</span>' :
+          (d.certificadoDisponible ? '<span class="insignia insignia--ok">' + icono('premio', 'icono--chico') + 'Certificado' + (p.certificado ? ' · ' + esc(fecha(p.certificado)) : '') + '</span>' :
+            d.terminado ? '<span class="insignia insignia--pendiente">' + icono('usuarios', 'icono--chico') + 'Cursos al 100% · falta registrar la práctica' +
+              (practicaPendiente ? ' (' + esc(practicaPendiente.titulo) + ')' : '') + '</span>' :
             '<span class="insignia insignia--curso">' + icono('ruta', 'icono--chico') + 'En curso: ' + esc(actual ? actual.titulo : '') + '</span>') +
           (p.admin ? '<span class="insignia insignia--curso">Administrador</span>' : '') +
         '</div>' +
@@ -744,16 +847,22 @@
 
     html += '<div class="metricas metricas--4">' +
       '<div class="metrica"><strong>' + d.modulosCompletos + ' / ' + d.totalModulos + '</strong><span>módulos completados</span></div>' +
-      '<div class="metrica"><strong>' + d.leccionesCompletadas + ' / ' + d.totalLecciones + '</strong><span>lecciones vistas</span></div>' +
-      '<div class="metrica"><strong>' + evaluacionesOk + ' / ' + evaluacionesTotal + '</strong><span>evaluaciones aprobadas</span></div>' +
+      '<div class="metrica"><strong>' + d.leccionesCompletadas + ' / ' + d.totalLecciones + '</strong><span>lecciones completadas</span></div>' +
+      '<div class="metrica"><strong>' + (minisOk + finalesOk) + ' / ' + (minisTotal + finalesTotal) + '</strong><span>evaluaciones aprobadas · ' +
+        minisOk + '/' + minisTotal + ' mini · ' + finalesOk + '/' + finalesTotal + ' finales</span></div>' +
       '<div class="metrica"><strong>' + esc(fechaCorta(p.ultimaActividad || p.ultimoIngreso)) + '</strong><span>última actividad · ingresó el ' + esc(fechaCorta(p.primerIngreso)) + '</span></div>' +
     '</div>';
 
     html += '<h2>Avance por módulo</h2>';
     d.modulos.forEach(function (m) {
       var ev = '';
+      var minisM = m.lecciones.filter(function (l) { return l.miniEvaluacion; });
+      if (minisM.length) {
+        ev += '<span class="chico">' + icono('play', 'icono--chico') + ' Mini evaluaciones: ' +
+          minisM.filter(function (l) { return l.miniEvaluacion.aprobada; }).length + ' de ' + minisM.length + ' aprobadas</span>';
+      }
       if (m.evaluacion) {
-        ev += '<span class="chico">' + icono('pregunta', 'icono--chico') + ' Evaluación: ' +
+        ev += '<span class="chico">' + icono('pregunta', 'icono--chico') + ' Evaluación final: ' +
           (m.evaluacion.intentos ? (m.evaluacion.aprobada ? 'aprobada' : 'no aprobada') + ' · mejor ' + m.evaluacion.mejorPuntaje + '% · ' +
             m.evaluacion.intentos + (m.evaluacion.intentos === 1 ? ' intento' : ' intentos') : 'sin rendir') + '</span>';
       }
@@ -772,7 +881,11 @@
         '</summary>' +
         '<ul class="lista-lecciones">' + m.lecciones.map(function (l) {
           return '<li><span class="temario__check' + (l.completada ? ' temario__check--ok' : '') + '">' + (l.completada ? icono('check') : '') + '</span>' +
-            '<span class="espaciador">' + esc(l.titulo) + ' <span class="chico muted">· ' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.obligatoria ? '' : ' · opcional') + '</span></span>' +
+            '<span class="espaciador">' + esc(l.titulo) + ' <span class="chico muted">· ' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.obligatoria ? '' : ' · opcional') +
+              (l.miniEvaluacion ? ' · mini evaluación: ' + (l.miniEvaluacion.intentos
+                ? (l.miniEvaluacion.aprobada ? 'aprobada' : 'no aprobada') + ' (mejor ' + l.miniEvaluacion.mejorPuntaje + '%, ' + l.miniEvaluacion.intentos +
+                  (l.miniEvaluacion.intentos === 1 ? ' intento)' : ' intentos)')
+                : 'sin rendir') : '') + '</span></span>' +
             '<span class="chico muted">' + (l.completada ? esc(fechaCorta(l.fecha)) : 'pendiente') + '</span></li>';
         }).join('') + '</ul>' +
         (m.practica && m.practica.comentario ? '<div class="destacado chico"><strong>Retroalimentación:</strong> ' + esc(m.practica.comentario) + '</div>' : '') +
@@ -921,7 +1034,7 @@
           ocupado = false;
           var m = moduloPorId(vista.moduloId);
           if (valor && m && m.completo && !estabaCompleto) aviso('¡Completaste el módulo «' + m.titulo + '»!', 'ok');
-          else if (valor && m && m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) aviso('Ya puedes rendir la evaluación del módulo.', 'ok');
+          else if (valor && m && m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) aviso('Ya puedes rendir la evaluación final del módulo.', 'ok');
           else if (valor) aviso('Lección completada', 'ok');
           render();
         }).catch(errorServidor);
@@ -933,8 +1046,8 @@
       siguiente.onclick = function () {
         var paso = JSON.parse(siguiente.getAttribute('data-paso'));
         var l = leccionPorId(moduloPorId(vista.moduloId), vista.leccionId);
-        // Avanzar marca la lección actual como vista.
-        if (l && !l.completada && !ocupado) {
+        // Avanzar marca la lección actual como vista (salvo los videos: esos se completan con su mini evaluación).
+        if (l && !l.completada && !l.miniEvaluacion && !ocupado) {
           ocupado = true;
           siguiente.disabled = true;
           llamar('marcarLeccion', l.id, true).then(function (datos) {
@@ -965,10 +1078,12 @@
         var boton = document.getElementById('btn-enviar');
         boton.disabled = true;
         boton.innerHTML = '<span class="spinner" aria-hidden="true"></span> Corrigiendo…';
-        llamar('enviarEvaluacion', evaluacion.moduloId, evaluacion.respuestas).then(function (r) {
+        llamar('enviarEvaluacion', evaluacion.moduloId, evaluacion.respuestas, evaluacion.leccionId || '').then(function (r) {
           D = r.datos;
           ocupado = false;
-          ir({ tipo: 'resultado', moduloId: evaluacion.moduloId, resultado: r.resultado });
+          var resultado = { tipo: 'resultado', moduloId: evaluacion.moduloId, resultado: r.resultado };
+          if (evaluacion.leccionId) resultado.leccionId = evaluacion.leccionId;
+          ir(resultado);
         }).catch(errorServidor);
       });
     }
@@ -977,7 +1092,9 @@
     if (reintentar) {
       reintentar.onclick = function () {
         evaluacion = null;
-        ir({ tipo: 'evaluacion', moduloId: reintentar.getAttribute('data-modulo') });
+        var destino = { tipo: 'evaluacion', moduloId: reintentar.getAttribute('data-modulo') };
+        if (reintentar.getAttribute('data-leccion')) destino.leccionId = reintentar.getAttribute('data-leccion');
+        ir(destino);
       };
     }
 

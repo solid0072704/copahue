@@ -2,7 +2,7 @@
  * TPDV Academy · Estructura del programa (módulos y lecciones) y conexión con Drive.
  */
 
-var CLAVE_CACHE_ESTRUCTURA = 'estructura_v1';
+var CLAVE_CACHE_ESTRUCTURA = 'estructura_v2';
 
 /** Tipos de lección que entiende la plataforma. */
 var TIPOS_LECCION = {
@@ -114,10 +114,15 @@ function invalidarEstructura_() {
 
 /** Convierte las filas de las hojas en la estructura del programa (función pura, se prueba sin Google). */
 function construirEstructura_(filasModulos, filasLecciones, filasPreguntas) {
+  // Preguntas sin «ID lección» = evaluación final del módulo; con «ID lección» = mini evaluación de esa lección.
   var preguntasPorModulo = {};
+  var preguntasPorLeccion = {};
   filasPreguntas.forEach(function (p) {
     var id = aTexto_(p['ID módulo']);
-    if (id && aTexto_(p['Pregunta'])) preguntasPorModulo[id] = (preguntasPorModulo[id] || 0) + 1;
+    var idLeccion = aTexto_(p['ID lección']);
+    if (!id || !aTexto_(p['Pregunta'])) return;
+    if (idLeccion) preguntasPorLeccion[idLeccion] = (preguntasPorLeccion[idLeccion] || 0) + 1;
+    else preguntasPorModulo[id] = (preguntasPorModulo[id] || 0) + 1;
   });
 
   var modulos = filasModulos
@@ -155,7 +160,8 @@ function construirEstructura_(filasModulos, filasLecciones, filasPreguntas) {
       url: aTexto_(l['URL']),
       descripcion: aTexto_(l['Descripción']),
       duracion: Number(l['Duración (min)']) || 0,
-      obligatoria: aTexto_(l['Obligatoria']) === '' ? true : esSi_(l['Obligatoria'])
+      obligatoria: aTexto_(l['Obligatoria']) === '' ? true : esSi_(l['Obligatoria']),
+      preguntas: preguntasPorLeccion[aTexto_(l['ID'])] || 0
     };
     var urls = urlsLeccion_(leccion);
     leccion.embed = urls.embed;

@@ -66,15 +66,26 @@ function entornoInstalado(ajustarArbol) {
   return env;
 }
 
-function respuestasCorrectas(env, idModulo) {
+/** Respuestas correctas de la evaluación final (idLeccion vacío) o de la mini evaluación de un video. */
+function respuestasCorrectas(env, idModulo, idLeccion) {
   const r = {};
-  env.catalogo.preguntas.filter(p => p['ID módulo'] === idModulo).forEach(p => { r[p['N°']] = p['Correcta']; });
+  env.catalogo.preguntas
+    .filter(p => p['ID módulo'] === idModulo && (p['ID lección'] || '') === (idLeccion || ''))
+    .forEach(p => { r[p['N°']] = p['Correcta']; });
   return r;
 }
 
+/** Completa cada lección (los videos con su mini evaluación) y aprueba la evaluación final. */
 function completarModulo(env, idModulo) {
   const modulo = env.ejecutar('obtenerDatos').programa.modulos.find(m => m.id === idModulo);
-  modulo.lecciones.forEach(l => env.ejecutar('marcarLeccion', l.id, true));
+  modulo.lecciones.forEach(l => {
+    if (l.miniEvaluacion) {
+      const r = env.ejecutar('enviarEvaluacion', idModulo, respuestasCorrectas(env, idModulo, l.id), l.id);
+      assert.equal(r.resultado.aprobado, true, 'debería aprobar la mini evaluación de ' + l.id);
+    } else {
+      env.ejecutar('marcarLeccion', l.id, true);
+    }
+  });
   if (modulo.evaluacion) {
     const r = env.ejecutar('enviarEvaluacion', idModulo, respuestasCorrectas(env, idModulo));
     assert.equal(r.resultado.aprobado, true, 'debería aprobar ' + idModulo);

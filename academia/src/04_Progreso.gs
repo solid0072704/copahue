@@ -16,16 +16,26 @@ function leerProgresoUsuario_(email, filasPrecargadas) {
 }
 
 /**
- * Resultados de evaluaciones por módulo:
- * { idModulo: { quiz: {mejor, aprobado, intentos, ultima}, practica: {puntaje, aprobado, fecha, evaluador, comentario} } }
+ * Resultados por módulo:
+ * { idModulo: { quiz: {...}, mini: { idLeccion: {...} }, practica: {...} } }
+ * quiz y mini: { mejor, aprobado, intentos, ultima }; practica: { puntaje, aprobado, fecha, evaluador, comentario }.
  */
 function leerResultadosUsuario_(email, filasPrecargadas) {
   var mapa = {};
+  var acumular = function (actual, puntaje, aprobado, fecha) {
+    var q = actual || { mejor: 0, aprobado: false, intentos: 0, ultima: '' };
+    q.intentos += 1;
+    q.mejor = Math.max(q.mejor, puntaje);
+    q.aprobado = q.aprobado || aprobado;
+    if (fecha > q.ultima) q.ultima = fecha;
+    return q;
+  };
   (filasPrecargadas || leerTabla_(HOJAS.RESULTADOS)).forEach(function (r) {
     if (aTexto_(r['Email']).toLowerCase() !== email) return;
     var id = aTexto_(r['ID módulo']);
+    var idLeccion = aTexto_(r['ID lección']);
     var tipo = aTexto_(r['Tipo']).toLowerCase();
-    mapa[id] = mapa[id] || {};
+    mapa[id] = mapa[id] || { mini: {} };
     var puntaje = Number(r['Puntaje %']) || 0;
     var aprobado = esSi_(r['Aprobado']);
     var fecha = aFechaIso_(r['Fecha']);
@@ -38,13 +48,10 @@ function leerResultadosUsuario_(email, filasPrecargadas) {
           evaluador: aTexto_(r['Evaluador']), comentario: aTexto_(r['Comentario'])
         };
       }
+    } else if (idLeccion) {
+      mapa[id].mini[idLeccion] = acumular(mapa[id].mini[idLeccion], puntaje, aprobado, fecha);
     } else {
-      var q = mapa[id].quiz || { mejor: 0, aprobado: false, intentos: 0, ultima: '' };
-      q.intentos += 1;
-      q.mejor = Math.max(q.mejor, puntaje);
-      q.aprobado = q.aprobado || aprobado;
-      if (fecha > q.ultima) q.ultima = fecha;
-      mapa[id].quiz = q;
+      mapa[id].quiz = acumular(mapa[id].quiz, puntaje, aprobado, fecha);
     }
   });
   return mapa;
@@ -52,10 +59,16 @@ function leerResultadosUsuario_(email, filasPrecargadas) {
 
 /**
  * Calcula el estado del programa para un usuario (función pura).
- * opciones: { ordenObligatorio: bool }
+ *  - Avance (barra): lecciones obligatorias + evaluación final de cada módulo. Una lección con mini evaluación
+ *    se completa al aprobarla. La evaluación práctica de la tutora NO cuenta en el avance: al terminar los
+ *    cursos la barra llega a 100%.
+ *  - Certificado: todos los módulos completos y, si así se configura, las evaluaciones prácticas aprobadas.
+ * opciones: { ordenObligatorio: bool, certificadoRequierePractica: bool }
  */
 function calcularEstado_(estructura, completadas, resultados, opciones) {
-  var ordenObligatorio = !opciones || opciones.ordenObligatorio !== false;
+  opciones = opciones || {};
+  var ordenObligatorio = opciones.ordenObligatorio !== false;
+  var requierePractica = opciones.certificadoRequierePractica !== false;
   var unidades = 0;
   var unidadesHechas = 0;
   var leccionesHechas = 0;
@@ -64,13 +77,21 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
 
   var modulos = estructura.modulos.map(function (m) {
     var res = resultados[m.id] || {};
-    var obligatorias = m.lecciones.filter(function (l) { return l.obligatoria; });
+    var minis = res.mini || {};
     var lecciones = m.lecciones.map(function (l) {
-      var hecha = !!completadas[l.id];
+      var r = minis[l.id];
+      var mini = l.preguntas > 0 ? {
+        preguntas: l.preguntas,
+        aprobada: !!(r && r.aprobado),
+        mejorPuntaje: r ? r.mejor : null,
+        intentos: r ? r.intentos : 0
+      } : null;
+      var hecha = mini ? mini.aprobada : !!completadas[l.id];
       if (hecha) leccionesHechas++;
-      return Object.assign({}, l, { completada: hecha });
+      return Object.assign({}, l, { completada: hecha, miniEvaluacion: mini });
     });
-    var hechas = obligatorias.filter(function (l) { return completadas[l.id]; }).length;
+    var obligatorias = lecciones.filter(function (l) { return l.obligatoria; });
+    var hechas = obligatorias.filter(function (l) { return l.completada; }).length;
     var leccionesCompletas = hechas === obligatorias.length;
 
     var quiz = m.preguntas > 0 ? {
@@ -81,7 +102,7 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
       intentos: res.quiz ? res.quiz.intentos : 0
     } : null;
     var practica = m.tipo === 'practica' ? {
-      requerida: true,
+      requerida: requierePractica,
       aprobada: !!(res.practica && res.practica.aprobado),
       registrada: !!res.practica,
       puntaje: res.practica ? res.practica.puntaje : null,
@@ -90,8 +111,8 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
       comentario: res.practica ? res.practica.comentario : ''
     } : null;
 
-    var total = obligatorias.length + (quiz ? 1 : 0) + (practica ? 1 : 0);
-    var hechasModulo = hechas + (quiz && quiz.aprobada ? 1 : 0) + (practica && practica.aprobada ? 1 : 0);
+    var total = obligatorias.length + (quiz ? 1 : 0);
+    var hechasModulo = hechas + (quiz && quiz.aprobada ? 1 : 0);
     var completo = total > 0 ? hechasModulo === total : true;
     var bloqueado = ordenObligatorio && !anteriorCompleto;
 
@@ -113,6 +134,7 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
       leccionesCompletas: leccionesCompletas,
       evaluacion: quiz,
       practica: practica,
+      practicaPendiente: !!practica && !practica.aprobada,
       progreso: total ? Math.round(hechasModulo / total * 100) : 100,
       completo: completo,
       bloqueado: bloqueado,
@@ -121,13 +143,17 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
   });
 
   var modulosCompletos = modulos.filter(function (m) { return m.completo; }).length;
+  var terminado = modulos.length > 0 && modulosCompletos === modulos.length;
+  var practicasPendientes = modulos.filter(function (m) { return m.practicaPendiente; }).length;
   return {
     modulos: modulos,
     avance: unidades ? Math.round(unidadesHechas / unidades * 100) : 0,
     leccionesCompletadas: leccionesHechas,
     modulosCompletos: modulosCompletos,
     totalModulos: modulos.length,
-    terminado: modulos.length > 0 && modulosCompletos === modulos.length,
+    terminado: terminado,
+    certificadoDisponible: terminado && (!requierePractica || practicasPendientes === 0),
+    esperaPractica: terminado && requierePractica && practicasPendientes > 0,
     siguiente: siguiente
   };
 }
@@ -138,12 +164,15 @@ function estadoUsuario_(email) {
     estructura,
     leerProgresoUsuario_(email).completadas,
     leerResultadosUsuario_(email),
-    { ordenObligatorio: configSi_('ORDEN_OBLIGATORIO') }
+    { ordenObligatorio: configSi_('ORDEN_OBLIGATORIO'), certificadoRequierePractica: configSi_('CERTIFICADO_REQUIERE_PRACTICA') }
   );
 }
 
-/** Marca o desmarca una lección. Devuelve el módulo al que pertenece. */
-function registrarLeccion_(email, idLeccion, completada) {
+/**
+ * Marca o desmarca una lección. Las lecciones con mini evaluación solo se completan al aprobarla
+ * (desdeEvaluacion = true lo usa el registro de la mini evaluación).
+ */
+function registrarLeccion_(email, idLeccion, completada, desdeEvaluacion) {
   var estado = estadoUsuario_(email);
   var modulo = null;
   var leccion = null;
@@ -152,6 +181,9 @@ function registrarLeccion_(email, idLeccion, completada) {
   });
   if (!leccion) throw new Error('La lección no existe o ya no está visible.');
   if (modulo.bloqueado) throw new Error('Este módulo se desbloquea al completar el anterior.');
+  if (leccion.miniEvaluacion && !desdeEvaluacion) {
+    throw new Error('Esta lección se completa al aprobar su mini evaluación.');
+  }
 
   conBloqueo_(function () {
     var progreso = leerProgresoUsuario_(email);
@@ -217,7 +249,7 @@ function actualizarResumen_(email, estado) {
       'Avance %': estado.avance,
       'Módulos completados': estado.modulosCompletos + ' de ' + estado.totalModulos
     };
-    if (estado.terminado && !perfil.certificado) cambios['Certificado'] = new Date();
+    if (estado.certificadoDisponible && !perfil.certificado) cambios['Certificado'] = new Date();
     actualizarFila_(HOJAS.USUARIOS, perfil.fila, cambios);
   });
 }

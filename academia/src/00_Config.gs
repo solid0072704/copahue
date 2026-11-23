@@ -21,7 +21,7 @@ function administradoresAcademia_() {
 /** Carpeta «TPDV ACADEMY» compartida en Drive (fuente del contenido). */
 var CARPETA_ACADEMIA_ID = '1hCDqvmusCl0nnC8TvKChiH_9ibKsR_b1';
 
-var VERSION_ACADEMIA = '1.0.0';
+var VERSION_ACADEMIA = '1.1.0';
 
 /**
  * Valores iniciales de la hoja «Config»: [clave, valor, descripción].
@@ -30,7 +30,9 @@ var VERSION_ACADEMIA = '1.0.0';
 var CONFIG_DEFECTO = [
   ['NOMBRE_ACADEMIA', 'TPDV Academy', 'Nombre que aparece en la cabecera y en el certificado.'],
   ['BAJADA', 'Programa de inducción para nuevos asesores comerciales', 'Frase que acompaña al nombre.'],
-  ['PUNTAJE_APROBACION', '80', 'Porcentaje mínimo para aprobar cada evaluación (0 a 100).'],
+  ['PUNTAJE_APROBACION', '80', 'Porcentaje mínimo para aprobar la evaluación final de cada módulo (0 a 100).'],
+  ['PUNTAJE_APROBACION_MINI', '75', 'Porcentaje mínimo para aprobar la mini evaluación de cada video (75 = 3 de 4 preguntas).'],
+  ['CERTIFICADO_REQUIERE_PRACTICA', 'SI', 'SI: el certificado se habilita cuando la tutora registra la evaluación práctica aprobada. No afecta la barra de avance.'],
   ['INTENTOS_MAXIMOS', '0', 'Intentos permitidos por evaluación. 0 = sin límite.'],
   ['ORDEN_OBLIGATORIO', 'SI', 'SI: cada módulo se desbloquea al completar el anterior. NO: ruta libre.'],
   ['CORREO_CONTACTO', '', 'Correo de ayuda que verán los colaboradores (opcional).'],

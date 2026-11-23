@@ -100,8 +100,9 @@ test('el panel muestra el avance de cada colaborador por módulo y el detalle in
   env.ejecutar('doGet');
   env.ejecutar('guardarPerfil', { nombre: 'Camila Rojas', area: 'Ventas' });
   completarModulo(env, 'INDUCCION');
-  env.ejecutar('marcarLeccion', 'V1-01', true);
+  env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', 'V1-01'), 'V1-01');
   env.ejecutar('marcarLeccion', 'V1-02', true);
+  env.ejecutar('enviarEvaluacion', 'VENTAS-1', { 1: 'A', 2: 'A', 3: 'A', 4: 'A' }, 'V1-09');
   env.comoUsuario('otro.asesor@tuproyectodevida.cl');
   env.ejecutar('doGet');
 
@@ -125,9 +126,13 @@ test('el panel muestra el avance de cada colaborador por módulo y el detalle in
   assert.equal(v1.estado, 'curso');
   assert.ok(v1.lecciones.find(l => l.id === 'V1-01').fecha, 'fecha de la lección completada');
   assert.equal(v1.lecciones.find(l => l.id === 'V1-03').fecha, '');
-  assert.equal(d.historial.length, 1);
-  assert.equal(d.historial[0].tipo, 'Cuestionario');
-  assert.equal(d.historial[0].aprobado, true);
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-01').miniEvaluacion.aprobada, true);
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-09').miniEvaluacion.intentos, 1);
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-09').completada, false);
+  assert.deepEqual(d.historial.map(h => h.tipo).sort(), ['Evaluación final', 'Mini evaluación', 'Mini evaluación']);
+  assert.ok(d.historial.some(h => h.tipo === 'Mini evaluación' && /HubSpot 1/.test(h.modulo)), 'el historial nombra el video');
+  assert.equal(d.historial.find(h => h.tipo === 'Evaluación final').aprobado, true);
+  assert.ok(panel.modulos.find(m => m.id === 'VENTAS-1').minis >= 3, 'el panel cuenta las mini evaluaciones');
   assert.ok(d.perfil.ultimaActividad);
 
   assert.throws(() => env.ejecutar('obtenerDetalleColaborador', 'nadie@tuproyectodevida.cl'), /aún no ingresa/);
@@ -214,16 +219,26 @@ test('recorrido completo: lecciones, evaluaciones, bloqueo secuencial y certific
   datos = env.ejecutar('obtenerDatos');
   const final = datos.programa.modulos.find(m => m.id === 'FINAL');
   assert.equal(final.bloqueado, false);
-  final.lecciones.forEach(l => env.ejecutar('marcarLeccion', l.id, true));
+  assert.ok(final.evaluacion && final.evaluacion.preguntas >= 5, 'el módulo final también tiene evaluación final');
+  completarModulo(env, 'FINAL');
   datos = env.ejecutar('obtenerDatos');
-  assert.equal(datos.programa.terminado, false, 'falta la evaluación práctica');
-  assert.equal(datos.certificado.disponible, false);
+  assert.equal(datos.programa.avance, 100, 'al terminar los cursos la barra llega a 100% aunque falte la práctica');
+  assert.equal(datos.programa.terminado, true);
+  assert.equal(datos.programa.modulos.find(m => m.id === 'FINAL').progreso, 100);
+  assert.equal(datos.programa.modulos.find(m => m.id === 'FINAL').practicaPendiente, true);
+  assert.equal(datos.certificado.disponible, false, 'el certificado espera la evaluación práctica');
+  assert.equal(datos.certificado.esperaPractica, true);
+  assert.equal(datos.programa.siguiente, null);
+  assert.equal(env.hoja('Usuarios').objetos().find(u => u.Email === ALUMNA)['Avance %'], 100);
 
   // La tutora (administradora) registra la práctica: primero por reforzar, después aprobada.
   env.comoUsuario(ADMIN);
   let panel = env.ejecutar('obtenerPanelAdmin');
   const fila = panel.colaboradores.find(c => c.email === ALUMNA);
   assert.deepEqual(fila.practicasPendientes.map(p => p.id), ['FINAL']);
+  assert.equal(fila.avance, 100);
+  assert.equal(fila.modulos.find(m => m.id === 'FINAL').estado, 'practica');
+  assert.equal(fila.certificado, '');
   assert.throws(() => env.ejecutar('registrarEvaluacionPractica', ALUMNA, 'FINAL', 140, ''), /entre 0 y 100/);
   assert.throws(() => env.ejecutar('registrarEvaluacionPractica', ALUMNA, 'VENTAS-1', 90, ''), /no tiene evaluación práctica/);
   assert.throws(() => env.ejecutar('registrarEvaluacionPractica', 'otra@gmail.com', 'FINAL', 90, ''), /debe ser @/);
@@ -240,10 +255,140 @@ test('recorrido completo: lecciones, evaluaciones, bloqueo secuencial y certific
   assert.equal(datos.programa.terminado, true);
   assert.equal(datos.programa.avance, 100);
   assert.equal(datos.certificado.disponible, true);
+  assert.equal(datos.certificado.esperaPractica, false);
   assert.equal(datos.programa.modulos.find(m => m.id === 'FINAL').practica.comentario, 'Muy buena presentación del proyecto');
   const usuario = env.hoja('Usuarios').objetos().find(u => u.Email === ALUMNA);
   assert.equal(Object.prototype.toString.call(usuario.Certificado), '[object Date]', 'se registra la fecha del certificado');
   assert.equal(usuario['Avance %'], 100);
+});
+
+test('cada video tiene una mini evaluación de 4 preguntas que completa la lección', () => {
+  const env = entornoInstalado();
+  env.comoUsuario(ALUMNA);
+  let datos = env.ejecutar('obtenerDatos');
+  const videos = [];
+  datos.programa.modulos.forEach(m => m.lecciones.forEach(l => { if (l.tipo === 'Video') videos.push({ m, l }); }));
+  assert.ok(videos.length >= 8);
+  videos.forEach(({ l }) => {
+    assert.ok(l.miniEvaluacion, 'mini evaluación en ' + l.id);
+    assert.equal(l.miniEvaluacion.preguntas, 4, '4 preguntas en ' + l.id);
+  });
+  datos.programa.modulos.forEach(m => m.lecciones.filter(l => l.tipo !== 'Video').forEach(l =>
+    assert.equal(l.miniEvaluacion, null, 'solo los videos tienen mini evaluación: ' + l.id)));
+  assert.equal(datos.academia.puntajeAprobacionMini, 75);
+
+  // Módulo bloqueado: tampoco se rinde su mini evaluación.
+  assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-1', 'V1-01'), /se desbloquea/);
+  assert.throws(() => env.ejecutar('enviarEvaluacion', 'VENTAS-1', {}, 'V1-01'), /se desbloquea/);
+  completarModulo(env, 'INDUCCION');
+
+  // Un video no se marca a mano: se completa al aprobar su mini evaluación.
+  assert.throws(() => env.ejecutar('marcarLeccion', 'V1-01', true), /mini evaluación/);
+  assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-1', 'V1-02'), /no tiene mini evaluación/);
+  const ev = env.ejecutar('obtenerEvaluacion', 'VENTAS-1', 'V1-01');
+  assert.equal(ev.tipo, 'mini');
+  assert.equal(ev.leccionId, 'V1-01');
+  assert.equal(ev.preguntas.length, 4);
+  assert.equal(ev.puntajeAprobacion, 75);
+  assert.ok(!JSON.stringify(ev).includes('"correcta"'), 'no se envía la respuesta correcta');
+
+  const correctas = respuestasCorrectas(env, 'VENTAS-1', 'V1-01');
+  const otra = (letra) => (letra === 'A' ? 'B' : 'A');
+  const dosBien = { 1: correctas[1], 2: correctas[2], 3: otra(correctas[3]), 4: otra(correctas[4]) };
+  let r = env.ejecutar('enviarEvaluacion', 'VENTAS-1', dosBien, 'V1-01');
+  assert.equal(r.resultado.tipo, 'mini');
+  assert.equal(r.resultado.puntaje, 50);
+  assert.equal(r.resultado.aprobado, false);
+  assert.ok(r.resultado.detalle.every(d => d.respuestaCorrecta === undefined));
+  let v1 = r.datos.programa.modulos.find(m => m.id === 'VENTAS-1');
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-01').completada, false);
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-01').miniEvaluacion.intentos, 1);
+
+  const tresBien = Object.assign({}, dosBien, { 3: correctas[3] });
+  r = env.ejecutar('enviarEvaluacion', 'VENTAS-1', tresBien, 'V1-01');
+  assert.equal(r.resultado.puntaje, 75);
+  assert.equal(r.resultado.aprobado, true, '3 de 4 aprueba');
+  v1 = r.datos.programa.modulos.find(m => m.id === 'VENTAS-1');
+  const leccion = v1.lecciones.find(l => l.id === 'V1-01');
+  assert.equal(leccion.completada, true);
+  assert.equal(leccion.miniEvaluacion.aprobada, true);
+  assert.equal(leccion.miniEvaluacion.mejorPuntaje, 75);
+  assert.ok(v1.progreso > 0);
+
+  const progreso = env.hoja('Progreso').objetos().filter(f => f.Email === ALUMNA && f['ID lección'] === 'V1-01');
+  assert.equal(progreso.length, 1, 'la mini aprobada deja la lección registrada en «Progreso»');
+  const filas = env.hoja('Resultados').objetos().filter(f => f.Email === ALUMNA && f['ID lección'] === 'V1-01');
+  assert.deepEqual(filas.map(f => [f.Tipo, f.Aprobado, f.Intento]), [['Mini evaluación', 'NO', 1], ['Mini evaluación', 'SI', 2]]);
+
+  // La evaluación final del módulo exige todas las lecciones, con sus mini evaluaciones aprobadas.
+  v1.lecciones.filter(l => !l.miniEvaluacion).forEach(l => env.ejecutar('marcarLeccion', l.id, true));
+  assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-1'), /mini evaluaciones/);
+  assert.throws(() => env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1')), /aún no está disponible/);
+  v1.lecciones.filter(l => l.miniEvaluacion && !l.completada).forEach(l =>
+    env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', l.id), l.id));
+  const final = env.ejecutar('obtenerEvaluacion', 'VENTAS-1');
+  assert.equal(final.tipo, 'final');
+  assert.equal(final.puntajeAprobacion, 80);
+  assert.equal(final.preguntas.length, env.catalogo.preguntas.filter(p => p['ID módulo'] === 'VENTAS-1' && !p['ID lección']).length);
+});
+
+test('el avance llega a 100% con los cursos y el certificado se puede liberar sin práctica', () => {
+  const env = entornoInstalado();
+  const config = env.hoja('Config');
+  config.poner(config.datos.findIndex(f => f[0] === 'CERTIFICADO_REQUIERE_PRACTICA') + 1, 2, 'NO');
+  env.comoUsuario(ALUMNA);
+  env.ejecutar('doGet');
+  const avances = [];
+  ['INDUCCION', 'VENTAS-1', 'VENTAS-2', 'MARKETING-1', 'MARKETING-2', 'LEGAL-1', 'LEGAL-2', 'FINAL'].forEach(id => {
+    completarModulo(env, id);
+    avances.push(env.ejecutar('obtenerDatos').programa.avance);
+  });
+  assert.ok(avances.every((a, i) => i === 0 || a > avances[i - 1]), 'el avance sube con cada módulo: ' + avances.join(', '));
+  assert.equal(avances[avances.length - 1], 100);
+  const datos = env.ejecutar('obtenerDatos');
+  assert.equal(datos.certificado.disponible, true, 'sin práctica obligatoria el certificado sale al 100%');
+  assert.equal(datos.academia.certificadoRequierePractica, false);
+  assert.equal(datos.programa.modulos.find(m => m.id === 'FINAL').practica.requerida, false);
+});
+
+test('instalar sobre una versión anterior agrega las mini evaluaciones y la evaluación final que faltan', () => {
+  const env = entornoInstalado();
+  const hoja = env.hoja('Preguntas');
+  const cab = hoja.datos[0];
+  const col = cab.indexOf('ID lección');
+  const colModulo = cab.indexOf('ID módulo');
+  // Versión 1.0: sin columna «ID lección», sin mini evaluaciones y sin preguntas en el módulo FINAL.
+  const conservadas = hoja.datos.slice(1).filter(f => !f[col] && f[colModulo] !== 'FINAL').map(f => f.filter((_, j) => j !== col));
+  hoja.datos = [cab.filter((_, j) => j !== col)].concat(conservadas);
+  const antes = hoja.objetos().length;
+
+  const texto = env.ejecutar('instalar');
+  assert.match(texto, /mini evaluaciones/);
+  const despues = env.hoja('Preguntas').objetos();
+  assert.equal(despues.length, env.catalogo.preguntas.length, 'quedan todas las preguntas del catálogo');
+  assert.ok(despues.length > antes);
+  assert.equal(despues.filter(p => p['ID lección'] === 'V1-01').length, 4);
+  assert.ok(despues.filter(p => p['ID módulo'] === 'FINAL' && !p['ID lección']).length >= 5);
+  env.ejecutar('instalar');
+  assert.equal(env.hoja('Preguntas').objetos().length, despues.length, 'no se duplican');
+
+  env.comoUsuario(ALUMNA);
+  const v1 = env.ejecutar('obtenerDatos').programa.modulos.find(m => m.id === 'VENTAS-1');
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-01').miniEvaluacion.preguntas, 4, 'el caché de la estructura se renueva');
+});
+
+test('un certificado ya emitido se mantiene aunque cambien las reglas', () => {
+  const env = entornoInstalado();
+  env.comoUsuario(ALUMNA);
+  env.ejecutar('doGet');
+  const usuarios = env.hoja('Usuarios');
+  const col = usuarios.datos[0].indexOf('Certificado') + 1;
+  usuarios.poner(usuarios.datos.findIndex(f => f[0] === ALUMNA) + 1, col, new Date('2026-11-01T12:00:00Z'));
+  const datos = env.ejecutar('obtenerDatos');
+  assert.equal(datos.programa.terminado, false);
+  assert.equal(datos.certificado.disponible, true);
+  assert.equal(datos.certificado.esperaPractica, false);
+  assert.match(datos.certificado.fecha, /^2026-11-01/);
 });
 
 test('desmarcar una lección actualiza el avance y no duplica filas', () => {
@@ -395,10 +540,28 @@ test('el catálogo inicial es consistente', () => {
     assert.equal(new Set(['A', 'B', 'C', 'D'].map(k => p[k])).size, 4, ref + ' opciones distintas');
     assert.ok(p['Explicación'] && p.Fuente, ref);
   });
-  // Todos los módulos de contenido tienen evaluación; el final es práctico.
-  c.modulos.filter(m => m.Tipo !== 'Práctica').forEach(m =>
-    assert.ok(c.preguntas.filter(p => p['ID módulo'] === m.ID).length >= 5, 'al menos 5 preguntas en ' + m.ID));
+  // Cada módulo tiene evaluación final (preguntas sin «ID lección»); el módulo final además es práctico.
+  c.modulos.forEach(m =>
+    assert.ok(c.preguntas.filter(p => p['ID módulo'] === m.ID && !p['ID lección']).length >= 5, 'al menos 5 preguntas finales en ' + m.ID));
   assert.equal(c.modulos.find(m => m.ID === 'FINAL').Tipo, 'Práctica');
+  // Cada video tiene exactamente 4 preguntas de mini evaluación, numeradas 1 a 4 y del mismo módulo.
+  const videos = c.lecciones.filter(l => l.Tipo === 'Video');
+  assert.ok(videos.length >= 8);
+  videos.forEach(v => {
+    const mini = c.preguntas.filter(p => p['ID lección'] === v.ID);
+    assert.deepEqual(Array.from(mini, p => Number(p['N°'])), [1, 2, 3, 4], 'mini evaluación de ' + v.ID);
+    mini.forEach(p => assert.equal(p['ID módulo'], v['ID módulo'], 'módulo de la pregunta de ' + v.ID));
+  });
+  const idsLeccion = new Set(c.lecciones.map(l => l.ID));
+  c.preguntas.filter(p => p['ID lección']).forEach(p => {
+    assert.ok(idsLeccion.has(p['ID lección']), 'lección de la pregunta ' + p['ID lección']);
+    assert.equal(c.lecciones.find(l => l.ID === p['ID lección']).Tipo, 'Video', 'las mini evaluaciones son de videos');
+  });
+  const claves = c.preguntas.map(p => p['ID módulo'] + '|' + (p['ID lección'] || '') + '|' + p['N°']);
+  assert.equal(new Set(claves).size, claves.length, 'numeración única por evaluación');
+  // Las respuestas correctas no se cargan siempre en la misma letra.
+  const letras = new Set(c.preguntas.filter(p => p['ID lección']).map(p => p.Correcta));
+  assert.ok(letras.size >= 3, 'respuestas correctas repartidas entre letras');
 
   // Las claves de respuesta del evaluador nunca se publican como lección.
   const archivosPublicados = new Set(c.lecciones.map(l => l['ID archivo']).filter(Boolean));

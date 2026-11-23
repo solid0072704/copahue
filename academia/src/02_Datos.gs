@@ -18,7 +18,7 @@ var HOJAS = {
   },
   PREGUNTAS: {
     nombre: 'Preguntas',
-    columnas: ['ID módulo', 'N°', 'Pregunta', 'A', 'B', 'C', 'D', 'Correcta', 'Explicación', 'Fuente']
+    columnas: ['ID módulo', 'ID lección', 'N°', 'Pregunta', 'A', 'B', 'C', 'D', 'Correcta', 'Explicación', 'Fuente']
   },
   USUARIOS: {
     nombre: 'Usuarios',
@@ -28,7 +28,7 @@ var HOJAS = {
   PROGRESO: { nombre: 'Progreso', columnas: ['Email', 'ID lección', 'ID módulo', 'Completada', 'Fecha'] },
   RESULTADOS: {
     nombre: 'Resultados',
-    columnas: ['Fecha', 'Email', 'ID módulo', 'Tipo', 'Puntaje %', 'Aprobado', 'Intento', 'Evaluador', 'Comentario']
+    columnas: ['Fecha', 'Email', 'ID módulo', 'ID lección', 'Tipo', 'Puntaje %', 'Aprobado', 'Intento', 'Evaluador', 'Comentario']
   },
   POR_CLASIFICAR: {
     nombre: 'Por clasificar',

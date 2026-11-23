@@ -25,10 +25,15 @@ function catalogo_() {
       'Origen': 'Catálogo inicial'
     };
   };
+  // Pregunta de la evaluación final de un módulo.
   var p = function (modulo, n, pregunta, opciones, correcta, explicacion, fuente) {
+    return q(modulo, '', n, pregunta, opciones, correcta, explicacion, fuente);
+  };
+  // Pregunta de la mini evaluación de un video (lección).
+  var q = function (modulo, leccion, n, pregunta, opciones, correcta, explicacion, fuente) {
     return {
-      'ID módulo': modulo, 'N°': n, 'Pregunta': pregunta, 'A': opciones[0], 'B': opciones[1], 'C': opciones[2],
-      'D': opciones[3], 'Correcta': correcta, 'Explicación': explicacion, 'Fuente': fuente
+      'ID módulo': modulo, 'ID lección': leccion, 'N°': n, 'Pregunta': pregunta, 'A': opciones[0], 'B': opciones[1],
+      'C': opciones[2], 'D': opciones[3], 'Correcta': correcta, 'Explicación': explicacion, 'Fuente': fuente
     };
   };
   var x = function (id, titulo, tipo, carpeta, nota, modulo) {
@@ -70,7 +75,7 @@ function catalogo_() {
       ['Diferenciar la promesa de compraventa de la escritura definitiva', 'Explicar los plazos desde la reserva hasta la inscripción',
         'Orientar una compra con crédito hipotecario', 'Responder las preguntas frecuentes con la información vigente del área']),
     m('FINAL', 8, 'Semana 4', 'Evaluación final', 'Evaluación final: simulación comercial completa',
-      'Role play del proceso de venta, desde el primer contacto hasta el cierre, con retroalimentación de tu tutora o supervisor.',
+      'Evaluación final integradora de todos los pilares en la plataforma y role play del proceso de venta, desde el primer contacto hasta el cierre, con tu tutora o supervisor.',
       ['Explicar cualquier proyecto TPDV sin apoyo', 'Llevar un lead por las etapas del embudo en HubSpot',
         'Manejar objeciones y resolver preguntas frecuentes', 'Guiar a un cliente desde la consulta inicial hasta la reserva'],
       'Práctica')
@@ -187,7 +192,7 @@ function catalogo_() {
       'Respuestas vigentes del área de Escrituración a las preguntas legales más frecuentes.'),
 
     // Semana 4 · Evaluación final
-    l('F-01', 'FINAL', 1, '', 'Cómo es la evaluación final', 'Texto', '', 'Qué incluye la simulación y cómo se califica.', { min: 4 }),
+    l('F-01', 'FINAL', 1, '', 'Cómo es la evaluación final', 'Texto', '', 'La evaluación integradora, la simulación práctica y cómo se califican.', { min: 4 }),
     l('F-02', 'FINAL', 2, '', 'Prepárate: cuestionario de alternativas y casos', 'Word', '1UDzAMLlh10NY5m7zX7QqOLjF1PHtxrVD',
       'Diez preguntas de alternativa y diez casos de clientes para practicar antes de tu evaluación.')
   ];
@@ -328,7 +333,179 @@ function catalogo_() {
       'B', 'Una vez inscrita la parcela se libera el vale vista; la comisión se paga después de liberada la instrucción.', 'Presentación del pilar Legal y Escrituración (1dGo2IefiBg2bdI3xM5KWGQfJFPtpgPyJ)'),
     p('LEGAL-2', 6, 'Una clienta casada en sociedad conyugal quiere comprar sin la firma de su cónyuge. ¿Qué norma lo permite?',
       ['El artículo 55 de la LGUC', 'El artículo 150 del Código Civil, acreditando ingresos propios', 'Un certificado CONADI', 'Un usufructo a su favor'],
-      'B', 'El artículo 150 regula el patrimonio reservado; se acredita con liquidaciones de sueldo o carpeta tributaria.', 'Preguntas frecuentes de clientes (1pBt806NPAcvkM7Hh0vJkh_DavV_UWgyy9p0mFjt-bsA)')
+      'B', 'El artículo 150 regula el patrimonio reservado; se acredita con liquidaciones de sueldo o carpeta tributaria.', 'Preguntas frecuentes de clientes (1pBt806NPAcvkM7Hh0vJkh_DavV_UWgyy9p0mFjt-bsA)'),
+    // ── Mini evaluaciones de cada video (4 preguntas; se aprueban con PUNTAJE_APROBACION_MINI).
+    // Las de HubSpot 3, 4 y 5 (plantillas y fragmentos) usan conocimiento general de HubSpot: la tutora debe validarlas.
+    q('VENTAS-1', 'V1-01', 1, 'Según el video del Pilar de Ventas, ¿qué frase resume la forma de vender en TPDV?',
+      ['Vender es insistir hasta que la persona interesada acepte la oferta.', 'Vender es cerrar rápido antes de que la persona interesada compare.', 'Vender no es presionar, es guiar con conocimiento y confianza.', 'Vender es ofrecer siempre la parcela de menor precio disponible.'],
+      'C', 'El guion abre el pilar con la idea de que vender no es presionar, sino guiar con conocimiento y confianza.',
+      'Guión para videos con pausas (139xstRSc0OtVT0nZ6MaYks5g6Besdfu99xmgcHqyQSA) — «vender no es presionar, vender es guiar con conocimiento y confianza»'),
+    q('VENTAS-1', 'V1-01', 2, 'En la etapa de seguimiento del proceso de venta, ¿cuántos seguimientos se deben agendar como mínimo por cliente?',
+      ['Al menos 1 seguimiento', 'Al menos 3 seguimientos', 'Al menos 7 seguimientos', 'Al menos 12 seguimientos'],
+      'B', 'En la etapa de seguimiento se pide agendar al menos 3 seguimientos por cliente y registrarlos en el CRM.',
+      'Guión hablado Pilar de ventas (1nLsyXG6R-03tb8Hw2g_9KhbKZqMBSOdz3SJG4eFPzMw) — «Agenda al menos 3 seguimientos por cliente. Y todo eso lo anotas en el CRM.»'),
+    q('VENTAS-1', 'V1-01', 3, 'Al grabar el audio de presentación de una parcelación, ¿cuánto debería durar para mantener la atención?',
+      ['Entre 2 y 3 minutos', 'Entre 15 y 30 segundos', 'Entre 5 y 10 minutos', 'Entre 45 y 60 segundos'],
+      'D', 'El plan de trabajo del Pilar 6 indica que los audios por parcelación deben durar entre 45 y 60 segundos.',
+      'Guión hablado Pilar de ventas (1nLsyXG6R-03tb8Hw2g_9KhbKZqMBSOdz3SJG4eFPzMw) — «Audios deben durar entre 45 y 60 segundos para mantener atención.»'),
+    q('VENTAS-1', 'V1-01', 4, 'En el guion de primer contacto, ¿qué pregunta clave se hace para orientar la conversación?',
+      ['¿Estás buscando para vivir, invertir o ambas?', '¿Cuánto es lo máximo que puedes pagar hoy?', '¿Ya cotizaste con otras empresas de parcelas?', '¿Prefieres reservar hoy o la próxima semana?'],
+      'A', 'El guion de primer contacto incluye la pregunta clave sobre si se busca una parcela para vivir, invertir o ambas cosas.',
+      'Guión para videos con pausas (139xstRSc0OtVT0nZ6MaYks5g6Besdfu99xmgcHqyQSA) — «Vi tu interés por parcelas. ¿Estás buscando para vivir, invertir o ambas?»'),
+    q('VENTAS-1', 'V1-09', 1, 'En el uso avanzado de HubSpot, ¿para qué sirve visualizar el embudo de ventas?',
+      ['Para diseñar las creatividades de cada campaña.', 'Para saber en qué etapa está cada cliente.', 'Para calcular la tasación de cada parcela.', 'Para redactar la promesa de compraventa.'],
+      'B', 'En el uso avanzado, el embudo de ventas permite ver en qué etapa se encuentra cada cliente.',
+      'PILAR DE VENTAS – ACADEMIA TPDV-DETALLADO (1KFvt6BgZGly9oJWTDUyJwtj_V9A2x9ay0AGD7kobfK8) — «Usar el embudo de ventas para saber en qué etapa está cada cliente»'),
+    q('VENTAS-1', 'V1-09', 2, '¿Qué filtros propone el material para priorizar mejor la gestión dentro del CRM?',
+      ['Por color de zona, tipografía y formato de pieza.', 'Por banco, notaría y Conservador asignado.', 'Por red social, horario y número de seguidores.', 'Por proyectos, fechas o tipos de cliente.'],
+      'D', 'El material indica filtrar por proyectos, fechas o tipos de cliente para priorizar mejor la gestión.',
+      'PILAR DE VENTAS – ACADEMIA TPDV-DETALLADO (1KFvt6BgZGly9oJWTDUyJwtj_V9A2x9ay0AGD7kobfK8) — «Filtrar por proyectos, fechas o tipos de cliente para priorizar mejor»'),
+    q('VENTAS-1', 'V1-09', 3, 'Según el material de CRM, ¿cómo se describe a HubSpot y qué ayuda a evitar?',
+      ['Como un archivo de precios; evita errores en las cotizaciones.', 'Como un muro de noticias; evita la falta de motivación interna.', 'Como un “mapa comercial”; evita perder ventas por desorganización.', 'Como un repositorio legal; evita firmar documentos incompletos.'],
+      'C', 'El CRM se presenta como el “mapa comercial” que ayuda a no perder ninguna venta por desorganización.',
+      'PILAR DE VENTAS – ACADEMIA TPDV-DETALLADO (1KFvt6BgZGly9oJWTDUyJwtj_V9A2x9ay0AGD7kobfK8) — «El CRM es tu “mapa comercial” y te ayuda a no perder ninguna venta por desorganización.»'),
+    q('VENTAS-1', 'V1-09', 4, 'En el embudo de HubSpot, ¿en qué etapa se ubica un lead nuevo que llega desde una campaña, el sitio web o un referido y se asigna a una persona asesora?',
+      ['Identificación de oportunidad', 'Primera llamada o contacto efectivo', 'Visita agendada', 'Visita realizada'],
+      'A', 'La primera etapa del embudo, Identificación de oportunidad, agrupa los leads nuevos recibidos y asignados a quien asesora.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «1. Identificación de oportunidad • Lead nuevo recibido desde campaña, sitio web, referidos u otros. • Se asigna a asesor.»'),
+    q('VENTAS-1', 'V1-10', 1, 'Al registrar un cliente nuevo en HubSpot (uso básico), ¿qué datos indica el material?',
+      ['Profesión, edad y estado civil.', 'Banco, monto del crédito y tasación.', 'Nombre, contacto e interés.', 'Red social, horario y comuna.'],
+      'C', 'El uso básico indica registrar a cada cliente nuevo con su nombre, contacto e interés.',
+      'PILAR DE VENTAS – ACADEMIA TPDV-DETALLADO (1KFvt6BgZGly9oJWTDUyJwtj_V9A2x9ay0AGD7kobfK8) — «Registrar clientes nuevos (nombre, contacto, interés)»'),
+    q('VENTAS-1', 'V1-10', 2, 'Según el uso básico del CRM, ¿qué interacciones con cada cliente se deben registrar?',
+      ['Cada llamada, WhatsApp o reunión.', 'Solo las reuniones presenciales en terreno.', 'Solo los correos con cotizaciones formales.', 'Solo el contacto que termina en reserva.'],
+      'A', 'Toda interacción, ya sea llamada, WhatsApp o reunión, debe quedar registrada en el CRM.',
+      'PILAR DE VENTAS – ACADEMIA TPDV-DETALLADO (1KFvt6BgZGly9oJWTDUyJwtj_V9A2x9ay0AGD7kobfK8) — «Registrar cada llamada, WhatsApp o reunión»'),
+    q('VENTAS-1', 'V1-10', 3, 'Además de registrar datos e interacciones, ¿qué otra acción forma parte del uso básico de HubSpot?',
+      ['Diseñar las piezas gráficas de cada proyecto.', 'Redactar la escritura de compraventa desde la ficha.', 'Definir el precio final de la parcela en el contacto.', 'Asignar el estado de cada cliente, como 1° llamada o visita agendada.'],
+      'D', 'El uso básico incluye asignar el estado de cada cliente, desde Identificación de oportunidad hasta etapas como visita agendada.',
+      'PILAR DE VENTAS – ACADEMIA TPDV-DETALLADO (1KFvt6BgZGly9oJWTDUyJwtj_V9A2x9ay0AGD7kobfK8) — «Asignar estado del cliente (Identificación de oportunidad, 1° llamada, 2° llamada, 3° llamada, visita agendada, visita realizada…»'),
+    q('VENTAS-1', 'V1-10', 4, 'En la etapa «Primera llamada o contacto efectivo», ¿qué información clave se levanta para completar el registro del contacto?',
+      ['Lote reservado, abono y contrato.', 'Motivación, presupuesto e interés.', 'Razón de pérdida y fecha de cierre.', 'Notaría, lugar de firma y banco.'],
+      'B', 'En el primer contacto efectivo se levanta la motivación, el presupuesto y el interés de la persona.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «Se levanta información clave (motivación, presupuesto, interés).»'),
+    q('VENTAS-2', 'V2-02', 1, 'Un lead ya ingresado al CRM recibe los primeros intentos por teléfono, WhatsApp y correo, pero aún no hay contacto efectivo. ¿En qué etapa del embudo está?',
+      ['Segunda llamada', 'Sin contacto aún', 'Visita agendada', 'Reserva'],
+      'B', 'La etapa Sin contacto aún corresponde a un lead ingresado con primeros intentos de contacto, pero sin contacto efectivo.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «Lead ingresado, pero sin contacto efectivo. • Se realizan primeros intentos de contacto (teléfono, WhatsApp, correo)»'),
+    q('VENTAS-2', 'V2-02', 2, '¿Cuándo se marca un negocio como «Negocio ganado» en el embudo?',
+      ['Cuando se confirma la visita presencial al proyecto.', 'Cuando se paga el abono y se reserva el terreno.', 'Cuando se logra la primera llamada efectiva.', 'Cuando se completa el proceso legal y la escritura.'],
+      'D', 'Un negocio se considera ganado cuando se completa el proceso legal y la escritura, y se cierra la venta.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «8. Negocio ganado • Cliente completa proceso legal y escritura. • Se cierra venta.»'),
+    q('VENTAS-2', 'V2-02', 3, 'Si una persona interesada desiste o no concreta la compra, ¿qué se debe hacer al mover el negocio a «Negocio perdido»?',
+      ['Registrar la razón de pérdida para su análisis.', 'Eliminar el contacto para mantener el CRM limpio.', 'Devolverlo a la etapa Identificación de oportunidad.', 'Enviarle una nueva cotización con descuento.'],
+      'A', 'En Negocio perdido se registra la razón de pérdida para poder analizarla.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «9. Negocio perdido • Cliente desiste o no concreta. • Se registra razón de pérdida para análisis.»'),
+    q('VENTAS-2', 'V2-02', 4, 'En la etapa «Visita realizada», ¿qué información se registra en el negocio?',
+      ['El comprobante de pago del pie y el banco.', 'La fecha de inscripción en el Conservador.', 'La reacción de la persona y los lotes mostrados.', 'Los datos de la campaña que generó el lead.'],
+      'C', 'En Visita realizada se registran la reacción de la persona y los lotes mostrados, y se activa el seguimiento post-visita.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «Se ejecuta la visita. • Se registra reacción del cliente y lotes mostrados. • Se activa seguimiento post-visita.»'),
+    q('VENTAS-2', 'V2-03', 1, 'En HubSpot, ¿qué es una plantilla (template) de correo de ventas?',
+      ['Un bloque breve de texto que se inserta escribiendo # y un atajo.', 'Un informe automático con las métricas semanales del embudo.', 'Una etapa del embudo que agrupa los negocios en seguimiento.', 'Un correo reutilizable, con asunto y cuerpo, listo para insertar y enviar.'],
+      'D', 'Una plantilla es un correo completo guardado, con asunto y cuerpo, que se reutiliza al escribir a un contacto desde HubSpot.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-03', 2, 'Al crear una plantilla, ¿para qué sirven los tokens de personalización?',
+      ['Para bloquear la plantilla y que nadie más del equipo la use.', 'Para programar el envío masivo del correo a toda la base.', 'Para insertar automáticamente datos del registro, como el nombre.', 'Para traducir el correo al idioma de quien lo recibe.'],
+      'C', 'Los tokens de personalización completan automáticamente datos del registro, como el nombre del contacto, al usar la plantilla.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-03', 3, 'Después de insertar una plantilla en un correo a un contacto, ¿qué ocurre si se ajusta el texto antes de enviarlo?',
+      ['Solo cambia ese correo; la plantilla guardada no se modifica.', 'La plantilla original se sobrescribe para todo el equipo.', 'HubSpot bloquea el envío hasta que se apruebe el cambio.', 'El correo se envía sin asunto porque se pierde el formato.'],
+      'A', 'Los cambios hechos en el correo después de insertar la plantilla aplican solo a ese envío y no alteran la plantilla guardada.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-03', 4, '¿Qué permite revisar HubSpot sobre las plantillas que usa el equipo?',
+      ['La tasación estimada de las parcelas mencionadas.', 'Su rendimiento: aperturas, clics y respuestas.', 'El estado legal del proyecto asociado al correo.', 'Los seguidores ganados en redes sociales.'],
+      'B', 'HubSpot muestra métricas de rendimiento de cada plantilla, como envíos, aperturas, clics y respuestas.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-04', 1, 'En HubSpot, ¿qué es un fragmento (snippet)?',
+      ['Un correo completo, con asunto y cuerpo, listo para enviar.', 'Un bloque breve y reutilizable de texto para insertar al escribir.', 'Un filtro guardado para ver solo los negocios de un proyecto.', 'Un recordatorio automático que se crea al cerrar una tarea.'],
+      'B', 'Un fragmento es un bloque breve de texto reutilizable, a diferencia de la plantilla, que es un correo completo.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-04', 2, '¿Cuál es la forma rápida de insertar un fragmento mientras se escribe un correo o una nota?',
+      ['Escribir @ seguido del nombre del contacto.', 'Pegar el enlace del fragmento en el asunto.', 'Escribir # seguido del atajo del fragmento.', 'Arrastrar el fragmento desde el panel de negocios.'],
+      'C', 'Para insertar un fragmento se escribe el símbolo # seguido de su atajo y se selecciona de la lista.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-04', 3, 'Además de los correos, ¿en qué otros espacios de HubSpot se pueden usar fragmentos?',
+      ['Solo en la configuración de etapas del embudo.', 'Solo en los informes y paneles del equipo.', 'Solo en los formularios del sitio web.', 'En notas de actividad y conversaciones de chat.'],
+      'D', 'Los fragmentos pueden usarse en correos, en notas registradas en el CRM y en conversaciones de chat.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('VENTAS-2', 'V2-04', 4, 'Al crear un fragmento nuevo, ¿qué elementos se definen?',
+      ['Nombre interno, texto del fragmento y atajo.', 'Asunto, destinatarios y fecha de envío.', 'Etapa del embudo, monto y fecha de cierre.', 'Archivo adjunto, firma y logo de la marca.'],
+      'A', 'Al crear un fragmento se define un nombre interno, el texto que se insertará y el atajo para llamarlo.',
+      'Conocimiento general de HubSpot (validar con la tutora)'),
+    q('MARKETING-1', 'M1-01', 1, 'Según el video del Pilar de Marketing, ¿cuál es una ventaja del marketing digital frente al tradicional?',
+      ['Segmentar por edad, ubicación, intereses y comportamiento.', 'Llegar a todo el público sin segmentar por intereses.', 'Depender de puntos de venta físicos para crecer.', 'Invertir montos altos, solo al alcance de grandes empresas.'],
+      'A', 'El marketing digital permite dirigirse a audiencias específicas según edad, ubicación, intereses y comportamiento.',
+      '202507 - Desarrollo Pilares Marketing (100JEbybm2MVA1miyABrK9bS0K25fd1U7a1OlxhJBVEM) — «Segmentación precisa: Podemos dirigirnos a audiencias muy específicas según edad, ubicación, intereses y comportamiento.»'),
+    q('MARKETING-1', 'M1-01', 2, '¿Qué es un lead según el Pilar de Marketing?',
+      ['Una persona que ya firmó la promesa de compraventa.', 'Una campaña pagada que se publica en redes sociales.', 'Una persona que mostró interés y dejó sus datos de contacto.', 'Un proyecto nuevo que aún está en tramitación legal.'],
+      'C', 'Un lead es una persona que mostró interés en los proyectos y dejó datos como nombre, correo o teléfono.',
+      '202507 - Desarrollo Pilares Marketing (100JEbybm2MVA1miyABrK9bS0K25fd1U7a1OlxhJBVEM) — «Un lead es una persona que ha mostrado algún interés en nuestros proyectos dejando sus datos de contacto (nombre, correo, teléfono)»'),
+    q('MARKETING-1', 'M1-01', 3, 'En el resumen visual de leads, ¿qué tipo tiene volumen alto, costo por lead bajo y corresponde a la etapa inicial del embudo?',
+      ['MQL', 'SQL', 'Todos por igual', 'IQL'],
+      'D', 'En el resumen visual, el IQL tiene volumen alto, costo por lead bajo y se ubica en la etapa inicial del embudo.',
+      '202507 - Desarrollo Pilares Marketing (100JEbybm2MVA1miyABrK9bS0K25fd1U7a1OlxhJBVEM) — «Tipo de Lead Volumen Costo por Lead Nivel de Calificación […] IQL Alto Bajo Bajo Etapa inicial del embudo»'),
+    q('MARKETING-1', 'M1-01', 4, '¿Con qué calificación de prioridad entra cada lead al CRM, según el Pilar de Marketing?',
+      ['Prioridad baja, para gestionarlo cuando haya tiempo.', 'Prioridad media, y debe gestionarse rápidamente.', 'Prioridad alta, solo si viene desde Google.', 'Sin prioridad, hasta que quien asesora la defina.'],
+      'B', 'Cada lead ingresa al CRM con prioridad media y debe gestionarse rápidamente.',
+      '202507 - Desarrollo Pilares Marketing (100JEbybm2MVA1miyABrK9bS0K25fd1U7a1OlxhJBVEM) — «Cada lead entra con una calificación de prioridad media, y debe ser gestionado rápidamente.»'),
+    q('LEGAL-1', 'L1-01', 1, '¿Cómo se explica a la persona compradora un terreno «en blanco»?',
+      ['Está listo para escriturar, con la subdivisión ya autorizada.', 'Tiene documentación avanzada y avances en terreno en curso.', 'Es más barato, pero hay que esperar porque está en tramitación.', 'Es un terreno que solo pueden comprar empresas agrícolas.'],
+      'C', 'Un terreno en blanco es más barato, pero requiere esperar porque su documentación y subdivisión siguen en tramitación.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «En blanco: más barato, pero hay que esperar ya que se encuentra en proceso de tramitación de documentación y aprobaciones de subdivisión.»'),
+    q('LEGAL-1', 'L1-01', 2, 'Si la persona compradora pregunta qué es el Rol de su parcela, ¿cuál es la explicación correcta?',
+      ['Un número único de identificación tributaria que asigna el SII.', 'El número de inscripción que asigna la notaría al firmar.', 'El certificado que acredita que no es terreno indígena.', 'El código interno que TPDV asigna a cada parcelación.'],
+      'A', 'El Rol es el número único de identificación tributaria que el SII asigna a cada propiedad, como un RUT del terreno.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «El Rol es un número único de identificación tributaria que el SII asigna a cada propiedad, es como el rut de cada persona»'),
+    q('LEGAL-1', 'L1-01', 3, 'Cuando la compra es con crédito hipotecario, ¿quién redacta la escritura de compraventa?',
+      ['El área legal de TPDV, con los datos cargados en HubSpot.', 'La persona asesora, usando la ficha de reserva firmada.', 'El Conservador de Bienes Raíces, al recibir el pie.', 'El banco; TPDV solo da el visto bueno cuando todo está en regla.'],
+      'D', 'Con crédito hipotecario la escritura la redacta el banco y el área legal de TPDV solo da el visto bueno.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «Opción B: Crédito hipotecario. Aquí la escritura la redacta el banco. Nosotros solo damos el visto bueno cuando el cliente cumple con todo.»'),
+    q('LEGAL-1', 'L1-01', 4, 'En una compra con usufructo, ¿qué caracteriza al nudo propietario?',
+      ['Usa el bien y percibe sus frutos sin ser su dueño.', 'Es dueño legal, pero no usa el bien mientras dure el usufructo.', 'Representa legalmente a una persona menor de edad.', 'Es el banco que mantiene una hipoteca sobre la parcela.'],
+      'B', 'El nudo propietario es el dueño legal del bien, pero no puede usarlo mientras dure el usufructo.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «Nudo propietario: es el dueño legal del bien pero no puede usarlo mientras dure el usufructo.»'),
+
+    // ── Evaluación final integradora del módulo FINAL (todos los pilares). La práctica la registra la tutora aparte.
+    p('FINAL', 1, 'Si una persona interesada dice «Lo encontré caro comparado con otros», ¿qué recomienda el flujo de seguimiento?',
+      ['Reforzar el valor y los beneficios únicos del proyecto.', 'Ofrecer de inmediato un descuento para no perder la venta.', 'Dejar de insistir y mover el negocio a Negocio perdido.', 'Pedirle que lo piense y volver a llamar en un mes.'],
+      'A', 'Ante la objeción de precio, el flujo recomienda reforzar el valor y los beneficios únicos del proyecto.',
+      'FLUJO DE SEGUIMIENTO EN HUBSPOT.pdf (1EaUqY05FY-VMtbdZT2cGSiGDiqNdQYcD) — «“Lo encontré caro comparado con otros” Reforzar valor y beneficios únicos»'),
+    p('FINAL', 2, 'Según el cronograma del Pilar 3 (Conocimiento del Proyecto), ¿qué entregable se espera de la jornada de análisis de la competencia?',
+      ['Un video panorámico del proyecto de 2 a 3 minutos.', 'Fotos organizadas por número de parcela en Drive.', 'Una hoja comparativa con 3 a 5 competidores.', 'Una presentación simulada ante el equipo de ventas.'],
+      'C', 'La jornada de análisis de la competencia tiene como entregable una hoja comparativa con 3 a 5 competidores.',
+      'Guión hablado Pilar de ventas (1nLsyXG6R-03tb8Hw2g_9KhbKZqMBSOdz3SJG4eFPzMw) — «Análisis de la competencia […] Identificar precios, características y diferenciales de otros proyectos. […] Hoja comparativa con 3-5 competidores.»'),
+    p('FINAL', 3, 'En el guion de cierre, después de validar la decisión y enviar el paso a paso de la reserva, ¿con quién se coordina la persona asesora?',
+      ['Con marketing, para pedir una nueva creatividad.', 'Con el equipo legal o de escrituración.', 'Con otra persona asesora, para traspasar el lead.', 'Con soporte de HubSpot, para cerrar el negocio.'],
+      'B', 'El guion de cierre termina coordinando con el equipo legal o de escrituración tras validar la decisión y enviar el paso a paso.',
+      'Guión Pilares de ventas (1gV3r3GV8FJvoO_pmSFoGuwHOA1RhJwka_ECtdF4emTc) — «Validar decisión […] Enviar paso a paso para reserva […] Coordinar con equipo legal/escrituración»'),
+    p('FINAL', 4, '¿Cuáles de estos son valores de Tu Proyecto de Vida según su Manual de Marca?',
+      ['Rentabilidad, Rapidez y Exclusividad.', 'Tradición, Lujo y Competitividad.', 'Eficiencia, Prestigio y Expansión.', 'Innovación, Confianza y Sostenibilidad.'],
+      'D', 'El Manual de Marca declara como valores Innovación, Confianza, Excelencia, Comunidad, Compromiso y Sostenibilidad.',
+      'Manual de Marca TPDV.pdf (1lTjPKCV0x2LGu4JoVbbJj_AdlvyLEZKO) — «Nuestros Valores […] Innovación, Confianza, Excelencia, Comunidad, Compromiso, Sostenibilidad.»'),
+    p('FINAL', 5, 'Al grabar o fotografiar un proyecto para redes, ¿qué estilo de imagen pide el Manual de Marca?',
+      ['Filtros intensos y estilo cinematográfico para destacar.', 'Tonos cálidos y luz natural, con mínima intervención digital.', 'Colores saturados y sombras duras para dar más contraste.', 'Imágenes genéricas de catálogo en vez de fotos reales.'],
+      'B', 'El manual pide imágenes reales con tonos cálidos y luz natural, evitando filtros intensos o estilos cinematográficos.',
+      'Manual de Marca TPDV.pdf (1lTjPKCV0x2LGu4JoVbbJj_AdlvyLEZKO) — «Tonos cálidos y luz natural, especialmente golden hour o luz suave difusa. […] Evitar filtros intensos o estilos cinematográficos»'),
+    p('FINAL', 6, 'En el área de marketing, ¿qué es la Grilla Orgánica de Contenidos?',
+      ['Un calendario editorial con publicaciones planificadas.', 'Una lista con los precios vigentes y las promociones.', 'Una carpeta con logotipos, paletas e íconos oficiales.', 'Un formulario para pedir piezas gráficas específicas.'],
+      'A', 'La Grilla Orgánica de Contenidos es el calendario editorial con las publicaciones planificadas por marketing.',
+      '202507 - Desarrollo Pilares Marketing (100JEbybm2MVA1miyABrK9bS0K25fd1U7a1OlxhJBVEM) — «Grilla Orgánica de Contenidos: Calendario editorial con publicaciones planificadas.»'),
+    p('FINAL', 7, '¿Con qué banco trabaja TPDV para compras con crédito hipotecario y por qué?',
+      ['Con cualquier banco, ya que todos financian parcelas rurales.', 'Con una cooperativa de ahorro, porque exige menos requisitos.', 'Con Banco Santander: financia parcelas rurales no urbanizadas bajo 1.200 UF.', 'Con un banco distinto en cada zona, según la notaría.'],
+      'C', 'TPDV trabaja solo con Banco Santander porque es el único que financia parcelas rurales no urbanizadas bajo 1.200 UF.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «trabajamos únicamente con Banco Santander, ya que es el único banco que financia parcelas rurales no urbanizadas bajo 1.200 UF.»'),
+    p('FINAL', 8, 'Si la persona compradora pregunta qué es la servidumbre de tránsito, ¿cuál es la respuesta correcta?',
+      ['Un impuesto por usar los caminos interiores del loteo.', 'Un permiso municipal para abrir caminos en la parcela.', 'Un certificado que confirma que no habrá expropiación.', 'Un derecho que garantiza acceso a una parcela sin salida a camino público.'],
+      'D', 'La servidumbre de tránsito es un derecho que garantiza el acceso a una parcela sin salida directa a un camino público.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «Es un derecho que garantiza el acceso a una parcela que no tiene salida directa a un camino público.»'),
+    p('FINAL', 9, 'Para solicitar la promesa de compraventa, ¿qué puede usarse como respaldo si aún no hay ficha de reserva firmada?',
+      ['Un audio de WhatsApp donde la persona confirma su interés.', 'Una captura del negocio en HubSpot en etapa de reserva.', 'Un correo en el que la persona compradora acepta la compra.', 'La confirmación verbal de la persona asesora al área legal.'],
+      'C', 'Si falta la ficha firmada, la solicitud de promesa puede respaldarse con un correo donde se acepta la compra.',
+      '🎤 Guion Hablado Inducción actualizado.docx (1bzSlO1UpUL-yC_zf7dXMhBgLJ9hBUniT) — «Para solicitar promesa, si no hay ficha firmada, pueden respaldarse con un correo donde el cliente acepte la compra.»'),
+    p('FINAL', 10, 'Según el objetivo general de la Academia TPDV, ¿desde cuándo se espera que la persona asesora inicie una gestión comercial efectiva?',
+      ['Desde el primer día de inducción.', 'Después de su primera escritura.', 'Al terminar el primer año.', 'A partir del segundo mes.'],
+      'D', 'El objetivo general busca una inducción integral que permita iniciar la gestión comercial efectiva desde el segundo mes.',
+      'PILARES Y CONTENIDOS (1A8oe09l_AEDsqAq06ubx_R8Ao8LpzyF8) — «ASEGURANDO UNA INDUCCIÓN INTEGRAL QUE PERMITA INICIAR LA GESTIÓN COMERCIAL EFECTIVA A PARTIR DEL SEGUNDO MES.»')
   ];
 
   var notas = 'Notas de Gemini: actas de producción de la academia (no es material para alumnos).';
@@ -395,11 +572,12 @@ function contenidoInterno_() {
       '<tr><td>4</td><td>Legal II + simulaciones</td><td>Documentos, casos frecuentes y role playing</td><td>Escrituración y equipo comercial</td></tr>' +
       '</tbody></table>' +
       '<h2>Cómo avanzas</h2><ul>' +
-      '<li>Cada módulo tiene lecciones: videos, presentaciones, documentos y lecturas. Márcalas como completadas a medida que las revisas.</li>' +
-      '<li>Al terminar las lecciones se habilita la <strong>evaluación del módulo</strong>. Se aprueba con <strong>{{PUNTAJE_APROBACION}}%</strong> o más; si no lo logras, repasa y vuelve a rendirla.</li>' +
+      '<li>Cada módulo tiene lecciones: videos, presentaciones, documentos y lecturas. Las presentaciones, documentos y lecturas se marcan como completadas a medida que las revisas.</li>' +
+      '<li>Cada <strong>video</strong> termina con una <strong>mini evaluación de 4 preguntas</strong>. Se aprueba con <strong>{{PUNTAJE_APROBACION_MINI}}%</strong> (3 de 4) y, al aprobarla, el video queda completado. Puedes repetirla las veces que necesites.</li>' +
+      '<li>Al terminar las lecciones se habilita la <strong>evaluación final del módulo</strong>. Se aprueba con <strong>{{PUNTAJE_APROBACION}}%</strong> o más; si no lo logras, repasa y vuelve a rendirla.</li>' +
       '<li>Los módulos se abren en orden: el siguiente se desbloquea al completar el anterior.</li>' +
-      '<li>La <strong>evaluación final</strong> es una simulación completa del proceso de venta (role play) que realiza tu tutora o supervisor.</li>' +
-      '<li>Al completar todo, descargas tu <strong>certificado</strong>.</li></ul>' +
+      '<li>Tu barra de avance suma las lecciones y las evaluaciones finales: cuando terminas todos los cursos llega al <strong>100%</strong>.</li>' +
+      '<li>Además, tu tutora o supervisor realiza una <strong>evaluación práctica</strong>: una simulación completa del proceso de venta (role play). No cambia tu barra de avance, pero al aprobarla se habilita tu <strong>certificado</strong>.</li></ul>' +
       '<div class="destacado"><strong>Meta de tu primera semana.</strong> Explicar cualquier proyecto TPDV, manejar HubSpot correctamente, realizar un primer contacto comercial, ' +
       'resolver preguntas frecuentes básicas y guiar a un cliente desde la consulta inicial hasta una eventual reserva.</div>' +
       '<p>Además del contenido en línea, tu tutora te acompañará en visitas a los campos, en la escucha de llamadas y en ejercicios de role play. ' +
@@ -475,7 +653,8 @@ function contenidoInterno_() {
       '<li>Todo lead entra con prioridad media: contáctalo rápido. Cuanto antes llames, mayor es la probabilidad de concretar una visita o una venta.</li></ul>',
 
     'F-01':
-      '<p>La evaluación final comprueba que puedes llevar una venta de principio a fin. La realiza tu tutora o supervisor y queda registrada en la academia.</p>' +
+      '<p>El cierre del programa tiene dos partes. En la plataforma rindes la <strong>evaluación final integradora</strong>, con preguntas de todos los pilares: al aprobarla completas el 100% de tus cursos. ' +
+      'Después, tu tutora o supervisor realiza la <strong>evaluación práctica</strong>, que comprueba que puedes llevar una venta de principio a fin y queda registrada en la academia.</p>' +
       '<h2>Qué incluye</h2><ul>' +
       '<li><strong>Simulación completa del proceso de venta (role play):</strong> desde el primer contacto hasta el cierre.</li>' +
       '<li><strong>Práctica en HubSpot:</strong> creas tu contacto y tu negocio en el embudo y lo llevas por las distintas etapas, enviando fragmentos y plantillas.</li>' +
@@ -483,7 +662,8 @@ function contenidoInterno_() {
       '<li><strong>Presentación comercial estructurada</strong> de un proyecto.</li></ul>' +
       '<h2>Cómo se califica</h2>' +
       '<p>Cada caso o criterio se evalúa como <strong>Logrado</strong> (3 puntos), <strong>Por lograr</strong> (2) o <strong>Debe trabajar</strong> (1). ' +
-      'Se aprueba con <strong>{{PUNTAJE_APROBACION}}%</strong> o más del puntaje total y recibirás retroalimentación individual con tus fortalezas y puntos de mejora.</p>' +
+      'Se aprueba con <strong>{{PUNTAJE_APROBACION}}%</strong> o más del puntaje total y recibirás retroalimentación individual con tus fortalezas y puntos de mejora. ' +
+      'La evaluación práctica no cambia tu barra de avance: cuando queda aprobada se habilita tu certificado.</p>' +
       '<div class="destacado">Prepárate con el cuestionario de esta sección y repasa las preguntas frecuentes de clientes del módulo Legal II.</div>'
   };
 }

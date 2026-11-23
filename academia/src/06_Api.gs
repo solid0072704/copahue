@@ -74,10 +74,11 @@ function estadoParaCliente_(usuario) {
   var contenidos = {};
   var internos = typeof contenidoInterno_ === 'function' ? contenidoInterno_() : {};
   var puntaje = String(configNumero_('PUNTAJE_APROBACION', 0, 100));
+  var puntajeMini = String(configNumero_('PUNTAJE_APROBACION_MINI', 0, 100));
   estado.modulos.forEach(function (m) {
     m.lecciones.forEach(function (l) {
       if (l.tipo === TIPOS_LECCION.TEXTO && internos[l.id]) {
-        contenidos[l.id] = internos[l.id].replace(/\{\{PUNTAJE_APROBACION\}\}/g, puntaje);
+        contenidos[l.id] = internos[l.id].replace(/\{\{PUNTAJE_APROBACION_MINI\}\}/g, puntajeMini).replace(/\{\{PUNTAJE_APROBACION\}\}/g, puntaje);
       }
     });
   });
@@ -93,6 +94,8 @@ function estadoParaCliente_(usuario) {
       nombre: aTexto_(c['NOMBRE_ACADEMIA']) || 'TPDV Academy',
       bajada: aTexto_(c['BAJADA']),
       puntajeAprobacion: configNumero_('PUNTAJE_APROBACION', 0, 100),
+      puntajeAprobacionMini: configNumero_('PUNTAJE_APROBACION_MINI', 0, 100),
+      certificadoRequierePractica: configSi_('CERTIFICADO_REQUIERE_PRACTICA'),
       intentosMaximos: configNumero_('INTENTOS_MAXIMOS', 0, 50),
       ordenObligatorio: configSi_('ORDEN_OBLIGATORIO'),
       contacto: esCorreoPermitido_(c['CORREO_CONTACTO']) ? aTexto_(c['CORREO_CONTACTO']).toLowerCase() : '',
@@ -100,9 +103,11 @@ function estadoParaCliente_(usuario) {
     },
     programa: estado,
     contenidos: contenidos,
+    // Un certificado ya emitido (fecha en «Usuarios») no se revoca aunque cambien las reglas del programa.
     certificado: {
-      disponible: estado.terminado,
-      fecha: perfil.certificado || (estado.terminado ? new Date().toISOString() : '')
+      disponible: estado.certificadoDisponible || !!perfil.certificado,
+      esperaPractica: estado.esperaPractica && !perfil.certificado,
+      fecha: perfil.certificado || (estado.certificadoDisponible ? new Date().toISOString() : '')
     }
   };
 }
@@ -130,14 +135,15 @@ function guardarPerfil(datos) {
   return estadoParaCliente_(usuario);
 }
 
-function obtenerEvaluacion(idModulo) {
+/** Evaluación final del módulo, o mini evaluación de una lección si se indica idLeccion. */
+function obtenerEvaluacion(idModulo, idLeccion) {
   var usuario = exigirUsuario_();
-  return evaluacionParaAlumno_(usuario.email, aTexto_(idModulo));
+  return evaluacionParaAlumno_(usuario.email, aTexto_(idModulo), aTexto_(idLeccion));
 }
 
-function enviarEvaluacion(idModulo, respuestas) {
+function enviarEvaluacion(idModulo, respuestas, idLeccion) {
   var usuario = exigirUsuario_();
-  var resultado = registrarIntento_(usuario.email, aTexto_(idModulo), respuestas || {});
+  var resultado = registrarIntento_(usuario.email, aTexto_(idModulo), respuestas || {}, aTexto_(idLeccion));
   var datos = estadoParaCliente_(usuario);
   actualizarResumen_(usuario.email, datos.programa);
   return { resultado: resultado, datos: datos };
@@ -177,10 +183,10 @@ function obtenerDetalleColaborador(emailColaborador) {
 
 /** Estado resumido de un módulo para el panel. */
 function estadoModuloCorto_(m) {
+  if (m.completo && m.practicaPendiente) return 'practica';
   if (m.completo) return 'completo';
   if (m.bloqueado) return 'bloqueado';
   if (m.leccionesCompletas && m.evaluacion && !m.evaluacion.aprobada) return 'evaluacion';
-  if (m.leccionesCompletas && m.practica && !m.practica.aprobada) return 'practica';
   if (m.progreso > 0) return 'curso';
   return 'pendiente';
 }
@@ -207,16 +213,20 @@ function detalleColaborador_(email) {
   });
   var estado = estadoUsuario_(email);
   var titulos = {};
-  estado.modulos.forEach(function (m) { titulos[m.id] = m.titulo; });
+  estado.modulos.forEach(function (m) {
+    titulos[m.id] = m.titulo;
+    m.lecciones.forEach(function (l) { titulos[l.id] = l.titulo; });
+  });
 
   var historial = leerTabla_(HOJAS.RESULTADOS)
     .filter(function (r) { return aTexto_(r['Email']).toLowerCase() === email; })
     .map(function (r) {
       var practica = aTexto_(r['Tipo']).toLowerCase().indexOf('pr') === 0;
+      var idLeccion = aTexto_(r['ID lección']);
       return {
         fecha: aFechaIso_(r['Fecha']),
-        modulo: titulos[aTexto_(r['ID módulo'])] || aTexto_(r['ID módulo']),
-        tipo: practica ? 'Práctica' : 'Cuestionario',
+        modulo: (titulos[aTexto_(r['ID módulo'])] || aTexto_(r['ID módulo'])) + (idLeccion && titulos[idLeccion] ? ' · ' + titulos[idLeccion] : ''),
+        tipo: practica ? 'Práctica' : (idLeccion ? 'Mini evaluación' : 'Evaluación final'),
         puntaje: Number(r['Puntaje %']) || 0,
         aprobado: esSi_(r['Aprobado']),
         intento: aTexto_(r['Intento']),
@@ -236,6 +246,7 @@ function detalleColaborador_(email) {
     },
     avance: estado.avance,
     terminado: estado.terminado,
+    certificadoDisponible: estado.certificadoDisponible,
     modulosCompletos: estado.modulosCompletos,
     totalModulos: estado.totalModulos,
     leccionesCompletadas: estado.leccionesCompletadas,
@@ -246,7 +257,8 @@ function detalleColaborador_(email) {
         estado: estadoModuloCorto_(m), completadas: m.completadas, obligatorias: m.obligatorias,
         evaluacion: m.evaluacion, practica: m.practica,
         lecciones: m.lecciones.map(function (l) {
-          return { id: l.id, titulo: l.titulo, tipo: l.tipo, obligatoria: l.obligatoria, completada: l.completada, fecha: fechas[l.id] || '' };
+          return { id: l.id, titulo: l.titulo, tipo: l.tipo, obligatoria: l.obligatoria, completada: l.completada, fecha: fechas[l.id] || '',
+            miniEvaluacion: l.miniEvaluacion };
         })
       };
     }),
@@ -258,7 +270,7 @@ function panelAdmin_() {
   var estructura = leerEstructura_();
   var filasProgreso = leerTabla_(HOJAS.PROGRESO);
   var filasResultados = leerTabla_(HOJAS.RESULTADOS);
-  var opciones = { ordenObligatorio: configSi_('ORDEN_OBLIGATORIO') };
+  var opciones = { ordenObligatorio: configSi_('ORDEN_OBLIGATORIO'), certificadoRequierePractica: configSi_('CERTIFICADO_REQUIERE_PRACTICA') };
   var modulosPractica = estructura.modulos.filter(function (m) { return m.tipo === 'practica'; })
     .map(function (m) { return { id: m.id, titulo: m.titulo }; });
 
@@ -270,10 +282,9 @@ function panelAdmin_() {
       leerResultadosUsuario_(email, filasResultados),
       opciones
     );
-    var pendientes = estado.modulos.filter(function (m) {
-      return m.practica && !m.practica.aprobada && !m.bloqueado && m.leccionesCompletas &&
-        (!m.evaluacion || m.evaluacion.aprobada);
-    }).map(function (m) { return { id: m.id, titulo: m.titulo }; });
+    // Práctica por registrar: el contenido del módulo está completo y falta la evaluación de la tutora.
+    var pendientes = estado.modulos.filter(function (m) { return m.completo && m.practicaPendiente; })
+      .map(function (m) { return { id: m.id, titulo: m.titulo }; });
     var actual = estado.modulos.filter(function (m) { return !m.completo; })[0];
     var ultimoIngreso = aFechaIso_(u['Último ingreso']);
     return {
@@ -291,7 +302,7 @@ function panelAdmin_() {
       modulosCompletos: estado.modulosCompletos,
       totalModulos: estado.totalModulos,
       moduloActual: actual ? actual.titulo : 'Programa completo',
-      certificado: aFechaIso_(u['Certificado']) || (estado.terminado ? 'sí' : ''),
+      certificado: aFechaIso_(u['Certificado']) || (estado.certificadoDisponible ? 'sí' : ''),
       practicasPendientes: pendientes,
       evaluaciones: estado.modulos.filter(function (m) { return m.evaluacion || m.practica; }).map(function (m) {
         return {
@@ -318,7 +329,10 @@ function panelAdmin_() {
     },
     colaboradores: colaboradores,
     modulos: estructura.modulos.map(function (m) {
-      return { id: m.id, titulo: m.titulo, corto: tituloCorto_(m), semana: m.semana, lecciones: m.lecciones.length, preguntas: m.preguntas, tipo: m.tipo };
+      return {
+        id: m.id, titulo: m.titulo, corto: tituloCorto_(m), semana: m.semana, lecciones: m.lecciones.length, preguntas: m.preguntas, tipo: m.tipo,
+        minis: m.lecciones.filter(function (l) { return l.preguntas > 0; }).length
+      };
     }),
     modulosPractica: modulosPractica,
     porClasificar: contarPendientesClasificar_(),

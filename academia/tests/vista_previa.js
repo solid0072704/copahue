@@ -40,7 +40,11 @@ function avanzar(email, nombre, area, hasta) {
 }
 function completarLecciones(idModulo, cantidad) {
   const modulo = env.ejecutar('obtenerDatos').programa.modulos.find(m => m.id === idModulo);
-  modulo.lecciones.slice(0, cantidad === undefined ? modulo.lecciones.length : cantidad).forEach(l => env.ejecutar('marcarLeccion', l.id, true));
+  modulo.lecciones.slice(0, cantidad === undefined ? modulo.lecciones.length : cantidad).forEach(l => {
+    // Los videos se completan aprobando su mini evaluación.
+    if (l.miniEvaluacion) env.ejecutar('enviarEvaluacion', idModulo, respuestasCorrectas(env, idModulo, l.id), l.id);
+    else env.ejecutar('marcarLeccion', l.id, true);
+  });
 }
 function aprobar(idModulo) {
   completarLecciones(idModulo);
@@ -58,10 +62,11 @@ avanzar(DIEGO, 'Diego Soto', 'Ventas zona centro', () => {
   completarLecciones('VENTAS-1');
   env.ejecutar('enviarEvaluacion', 'VENTAS-1', { 1: 'B', 2: 'C', 3: 'A', 4: 'A', 5: 'B', 6: 'D' });
 });
-avanzar(VALENTINA, 'Valentina Muñoz', 'Ventas zona sur', () => {
-  ['INDUCCION', 'VENTAS-1', 'VENTAS-2', 'MARKETING-1', 'MARKETING-2', 'LEGAL-1', 'LEGAL-2'].forEach(aprobar);
-  completarLecciones('FINAL');
-});
+const TODOS = ['INDUCCION', 'VENTAS-1', 'VENTAS-2', 'MARKETING-1', 'MARKETING-2', 'LEGAL-1', 'LEGAL-2', 'FINAL'];
+avanzar(VALENTINA, 'Valentina Muñoz', 'Ventas zona sur', () => { TODOS.forEach(aprobar); });
+// Matías terminó todos los cursos (100%) y espera que la tutora registre su evaluación práctica.
+const MATIAS = 'matias.vega@tuproyectodevida.cl';
+avanzar(MATIAS, 'Matías Vega', 'Ventas zona norte', () => { TODOS.forEach(aprobar); });
 const PAULA = 'paula.herrera@tuproyectodevida.cl';
 avanzar(PAULA, 'Paula Herrera', 'Ventas zona centro', () => { completarLecciones('INDUCCION', 2); });
 // Paula no ingresa hace 12 días (para ver la alerta de inactividad en el panel).
@@ -160,6 +165,20 @@ async function captura(pagina, nombre, completa = true) {
     await captura(s.pagina, '03_leccion_drive.png', false);
     await s.pagina.click('#btn-completar');
     await s.pagina.waitForSelector('#btn-completar.boton--exito');
+    // Video con su mini evaluación de 4 preguntas.
+    await s.pagina.click('[data-ir="leccion"][data-leccion="V1-09"]');
+    await s.pagina.waitForSelector('.mini-eval');
+    await captura(s.pagina, '03b_video_mini_evaluacion.png');
+    await s.pagina.click('.mini-eval [data-ir="evaluacion"]');
+    await s.pagina.waitForSelector('#form-evaluacion');
+    const mini = respuestasCorrectas(env, 'VENTAS-1', 'V1-09');
+    for (const [n, letra] of Object.entries(mini)) {
+      await s.pagina.check(`input[name="p${n}"][value="${n === '4' ? (letra === 'A' ? 'B' : 'A') : letra}"]`);
+    }
+    await captura(s.pagina, '03c_mini_evaluacion.png', false);
+    await s.pagina.click('#btn-enviar');
+    await s.pagina.waitForSelector('.resultado');
+    await captura(s.pagina, '03d_mini_resultado.png');
     await s.pagina.click('.cabecera__nav [data-ir="inicio"]');
     await s.pagina.click('[data-ir="modulo"][data-modulo="INDUCCION"]');
     await s.pagina.click('[data-ir="leccion"][data-leccion="IND-03"]');
@@ -180,6 +199,12 @@ async function captura(pagina, nombre, completa = true) {
     await s.pagina.click('#btn-enviar');
     await s.pagina.waitForSelector('.resultado');
     await captura(s.pagina, '06_resultado.png');
+    todosLosErrores.push(...s.errores);
+    await s.contexto.close();
+
+    // 3a. Cursos al 100% con la evaluación práctica pendiente.
+    s = await prepararPagina(navegador, MATIAS);
+    await captura(s.pagina, '07a_cursos_100_practica_pendiente.png', false);
     todosLosErrores.push(...s.errores);
     await s.contexto.close();
 

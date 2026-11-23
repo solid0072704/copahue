@@ -1,15 +1,21 @@
 /**
  * TPDV Academy · Evaluaciones.
- *  - Cuestionario del módulo: selección múltiple, se corrige en el servidor (las respuestas
- *    correctas nunca viajan al navegador antes de enviar).
- *  - Evaluación práctica (role play, casos): la registra un administrador desde el panel.
+ *  - Mini evaluación de cada video (preguntas con «ID lección»): al aprobarla se completa la lección.
+ *  - Evaluación final de cada módulo (preguntas sin «ID lección»): se habilita al completar las lecciones.
+ *  - Evaluación práctica (role play, casos): la registra un administrador desde el panel; no cuenta en la barra
+ *    de avance, pero puede ser requisito del certificado (CERTIFICADO_REQUIERE_PRACTICA).
+ * Todas se corrigen en el servidor: las respuestas correctas nunca viajan al navegador antes de enviar.
  */
 
 var LETRAS = ['A', 'B', 'C', 'D'];
 
-function preguntasDeModulo_(idModulo) {
+/** Preguntas de la evaluación final del módulo (idLeccion vacío) o de la mini evaluación de una lección. */
+function preguntasDeModulo_(idModulo, idLeccion) {
+  var leccion = aTexto_(idLeccion);
   return leerTabla_(HOJAS.PREGUNTAS)
-    .filter(function (p) { return aTexto_(p['ID módulo']) === idModulo && aTexto_(p['Pregunta']); })
+    .filter(function (p) {
+      return aTexto_(p['ID módulo']) === idModulo && aTexto_(p['ID lección']) === leccion && aTexto_(p['Pregunta']);
+    })
     .map(function (p, i) {
       return {
         n: Number(p['N°']) || i + 1,
@@ -46,6 +52,13 @@ function moduloDelUsuario_(email, idModulo) {
   return modulo;
 }
 
+function leccionDelModulo_(modulo, idLeccion) {
+  var leccion = modulo.lecciones.filter(function (l) { return l.id === idLeccion; })[0];
+  if (!leccion) throw new Error('La lección no existe o ya no está visible.');
+  if (!leccion.miniEvaluacion) throw new Error('Esta lección no tiene mini evaluación.');
+  return leccion;
+}
+
 function validarIntentos_(modulo) {
   var maximo = configNumero_('INTENTOS_MAXIMOS', 0, 50);
   if (maximo > 0 && modulo.evaluacion && !modulo.evaluacion.aprobada && modulo.evaluacion.intentos >= maximo) {
@@ -54,50 +67,77 @@ function validarIntentos_(modulo) {
 }
 
 /** Preguntas para mostrar al colaborador (sin la respuesta correcta). */
-function evaluacionParaAlumno_(email, idModulo) {
+function evaluacionParaAlumno_(email, idModulo, idLeccion) {
   var modulo = moduloDelUsuario_(email, idModulo);
-  if (!modulo.evaluacion) throw new Error('Este módulo no tiene evaluación.');
   if (modulo.bloqueado) throw new Error('Este módulo se desbloquea al completar el anterior.');
-  if (!modulo.leccionesCompletas) throw new Error('Completa todas las lecciones del módulo antes de rendir la evaluación.');
-  validarIntentos_(modulo);
-  return {
-    moduloId: modulo.id,
-    titulo: modulo.titulo,
-    puntajeAprobacion: configNumero_('PUNTAJE_APROBACION', 0, 100),
-    intentos: modulo.evaluacion.intentos,
-    intentosMaximos: configNumero_('INTENTOS_MAXIMOS', 0, 50),
-    preguntas: preguntasDeModulo_(idModulo).map(function (p) {
-      return { n: p.n, pregunta: p.pregunta, opciones: p.opciones };
-    })
-  };
+  var esMini = !!aTexto_(idLeccion);
+  var base;
+  if (esMini) {
+    var leccion = leccionDelModulo_(modulo, idLeccion);
+    base = {
+      tipo: 'mini', leccionId: leccion.id, titulo: leccion.titulo,
+      puntajeAprobacion: configNumero_('PUNTAJE_APROBACION_MINI', 0, 100),
+      intentos: leccion.miniEvaluacion.intentos, intentosMaximos: 0
+    };
+  } else {
+    if (!modulo.evaluacion) throw new Error('Este módulo no tiene evaluación final.');
+    if (!modulo.leccionesCompletas) throw new Error('Completa todas las lecciones del módulo (y sus mini evaluaciones) antes de rendir la evaluación final.');
+    validarIntentos_(modulo);
+    base = {
+      tipo: 'final', leccionId: '', titulo: modulo.titulo,
+      puntajeAprobacion: configNumero_('PUNTAJE_APROBACION', 0, 100),
+      intentos: modulo.evaluacion.intentos, intentosMaximos: configNumero_('INTENTOS_MAXIMOS', 0, 50)
+    };
+  }
+  base.moduloId = modulo.id;
+  base.preguntas = preguntasDeModulo_(idModulo, esMini ? idLeccion : '').map(function (p) {
+    return { n: p.n, pregunta: p.pregunta, opciones: p.opciones };
+  });
+  return base;
 }
 
-function registrarIntento_(email, idModulo, respuestas) {
+function registrarIntento_(email, idModulo, respuestas, idLeccion) {
   var modulo = moduloDelUsuario_(email, idModulo);
-  if (!modulo.evaluacionDisponible) throw new Error('La evaluación de este módulo aún no está disponible.');
-  validarIntentos_(modulo);
-  var preguntas = preguntasDeModulo_(idModulo);
-  if (!preguntas.length) throw new Error('Este módulo no tiene preguntas cargadas.');
-  var resultado = corregir_(preguntas, respuestas, configNumero_('PUNTAJE_APROBACION', 0, 100));
+  var esMini = !!aTexto_(idLeccion);
+  var intento;
+  var umbral;
+  if (esMini) {
+    if (modulo.bloqueado) throw new Error('Este módulo se desbloquea al completar el anterior.');
+    intento = leccionDelModulo_(modulo, idLeccion).miniEvaluacion.intentos + 1;
+    umbral = configNumero_('PUNTAJE_APROBACION_MINI', 0, 100);
+  } else {
+    if (!modulo.evaluacionDisponible) throw new Error('La evaluación final de este módulo aún no está disponible.');
+    validarIntentos_(modulo);
+    intento = modulo.evaluacion.intentos + 1;
+    umbral = configNumero_('PUNTAJE_APROBACION', 0, 100);
+  }
+  var preguntas = preguntasDeModulo_(idModulo, esMini ? idLeccion : '');
+  if (!preguntas.length) throw new Error('Esta evaluación no tiene preguntas cargadas.');
+  var resultado = corregir_(preguntas, respuestas, umbral);
 
   conBloqueo_(function () {
     anexarFilas_(HOJAS.RESULTADOS, [{
       'Fecha': new Date(),
       'Email': email,
       'ID módulo': idModulo,
-      'Tipo': 'Cuestionario',
+      'ID lección': esMini ? idLeccion : '',
+      'Tipo': esMini ? 'Mini evaluación' : 'Evaluación final',
       'Puntaje %': resultado.puntaje,
       'Aprobado': resultado.aprobado ? 'SI' : 'NO',
-      'Intento': modulo.evaluacion.intentos + 1,
+      'Intento': intento,
       'Evaluador': 'Automático',
       'Comentario': resultado.detalle.map(function (d) { return d.n + ':' + (d.elegida || '-'); }).join(' ')
     }]);
   });
+  // La mini evaluación aprobada completa la lección (queda la fecha en «Progreso»).
+  if (esMini && resultado.aprobado) registrarLeccion_(email, idLeccion, true, true);
 
   // La respuesta correcta se muestra solo cuando se aprueba; antes, solo si acertó y la explicación.
   resultado.detalle.forEach(function (d) {
     if (!resultado.aprobado) delete d.respuestaCorrecta;
   });
+  resultado.tipo = esMini ? 'mini' : 'final';
+  resultado.umbral = umbral;
   return resultado;
 }
 
@@ -115,6 +155,7 @@ function registrarPractica_(evaluador, emailColaborador, idModulo, puntaje, come
       'Fecha': new Date(),
       'Email': email,
       'ID módulo': idModulo,
+      'ID lección': '',
       'Tipo': 'Práctica',
       'Puntaje %': nota,
       'Aprobado': aprobado ? 'SI' : 'NO',

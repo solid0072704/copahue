@@ -179,6 +179,14 @@
   .contenido-texto th, .contenido-texto td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--gris-100); vertical-align: top; }
   .contenido-texto th { font-family: var(--fuente-titulos); font-size: .85rem; color: var(--gris-600); }
   .acciones-leccion { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+  /* Mini evaluación de cada video */
+  .mini-eval { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 18px 20px; border-left: 5px solid var(--acento); }
+  .mini-eval--ok { border-left-color: var(--exito); }
+  .mini-eval__icono { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--acento-suave); color: #7A5200; }
+  .mini-eval--ok .mini-eval__icono { background: var(--exito-suave); color: var(--exito-oscuro); }
+  .mini-eval__texto { flex: 1; min-width: 0; }
+  .mini-eval__texto h2 { margin: 0 0 2px; font-size: 1.05rem; }
+  .mini-eval__texto p { margin: 0; }
   .ayuda-visor { font-size: .85rem; color: var(--gris-600); margin-top: 10px; }
   .objetivos { list-style: none; padding: 0; margin: 0 0 1em; display: grid; gap: 8px; }
   .objetivos li { display: flex; gap: 10px; align-items: flex-start; }
@@ -289,6 +297,8 @@
     .anillo { justify-self: start; }
   }
   @media (max-width: 640px) {
+    .mini-eval { flex-wrap: wrap; }
+    .mini-eval .boton { width: 100%; }
     .contenedor { padding: 18px 16px 40px; }
     .cabecera__interior { padding: 8px 16px; gap: 10px; }
     .cabecera__logo { height: 26px; }

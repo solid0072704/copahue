@@ -72,7 +72,11 @@ function instalar() {
   return texto;
 }
 
-/** Carga módulos, lecciones, preguntas y archivos excluidos del catálogo, solo en hojas vacías. */
+/**
+ * Carga módulos, lecciones, preguntas y archivos excluidos del catálogo en las hojas vacías.
+ * Actualización de versión: en «Preguntas» agrega los grupos que falten (mini evaluación de un video o
+ * evaluación final de un módulo que todavía no tiene preguntas). Nunca modifica las preguntas existentes.
+ */
 function cargarCatalogoSiVacio_() {
   var mensajes = [];
   if (typeof catalogo_ !== 'function') return ['Sin catálogo inicial (10_Catalogo.gs).'];
@@ -84,9 +88,24 @@ function cargarCatalogoSiVacio_() {
     { def: HOJAS.POR_CLASIFICAR, filas: catalogo.excluidos, nombre: 'archivos excluidos (revisados, no publicados)' }
   ];
   cargas.forEach(function (c) {
-    if (leerTabla_(c.def).length || !c.filas || !c.filas.length) return;
-    anexarFilas_(c.def, c.filas);
-    mensajes.push('Cargados ' + c.filas.length + ' ' + c.nombre + '.');
+    if (!c.filas || !c.filas.length) return;
+    var existentes = leerTabla_(c.def);
+    if (!existentes.length) {
+      anexarFilas_(c.def, c.filas);
+      mensajes.push('Cargados ' + c.filas.length + ' ' + c.nombre + '.');
+      return;
+    }
+    if (c.def !== HOJAS.PREGUNTAS) return;
+    var grupo = function (p) { return aTexto_(p['ID módulo']) + '|' + aTexto_(p['ID lección']); };
+    var conPreguntas = {};
+    existentes.forEach(function (p) { conPreguntas[grupo(p)] = true; });
+    var nuevas = c.filas.filter(function (p) { return !conPreguntas[grupo(p)]; });
+    if (!nuevas.length) return;
+    anexarFilas_(c.def, nuevas);
+    var minis = {};
+    nuevas.forEach(function (p) { if (aTexto_(p['ID lección'])) minis[p['ID lección']] = true; });
+    mensajes.push('Preguntas: se agregaron ' + nuevas.length + ' preguntas nuevas (' + Object.keys(minis).length +
+      ' mini evaluaciones de video y las evaluaciones finales que faltaban).');
   });
   return mensajes;
 }

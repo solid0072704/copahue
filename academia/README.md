@@ -9,8 +9,8 @@ marca oficial.
 |---|---|
 | Ruta de 4 semanas con módulos que se desbloquean en orden | Panel con el avance de cada colaborador |
 | Videos, PDF, presentaciones y documentos de Drive dentro de la plataforma | Registro de la evaluación práctica (role play, rúbrica 3/2/1) |
-| Evaluación por módulo (aprobación 80%) con revisión de respuestas | Verificación de permisos de cada archivo de Drive |
-| Certificado de finalización para imprimir o guardar en PDF | Detección de archivos nuevos en la carpeta («Por clasificar») |
+| Mini evaluación de 4 preguntas en cada video y evaluación final en cada módulo, con revisión de respuestas | Verificación de permisos de cada archivo de Drive |
+| Barra de avance que llega a 100% al terminar los cursos · certificado para imprimir o guardar en PDF | Detección de archivos nuevos en la carpeta («Por clasificar») |
 | Funciona en computador y celular | Todo se administra desde una planilla de Google Sheets |
 
 ---
@@ -19,19 +19,33 @@ marca oficial.
 
 Estructura tomada del documento **«PILARES Y CONTENIDOS»** (carpeta TPDV ACADEMY) y del cronograma del asesor comercial.
 
-| Semana | Módulo | Lecciones | Evaluación |
-|---|---|---|---|
-| 1 | Te damos la bienvenida a Tu Proyecto de Vida | 3 lecturas (cómo funciona la academia, quiénes somos, propuesta de valor y zonas) | 6 preguntas |
-| 1 | Ventas I: fundamentos, proyectos y HubSpot básico | 13 (video del pilar, rol y metas, proceso de venta, HubSpot 1–2, fichas, manual de visitas) | 6 preguntas |
-| 2 | Ventas II: seguimiento, guiones y cierre | 17 (HubSpot 3–5, guiones de llamada, plantillas WhatsApp/correo, objeciones, cierre, role play) | 6 preguntas |
-| 2 | Marketing I: leads, canales y portafolio | 4 (video del pilar, Pilar I de Marketing, Manual de Marca, logos 2026) | 7 preguntas |
-| 3 | Marketing II: contenido para ventas y CRM | 3 (Pilar II de Marketing, checklist de contenido, grilla 2026) | 5 preguntas |
-| 3 | Legal I: fundamentos legales de la parcelación | 6 (video del pilar, presentación, inducción de Escrituración, glosario, checklist legal, guion) | 6 preguntas |
-| 4 | Legal II: documentos de venta y preguntas frecuentes | 3 (promesa y compraventa, crédito y plazos, preguntas frecuentes) | 6 preguntas |
-| 4 | Evaluación final: simulación comercial completa | 2 (cómo es la evaluación, cuestionario de práctica) | Práctica, la registra la tutora |
+| Semana | Módulo | Lecciones | Mini evaluaciones (videos) | Evaluación final |
+|---|---|---|---|---|
+| 1 | Te damos la bienvenida a Tu Proyecto de Vida | 3 lecturas (cómo funciona la academia, quiénes somos, propuesta de valor y zonas) | — | 6 preguntas |
+| 1 | Ventas I: fundamentos, proyectos y HubSpot básico | 13 (video del pilar, rol y metas, proceso de venta, HubSpot 1–2, fichas, manual de visitas) | 3 × 4 preguntas | 6 preguntas |
+| 2 | Ventas II: seguimiento, guiones y cierre | 17 (HubSpot 3–5, guiones de llamada, plantillas WhatsApp/correo, objeciones, cierre, role play) | 3 × 4 preguntas | 6 preguntas |
+| 2 | Marketing I: leads, canales y portafolio | 4 (video del pilar, Pilar I de Marketing, Manual de Marca, logos 2026) | 1 × 4 preguntas | 7 preguntas |
+| 3 | Marketing II: contenido para ventas y CRM | 3 (Pilar II de Marketing, checklist de contenido, grilla 2026) | — | 5 preguntas |
+| 3 | Legal I: fundamentos legales de la parcelación | 6 (video del pilar, presentación, inducción de Escrituración, glosario, checklist legal, guion) | 1 × 4 preguntas | 6 preguntas |
+| 4 | Legal II: documentos de venta y preguntas frecuentes | 3 (promesa y compraventa, crédito y plazos, preguntas frecuentes) | — | 6 preguntas |
+| 4 | Evaluación final: simulación comercial completa | 2 (cómo es la evaluación, cuestionario de práctica) | — | 10 preguntas integradoras + práctica con la tutora |
 
 Cada lección apunta al archivo real de Drive (ver `src/10_Catalogo.gs`). Las preguntas se redactaron a partir del
 material de cada pilar y la columna «Fuente» de la hoja «Preguntas» indica de qué archivo sale cada una.
+
+**Cómo se evalúa y cómo avanza la barra**
+
+- **Mini evaluación por video**: cada video termina con 4 preguntas. Se aprueba con `PUNTAJE_APROBACION_MINI`
+  (75% = 3 de 4) y, al aprobarla, el video queda completado (los videos no se marcan a mano). Se puede repetir.
+- **Evaluación final por módulo**: se habilita cuando todas las lecciones del módulo están completas (incluidas las
+  mini evaluaciones) y se aprueba con `PUNTAJE_APROBACION` (80%).
+- **Barra de avance**: suma las lecciones obligatorias y la evaluación final de cada módulo. La evaluación práctica de
+  la tutora **no cuenta**, así que al terminar los cursos la barra llega a **100%**.
+- **Certificado**: con `CERTIFICADO_REQUIERE_PRACTICA = SI` (por defecto) se habilita cuando la tutora registra la
+  evaluación práctica aprobada; con `NO`, apenas la barra llega a 100%.
+- Las 8 preguntas de los videos HubSpot 4 y 5 (plantillas y fragmentos) usan conocimiento general de HubSpot porque la
+  carpeta no tiene material escrito de esos videos: **la tutora debe validarlas** (columna «Fuente»). También conviene
+  confirmar que el video de bienvenida de Ventas y los videos HubSpot 1 y 2 cubren los puntos de sus preguntas.
 
 ---
 
@@ -103,27 +117,39 @@ clasp push
 Cada vez que cambies el código, ve a **Implementar → Administrar implementaciones → Editar → Nueva versión** para
 publicarlo en la misma URL.
 
+### Actualizar una academia ya instalada (versión 1.0 → 1.1)
+
+1. Reemplaza en el editor todos los archivos `.gs` y `.html` por los de esta versión (no toques `11_Administradores`).
+2. Ejecuta **`instalar`** una vez. No borra nada: agrega las claves nuevas de «Config» (`PUNTAJE_APROBACION_MINI`,
+   `CERTIFICADO_REQUIERE_PRACTICA`), la columna «ID lección» en «Preguntas» y «Resultados», las 32 preguntas de las
+   mini evaluaciones y las 10 de la evaluación final del módulo «Evaluación final». Las preguntas que ya editaste quedan igual.
+3. Publica una **nueva versión** de la implementación.
+
+Lo que cada persona ya avanzó se conserva y los certificados ya emitidos siguen vigentes. Los videos que alguien marcó
+como vistos en la versión anterior quedan pendientes hasta que apruebe su mini evaluación.
+
 ---
 
 ## 4. Administración diaria (todo desde la planilla)
 
 | Hoja | Para qué |
 |---|---|
-| **Config** | Nombre, puntaje de aprobación (`PUNTAJE_APROBACION`), intentos (`INTENTOS_MAXIMOS`, 0 = sin límite), orden obligatorio, correo de ayuda, colores, tipografías y logos. (Los administradores **no** se definen aquí: ver `11_Administradores`.) |
+| **Config** | Nombre, puntaje de aprobación de la evaluación final (`PUNTAJE_APROBACION`) y de las mini evaluaciones (`PUNTAJE_APROBACION_MINI`), si el certificado espera la práctica (`CERTIFICADO_REQUIERE_PRACTICA`), intentos de la evaluación final (`INTENTOS_MAXIMOS`, 0 = sin límite), orden obligatorio, correo de ayuda, colores, tipografías y logos. (Los administradores **no** se definen aquí: ver `11_Administradores`.) |
 | **Módulos** | Título, descripción, objetivos (uno por línea), semana, pilar, orden y `Visible`. `Tipo = Práctica` agrega la evaluación que registra la tutora. |
 | **Lecciones** | Una fila por material: módulo, orden, sección, título, tipo, ID de Drive o URL (YouTube o enlace), duración, obligatoria y visible. |
-| **Preguntas** | Selección múltiple: módulo, pregunta, opciones A–D, letra correcta, explicación y fuente. |
+| **Preguntas** | Selección múltiple: módulo, lección, N°, pregunta, opciones A–D, letra correcta, explicación y fuente. Con «ID lección» la pregunta es de la mini evaluación de ese video; sin «ID lección», de la evaluación final del módulo. |
 | **Por clasificar** | Archivos nuevos que aparecieron en la carpeta. Escribe el ID del módulo, pon `SI` en «Incluir» y presiona **Sincronizar con Drive** en el panel. Los que tienen `NO` ya fueron revisados (actas, borradores, claves del evaluador) y no se publican. |
 | **Usuarios · Progreso · Resultados** | Registro automático de cada colaborador: ingresos, lecciones vistas, puntajes, intentos y fecha del certificado. |
 
 **Panel de administración.** Muestra a cada colaborador con su avance en los 8 módulos (completado, en curso,
-evaluación o práctica pendiente, sin comenzar o bloqueado), su último ingreso y alertas de inactividad (7 días o más).
-Se puede buscar por nombre, correo o área y filtrar por estado. Al hacer clic en una persona se abre su detalle:
-lecciones vistas con fecha, puntajes e intentos de cada evaluación, evaluación práctica y retroalimentación.
+evaluación final pendiente, completado con práctica por registrar, sin comenzar o bloqueado), su último ingreso y
+alertas de inactividad (7 días o más). Se puede buscar por nombre, correo o área y filtrar por estado. Al hacer clic en
+una persona se abre su detalle: lecciones completadas con fecha, resultado de cada mini evaluación, puntajes e intentos
+de cada evaluación final, evaluación práctica y retroalimentación.
 
 **Evaluación práctica (semana 4).** En **Panel → Registrar evaluación práctica** elige al colaborador, ingresa los
 puntos de la rúbrica (por ejemplo 26 de 30; la plataforma calcula el %) y la retroalimentación. Con 80% o más se
-completa el programa y se habilita el certificado.
+habilita el certificado. No cambia la barra de avance.
 
 **Kit de marca.** Viene configurado con el *Manual de Marca TPDV* (dic-2025): colores principales `#005A82`,
 `#007264`, `#85B500` y `#FFB829`; Montserrat para títulos y Lato para textos; logo `horizontal_blanco.png` en la
@@ -150,7 +176,7 @@ Al leer la carpeta TPDV ACADEMY se detectó lo siguiente. Conviene resolverlo co
 - Legal: luz y agua («No» frente a «con factibilidad»), cambio de uso de suelo, extranjeros (10 km de frontera frente
   a nacionales de países limítrofes), plazos de notaría y CBR, y el plano de loteo (DOM o SAG).
 - La rúbrica de Escrituración aprueba desde 18/30 (60%), mientras que el programa exige 80%. La plataforma usa
-  `PUNTAJE_APROBACION` (80) para todo.
+  `PUNTAJE_APROBACION` (80) para las evaluaciones finales y la práctica, y `PUNTAJE_APROBACION_MINI` (75) para los videos.
 
 **Material pendiente**
 - El Keynote de Marketing (1,4 GB) no se puede previsualizar en Drive: exportarlo a PDF y agregarlo al módulo.
@@ -169,9 +195,10 @@ El código del servidor se prueba en Node con un simulador de Apps Script (Drive
 node --test academia/tests/*.test.js
 ```
 
-Las 21 pruebas cubren el bloqueo de cuentas externas, que solo la lista de administradores vea el panel, el avance por colaborador, la instalación, el recorrido
-completo hasta el certificado, la sincronización con Drive, la verificación de permisos, la seguridad de la página y la
-consistencia del catálogo.
+Las 25 pruebas cubren el bloqueo de cuentas externas, que solo la lista de administradores vea el panel, el avance por colaborador, la instalación
+(y la actualización desde la versión anterior), las mini evaluaciones de cada video, la evaluación final de cada módulo,
+que la barra llegue a 100% sin la práctica, el recorrido completo hasta el certificado, la sincronización con Drive, la
+verificación de permisos, la seguridad de la página y la consistencia del catálogo.
 
 Para generar capturas de cada pantalla con Chromium (requiere Playwright):
 
@@ -192,7 +219,7 @@ academia/
 │   ├── 02_Datos.gs          base de datos en Google Sheets
 │   ├── 03_Contenido.gs      módulos, lecciones, visores de Drive, sincronización, permisos y marca
 │   ├── 04_Progreso.gs       avance, desbloqueo y certificado
-│   ├── 05_Evaluaciones.gs   cuestionarios y evaluación práctica
+│   ├── 05_Evaluaciones.gs   mini evaluaciones de video, evaluación final de módulo y evaluación práctica
 │   ├── 06_Api.gs            doGet y funciones que llama la página
 │   ├── 07_Instalacion.gs    instalar() y sincronización diaria
 │   ├── 10_Catalogo.gs       programa inicial, preguntas y lecturas propias
