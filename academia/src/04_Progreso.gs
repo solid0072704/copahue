@@ -63,6 +63,8 @@ function leerResultadosUsuario_(email, filasPrecargadas) {
  *    se completa al aprobarla. La evaluación práctica de la tutora NO cuenta en el avance: al terminar los
  *    cursos la barra llega a 100%.
  *  - Certificado: todos los módulos completos y, si así se configura, las evaluaciones prácticas aprobadas.
+ *  - Orden obligatorio: no se avanza sin responder. Las lecciones que siguen a un video con la mini evaluación
+ *    pendiente quedan bloqueadas, y cada módulo se abre al aprobar la evaluación final del anterior.
  * opciones: { ordenObligatorio: bool, certificadoRequierePractica: bool }
  */
 function calcularEstado_(estructura, completadas, resultados, opciones) {
@@ -78,6 +80,8 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
   var modulos = estructura.modulos.map(function (m) {
     var res = resultados[m.id] || {};
     var minis = res.mini || {};
+    // Con orden obligatorio, lo que sigue a un video obligatorio queda bloqueado hasta aprobar su mini evaluación.
+    var miniPendiente = null;
     var lecciones = m.lecciones.map(function (l) {
       var r = minis[l.id];
       var mini = l.preguntas > 0 ? {
@@ -88,7 +92,9 @@ function calcularEstado_(estructura, completadas, resultados, opciones) {
       } : null;
       var hecha = mini ? mini.aprobada : !!completadas[l.id];
       if (hecha) leccionesHechas++;
-      return Object.assign({}, l, { completada: hecha, miniEvaluacion: mini });
+      var bloqueadaPor = ordenObligatorio && miniPendiente ? miniPendiente : null;
+      if (mini && l.obligatoria && !mini.aprobada && !miniPendiente) miniPendiente = { id: l.id, titulo: l.titulo };
+      return Object.assign({}, l, { completada: hecha, miniEvaluacion: mini, bloqueada: !!bloqueadaPor, bloqueadaPor: bloqueadaPor });
     });
     var obligatorias = lecciones.filter(function (l) { return l.obligatoria; });
     var hechas = obligatorias.filter(function (l) { return l.completada; }).length;
@@ -168,6 +174,10 @@ function estadoUsuario_(email) {
   );
 }
 
+function mensajeLeccionBloqueada_(leccion) {
+  return 'Para avanzar, primero aprueba la mini evaluación de «' + leccion.bloqueadaPor.titulo + '».';
+}
+
 /**
  * Marca o desmarca una lección. Las lecciones con mini evaluación solo se completan al aprobarla
  * (desdeEvaluacion = true lo usa el registro de la mini evaluación).
@@ -181,6 +191,7 @@ function registrarLeccion_(email, idLeccion, completada, desdeEvaluacion) {
   });
   if (!leccion) throw new Error('La lección no existe o ya no está visible.');
   if (modulo.bloqueado) throw new Error('Este módulo se desbloquea al completar el anterior.');
+  if (leccion.bloqueada) throw new Error(mensajeLeccionBloqueada_(leccion));
   if (leccion.miniEvaluacion && !desdeEvaluacion) {
     throw new Error('Esta lección se completa al aprobar su mini evaluación.');
   }

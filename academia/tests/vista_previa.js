@@ -169,6 +169,21 @@ async function captura(pagina, nombre, completa = true) {
     await s.pagina.click('[data-ir="leccion"][data-leccion="V1-09"]');
     await s.pagina.waitForSelector('.mini-eval');
     await captura(s.pagina, '03b_video_mini_evaluacion.png');
+    // Lo que sigue al video queda bloqueado hasta aprobar su mini evaluación.
+    await s.pagina.locator('.temario').evaluate(e => { e.scrollTop = e.scrollHeight; });
+    await s.pagina.waitForTimeout(200);
+    await s.pagina.locator('.temario').screenshot({ path: path.join(SALIDA, '03e_temario_bloqueado.png') });
+    console.log('✓ 03e_temario_bloqueado.png');
+    // Intento de abrir directamente una lección bloqueada (enlace o historial).
+    await s.pagina.evaluate(() => {
+      const b = document.createElement('button');
+      b.setAttribute('data-ir', 'leccion'); b.setAttribute('data-modulo', 'VENTAS-1'); b.setAttribute('data-leccion', 'V1-11');
+      document.body.appendChild(b); b.click(); b.remove();
+    });
+    await s.pagina.waitForSelector('.sin-visor');
+    await captura(s.pagina, '03f_leccion_bloqueada.png', false);
+    await s.pagina.click('[data-ir="leccion"][data-leccion="V1-09"]');
+    await s.pagina.waitForSelector('.mini-eval');
     await s.pagina.click('.mini-eval [data-ir="evaluacion"]');
     await s.pagina.waitForSelector('#form-evaluacion');
     const mini = respuestasCorrectas(env, 'VENTAS-1', 'V1-09');

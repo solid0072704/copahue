@@ -182,6 +182,8 @@
   /* Mini evaluación de cada video */
   .mini-eval { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 18px 20px; border-left: 5px solid var(--acento); }
   .mini-eval--ok { border-left-color: var(--exito); }
+  .temario__item--bloqueado { opacity: .62; cursor: not-allowed; }
+  .temario__item--bloqueado .temario__check { border-style: dashed; color: var(--gris-600); }
   .mini-eval__icono { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--acento-suave); color: #7A5200; }
   .mini-eval--ok .mini-eval__icono { background: var(--exito-suave); color: var(--exito-oscuro); }
   .mini-eval__texto { flex: 1; min-width: 0; }

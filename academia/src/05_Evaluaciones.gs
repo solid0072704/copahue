@@ -56,6 +56,7 @@ function leccionDelModulo_(modulo, idLeccion) {
   var leccion = modulo.lecciones.filter(function (l) { return l.id === idLeccion; })[0];
   if (!leccion) throw new Error('La lección no existe o ya no está visible.');
   if (!leccion.miniEvaluacion) throw new Error('Esta lección no tiene mini evaluación.');
+  if (leccion.bloqueada) throw new Error(mensajeLeccionBloqueada_(leccion));
   return leccion;
 }
 

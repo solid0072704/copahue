@@ -321,15 +321,64 @@ test('cada video tiene una mini evaluación de 4 preguntas que completa la lecci
   assert.deepEqual(filas.map(f => [f.Tipo, f.Aprobado, f.Intento]), [['Mini evaluación', 'NO', 1], ['Mini evaluación', 'SI', 2]]);
 
   // La evaluación final del módulo exige todas las lecciones, con sus mini evaluaciones aprobadas.
-  v1.lecciones.filter(l => !l.miniEvaluacion).forEach(l => env.ejecutar('marcarLeccion', l.id, true));
+  const ultimoVideo = v1.lecciones.filter(l => l.miniEvaluacion).pop();
+  v1.lecciones.forEach(l => {
+    if (l.completada || l.id === ultimoVideo.id) return;
+    if (l.miniEvaluacion) env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', l.id), l.id);
+    else if (!env.ejecutar('obtenerDatos').programa.modulos[1].lecciones.find(x => x.id === l.id).bloqueada) env.ejecutar('marcarLeccion', l.id, true);
+  });
   assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-1'), /mini evaluaciones/);
   assert.throws(() => env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1')), /aún no está disponible/);
-  v1.lecciones.filter(l => l.miniEvaluacion && !l.completada).forEach(l =>
-    env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', l.id), l.id));
+  env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', ultimoVideo.id), ultimoVideo.id);
+  env.ejecutar('obtenerDatos').programa.modulos[1].lecciones.filter(l => !l.completada && !l.miniEvaluacion)
+    .forEach(l => env.ejecutar('marcarLeccion', l.id, true));
   const final = env.ejecutar('obtenerEvaluacion', 'VENTAS-1');
   assert.equal(final.tipo, 'final');
   assert.equal(final.puntajeAprobacion, 80);
   assert.equal(final.preguntas.length, env.catalogo.preguntas.filter(p => p['ID módulo'] === 'VENTAS-1' && !p['ID lección']).length);
+});
+
+test('no se avanza sin responder: lo que sigue a un video se abre al aprobar su mini evaluación', () => {
+  const env = entornoInstalado();
+  env.comoUsuario(ALUMNA);
+  completarModulo(env, 'INDUCCION');
+  let v1 = env.ejecutar('obtenerDatos').programa.modulos.find(m => m.id === 'VENTAS-1');
+  const orden = v1.lecciones.map(l => l.id);
+  assert.equal(orden[0], 'V1-01', 'el módulo parte con su video');
+  assert.equal(v1.lecciones[0].bloqueada, false);
+  v1.lecciones.slice(1).forEach(l => {
+    assert.equal(l.bloqueada, true, l.id + ' bloqueada hasta responder');
+    assert.equal(l.bloqueadaPor.id, 'V1-01');
+  });
+  assert.deepEqual(env.ejecutar('obtenerDatos').programa.siguiente, { moduloId: 'VENTAS-1', leccionId: 'V1-01' });
+
+  // El servidor no deja saltarse las preguntas.
+  assert.throws(() => env.ejecutar('marcarLeccion', 'V1-02', true), /primero aprueba la mini evaluación de «TPDV Academy · Ventas \(video\)»/);
+  assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-1', 'V1-09'), /primero aprueba la mini evaluación/);
+  assert.throws(() => env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', 'V1-09'), 'V1-09'), /primero aprueba/);
+  assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-1'), /Completa todas las lecciones/);
+
+  // Reprobar no abre nada; aprobar abre hasta el siguiente video.
+  env.ejecutar('enviarEvaluacion', 'VENTAS-1', { 1: 'X', 2: 'X', 3: 'X', 4: 'X' }, 'V1-01');
+  v1 = env.ejecutar('obtenerDatos').programa.modulos.find(m => m.id === 'VENTAS-1');
+  assert.equal(v1.lecciones.find(l => l.id === 'V1-02').bloqueada, true);
+  const r = env.ejecutar('enviarEvaluacion', 'VENTAS-1', respuestasCorrectas(env, 'VENTAS-1', 'V1-01'), 'V1-01');
+  v1 = r.datos.programa.modulos.find(m => m.id === 'VENTAS-1');
+  const i09 = orden.indexOf('V1-09');
+  v1.lecciones.forEach((l, i) => assert.equal(l.bloqueada, i > i09, l.id + (i > i09 ? ' sigue bloqueada (falta V1-09)' : ' abierta')));
+  env.ejecutar('marcarLeccion', 'V1-02', true);
+  assert.throws(() => env.ejecutar('marcarLeccion', orden[i09 + 2], true), /HubSpot 1/);
+
+  // El siguiente módulo sigue cerrado hasta aprobar la evaluación final.
+  assert.equal(r.datos.programa.modulos.find(m => m.id === 'VENTAS-2').bloqueado, true);
+  assert.throws(() => env.ejecutar('obtenerEvaluacion', 'VENTAS-2', 'V2-02'), /se desbloquea/);
+
+  // Con ORDEN_OBLIGATORIO = NO la ruta es libre.
+  const config = env.hoja('Config');
+  config.poner(config.datos.findIndex(f => f[0] === 'ORDEN_OBLIGATORIO') + 1, 2, 'NO');
+  const libre = env.ejecutar('obtenerDatos').programa.modulos.find(m => m.id === 'VENTAS-1');
+  assert.ok(libre.lecciones.every(l => !l.bloqueada));
+  env.ejecutar('marcarLeccion', orden[i09 + 2], true);
 });
 
 test('el avance llega a 100% con los cursos y el certificado se puede liberar sin práctica', () => {

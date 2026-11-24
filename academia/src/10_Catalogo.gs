@@ -575,7 +575,7 @@ function contenidoInterno_() {
       '<li>Cada módulo tiene lecciones: videos, presentaciones, documentos y lecturas. Las presentaciones, documentos y lecturas se marcan como completadas a medida que las revisas.</li>' +
       '<li>Cada <strong>video</strong> termina con una <strong>mini evaluación de 4 preguntas</strong>. Se aprueba con <strong>{{PUNTAJE_APROBACION_MINI}}%</strong> (3 de 4) y, al aprobarla, el video queda completado. Puedes repetirla las veces que necesites.</li>' +
       '<li>Al terminar las lecciones se habilita la <strong>evaluación final del módulo</strong>. Se aprueba con <strong>{{PUNTAJE_APROBACION}}%</strong> o más; si no lo logras, repasa y vuelve a rendirla.</li>' +
-      '<li>Los módulos se abren en orden: el siguiente se desbloquea al completar el anterior.</li>' +
+      '<li><strong>No puedes avanzar sin responder:</strong> lo que sigue a un video se abre al aprobar su mini evaluación, y el siguiente módulo se abre al aprobar la evaluación final del módulo actual.</li>' +
       '<li>Tu barra de avance suma las lecciones y las evaluaciones finales: cuando terminas todos los cursos llega al <strong>100%</strong>.</li>' +
       '<li>Además, tu tutora o supervisor realiza una <strong>evaluación práctica</strong>: una simulación completa del proceso de venta (role play). No cambia tu barra de avance, pero al aprobarla se habilita tu <strong>certificado</strong>.</li></ul>' +
       '<div class="destacado"><strong>Meta de tu primera semana.</strong> Explicar cualquier proyecto TPDV, manejar HubSpot correctamente, realizar un primer contacto comercial, ' +

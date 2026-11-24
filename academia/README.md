@@ -39,6 +39,9 @@ material de cada pilar y la columna «Fuente» de la hoja «Preguntas» indica d
   (75% = 3 de 4) y, al aprobarla, el video queda completado (los videos no se marcan a mano). Se puede repetir.
 - **Evaluación final por módulo**: se habilita cuando todas las lecciones del módulo están completas (incluidas las
   mini evaluaciones) y se aprueba con `PUNTAJE_APROBACION` (80%).
+- **No se avanza sin responder** (`ORDEN_OBLIGATORIO = SI`, por defecto): las lecciones que siguen a un video quedan
+  bloqueadas hasta aprobar su mini evaluación, y el módulo siguiente se abre solo al aprobar la evaluación final del
+  módulo actual. El servidor también lo exige: no se puede marcar ni rendir nada bloqueado. Con `NO`, la ruta es libre.
 - **Barra de avance**: suma las lecciones obligatorias y la evaluación final de cada módulo. La evaluación práctica de
   la tutora **no cuenta**, así que al terminar los cursos la barra llega a **100%**.
 - **Certificado**: con `CERTIFICADO_REQUIERE_PRACTICA = SI` (por defecto) se habilita cuando la tutora registra la
@@ -117,7 +120,7 @@ clasp push
 Cada vez que cambies el código, ve a **Implementar → Administrar implementaciones → Editar → Nueva versión** para
 publicarlo en la misma URL.
 
-### Actualizar una academia ya instalada (versión 1.0 → 1.1)
+### Actualizar una academia ya instalada (a la versión 1.2)
 
 1. Reemplaza en el editor todos los archivos `.gs` y `.html` por los de esta versión (no toques `11_Administradores`).
 2. Ejecuta **`instalar`** una vez. No borra nada: agrega las claves nuevas de «Config» (`PUNTAJE_APROBACION_MINI`,
@@ -195,8 +198,8 @@ El código del servidor se prueba en Node con un simulador de Apps Script (Drive
 node --test academia/tests/*.test.js
 ```
 
-Las 25 pruebas cubren el bloqueo de cuentas externas, que solo la lista de administradores vea el panel, el avance por colaborador, la instalación
-(y la actualización desde la versión anterior), las mini evaluaciones de cada video, la evaluación final de cada módulo,
+Las 26 pruebas cubren el bloqueo de cuentas externas, que solo la lista de administradores vea el panel, el avance por colaborador, la instalación
+(y la actualización desde la versión anterior), las mini evaluaciones de cada video, que no se pueda avanzar sin responderlas, la evaluación final de cada módulo,
 que la barra llegue a 100% sin la práctica, el recorrido completo hasta el certificado, la sincronización con Drive, la
 verificación de permisos, la seguridad de la página y la consistencia del catálogo.
 

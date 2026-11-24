@@ -21,7 +21,7 @@ function administradoresAcademia_() {
 /** Carpeta «TPDV ACADEMY» compartida en Drive (fuente del contenido). */
 var CARPETA_ACADEMIA_ID = '1hCDqvmusCl0nnC8TvKChiH_9ibKsR_b1';
 
-var VERSION_ACADEMIA = '1.1.0';
+var VERSION_ACADEMIA = '1.2.0';
 
 /**
  * Valores iniciales de la hoja «Config»: [clave, valor, descripción].
@@ -34,7 +34,7 @@ var CONFIG_DEFECTO = [
   ['PUNTAJE_APROBACION_MINI', '75', 'Porcentaje mínimo para aprobar la mini evaluación de cada video (75 = 3 de 4 preguntas).'],
   ['CERTIFICADO_REQUIERE_PRACTICA', 'SI', 'SI: el certificado se habilita cuando la tutora registra la evaluación práctica aprobada. No afecta la barra de avance.'],
   ['INTENTOS_MAXIMOS', '0', 'Intentos permitidos por evaluación. 0 = sin límite.'],
-  ['ORDEN_OBLIGATORIO', 'SI', 'SI: cada módulo se desbloquea al completar el anterior. NO: ruta libre.'],
+  ['ORDEN_OBLIGATORIO', 'SI', 'SI: no se avanza sin responder. Lo que sigue a un video se abre al aprobar su mini evaluación y cada módulo al aprobar la evaluación final del anterior. NO: ruta libre.'],
   ['CORREO_CONTACTO', '', 'Correo de ayuda que verán los colaboradores (opcional).'],
   ['CARPETA_CONTENIDO_ID', CARPETA_ACADEMIA_ID, 'Carpeta de Drive que se revisa al sincronizar contenido nuevo.'],
   // Kit de marca: Manual de Marca TPDV (dic-2025). Colores principales #005A82 · #007264 · #85B500 · #FFB829.

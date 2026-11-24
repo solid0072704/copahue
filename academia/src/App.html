@@ -178,6 +178,10 @@
     return D.programa.modulos.filter(function (m) { return m.practicaPendiente; })[0] || null;
   }
 
+  function textoBloqueo(l) {
+    return 'Para avanzar, primero aprueba la mini evaluación de «' + l.bloqueadaPor.titulo + '».';
+  }
+
   function correctasParaAprobar(total, umbral) {
     return Math.ceil(total * umbral / 100 - 1e-9);
   }
@@ -295,7 +299,7 @@
           (D.certificado.disponible ? 'Ya puedes descargar tu certificado.' :
             D.certificado.esperaPractica ? 'Terminaste el 100% de los cursos. Tu certificado se habilita cuando tu tutora o supervisor registre tu evaluación práctica.' :
             'Cada video tiene una mini evaluación de 4 preguntas y cada módulo cierra con una evaluación final (se aprueba con ' +
-              D.academia.puntajeAprobacion + '% o más).')) + '</p>' +
+              D.academia.puntajeAprobacion + '% o más).' + (D.academia.ordenObligatorio ? ' Para avanzar debes aprobarlas.' : ''))) + '</p>' +
         '<div class="hero__acciones">' +
           (D.certificado.disponible
             ? '<button class="boton boton--acento" type="button" data-ir="certificado">' + icono('premio') + 'Ver mi certificado</button>'
@@ -386,6 +390,12 @@
         html += '<div class="temario__seccion">' + esc(seccion) + '</div>';
       }
       var actual = vista.tipo === 'leccion' && vista.leccionId === l.id;
+      if (l.bloqueada) {
+        html += '<button type="button" class="temario__item temario__item--bloqueado" disabled title="' + esc(textoBloqueo(l)) + '">' +
+          '<span class="temario__check">' + icono('candado', 'icono--chico') + '</span>' +
+          '<span>' + esc(l.titulo) + '<span class="temario__meta">' + esc('Se abre al aprobar la mini evaluación de «' + l.bloqueadaPor.titulo + '»') + '</span></span></button>';
+        return;
+      }
       html += '<button type="button" class="temario__item" data-ir="leccion" data-modulo="' + esc(m.id) + '" data-leccion="' + esc(l.id) + '"' + (actual ? ' aria-current="true"' : '') + '>' +
         '<span class="temario__check' + (l.completada ? ' temario__check--ok' : '') + '">' + (l.completada ? icono('check') : '') + '</span>' +
         '<span>' + esc(l.titulo) + '<span class="temario__meta">' + esc(l.tipo === 'Texto' ? 'Lectura' : l.tipo) + (l.duracion ? ' · ' + minutos(l.duracion) : '') +
@@ -442,6 +452,14 @@
 
   function contenidoLeccion(m, l) {
     if (!l) return vistaNoEncontrada();
+    if (l.bloqueada) {
+      return '<div class="tarjeta sin-visor">' + icono('candado') + '<h1>' + esc(l.titulo) + '</h1>' +
+        '<p class="muted">' + esc('Se abre cuando apruebes la mini evaluación de «' + l.bloqueadaPor.titulo + '». No puedes avanzar sin responder sus preguntas.') + '</p>' +
+        '<div class="fila" style="justify-content:center">' +
+          botonIr({ tipo: 'evaluacion', moduloId: m.id, leccionId: l.bloqueadaPor.id }, 'Rendir la mini evaluación', 'boton--acento', 'pregunta') +
+          botonIr({ tipo: 'leccion', moduloId: m.id, leccionId: l.bloqueadaPor.id }, 'Volver al video', 'boton--secundario', 'play') +
+        '</div></div>';
+    }
     var cuerpo;
     if (l.tipo === 'Texto') {
       cuerpo = '<article class="tarjeta contenido-texto">' + (D.contenidos[l.id] || parrafos(l.descripcion)) + '</article>';
@@ -478,6 +496,7 @@
             ? 'Mejor puntaje: ' + mini.mejorPuntaje + '%. Esta lección ya cuenta en tu avance.'
             : mini.preguntas + ' preguntas sobre lo que acabas de ver. Apruebas con ' + necesarias + ' de ' + mini.preguntas +
               ' correctas (' + umbralMini + '%) y la lección queda completada.' +
+              (D.academia.ordenObligatorio && l.obligatoria ? ' Debes aprobarla para continuar con lo que sigue.' : '') +
               (mini.intentos ? ' Mejor puntaje hasta ahora: ' + mini.mejorPuntaje + '% · ' + mini.intentos + (mini.intentos === 1 ? ' intento.' : ' intentos.') : '')) + '</p></div>' +
         botonIr({ tipo: 'evaluacion', moduloId: m.id, leccionId: l.id }, mini.aprobada ? 'Volver a rendirla' : (mini.intentos ? 'Intentar nuevamente' : 'Rendir mini evaluación'),
           mini.aprobada ? 'boton--fantasma' : 'boton--acento', 'pregunta') +
@@ -485,13 +504,20 @@
     }
 
     var botonSiguiente = '';
+    var leccionSiguiente = siguiente && siguiente.tipo === 'leccion' ? leccionPorId(m, siguiente.leccionId) : null;
     if (siguiente) {
-      var deshabilitado = siguiente.tipo === 'evaluacion' &&
-        !(m.evaluacionDisponible || (!mini && l.obligatoria && !l.completada && m.obligatorias - m.completadas === 1));
-      botonSiguiente = '<button class="boton boton--secundario" type="button" id="btn-siguiente" data-paso="' + esc(JSON.stringify(siguiente)) + '"' + (deshabilitado ? ' disabled title="Completa las lecciones para rendir la evaluación"' : '') + '>' +
+      var motivo = '';
+      if (leccionSiguiente && leccionSiguiente.bloqueada) motivo = textoBloqueo(leccionSiguiente);
+      else if (siguiente.tipo === 'evaluacion' &&
+        !(m.evaluacionDisponible || (!mini && l.obligatoria && !l.completada && m.obligatorias - m.completadas === 1))) {
+        motivo = 'Completa las lecciones y sus mini evaluaciones para rendir la evaluación final';
+      }
+      botonSiguiente = '<button class="boton boton--secundario" type="button" id="btn-siguiente" data-paso="' + esc(JSON.stringify(siguiente)) + '"' + (motivo ? ' disabled title="' + esc(motivo) + '"' : '') + '>' +
         (siguiente.tipo === 'evaluacion' ? 'Ir a la evaluación final' : siguiente.tipo === 'practica' ? 'Evaluación práctica' : 'Siguiente') + icono('flechaDer') + '</button>';
     } else if (sigModulo) {
-      botonSiguiente = '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(sigModulo.id) + '">Siguiente módulo' + icono('flechaDer') + '</button>';
+      var moduloCerrado = D.academia.ordenObligatorio && !m.completo;
+      botonSiguiente = '<button class="boton boton--secundario" type="button" data-ir="modulo" data-modulo="' + esc(sigModulo.id) + '"' +
+        (moduloCerrado ? ' disabled title="Aprueba la evaluación final de este módulo para pasar al siguiente"' : '') + '>Siguiente módulo' + icono('flechaDer') + '</button>';
     }
 
     return '<div class="leccion__cabeza"><div>' +
