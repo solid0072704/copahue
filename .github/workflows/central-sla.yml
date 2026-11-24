@@ -1,0 +1,44 @@
+# Revisa el SLA de la central de WhatsApp cada 10 minutos (reasigna leads no atendidos).
+# Úsalo solo si el servicio web NO corre el SLA (CENTRAL_SLA_EN_SERVIDOR=false), para no duplicar.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   HUBSPOT_TOKEN, CENTRAL_RUTEO_YAML (contenido completo de central_whatsapp/ruteo.yaml)
+#                 HUBSPOT_PORTAL_ID (opcional)
+#   2. Variables: CENTRAL_SLA_ACTIVO = true   (sin esta variable el flujo no corre ni consume minutos)
+#
+# La salida solo muestra cifras (sin nombres ni teléfonos), porque los logs de un repositorio público son públicos.
+name: SLA central WhatsApp
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: central-sla
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sla:
+    if: vars.CENTRAL_SLA_ACTIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements-central.txt
+
+      - name: Revisar SLA
+        env:
+          HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+          HUBSPOT_PORTAL_ID: ${{ secrets.HUBSPOT_PORTAL_ID }}
+          CENTRAL_RUTEO_YAML: ${{ secrets.CENTRAL_RUTEO_YAML }}
+        run: python run_central.py sla

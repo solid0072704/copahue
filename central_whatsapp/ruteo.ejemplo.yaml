@@ -1,0 +1,64 @@
+# Ejemplo de archivo de ruteo de la central de WhatsApp.
+#
+# El archivo real (central_whatsapp/ruteo.yaml) se genera con tus datos de HubSpot:
+#     python run_central.py sugerir-ruteo
+# y NO se sube al repositorio porque tiene nombres e IDs de tu equipo (.gitignore).
+# En el servidor, pega su contenido en la variable/secret CENTRAL_RUTEO_YAML.
+#
+# Los IDs son "Owner ID" de HubSpot (Configuración > Usuarios y equipos, o `python run_central.py sugerir-ruteo`).
+
+zona_horaria: America/Santiago
+pipeline: default                    # ID del pipeline donde se crean los negocios
+etapa_inicial: appointmentscheduled  # ID de la etapa inicial ("Identificación de Oportunidad")
+
+# todos   = la carga del día cuenta todos los negocios del vendedor (formularios, Google, WhatsApp…)
+# central = solo cuenta los negocios que creó la central de WhatsApp
+contar_carga: todos
+
+# Horario de atención. El SLA solo cuenta minutos dentro de este horario.
+# Formato: "HH:MM-HH:MM", varios tramos separados por coma, o "cerrado".
+horario:
+  lunes-viernes: "09:00-13:30,15:00-19:00"
+  sabado: "10:00-14:00"
+  domingo: cerrado
+
+feriados: [2026-12-08, 2026-12-25, 2027-01-01]
+
+sla:
+  minutos: 15             # minutos hábiles para contactar al lead y completar la tarea
+  max_reasignaciones: 2   # luego se escala al supervisor
+  supervisor: 900000001   # quien recibe los leads que nadie atendió
+
+# Leads sin proyecto: "todos" = el vendedor con menos carga de todo el equipo,
+# o una lista de IDs (p. ej. una ejecutiva de primera línea).
+pool_general: todos
+
+# Catálogo opcional por vendedor (no hace falta listar a todos):
+vendedores:
+  "100000003": {nombre: Vendedora 3, ausente_desde: 2026-12-20, ausente_hasta: 2027-01-10}  # vacaciones
+  "100000002": {nombre: Vendedor 2, max_diario: 30}                                         # tope de leads por día
+  "100000004": {nombre: Vendedor 4, horario: {martes-sabado: "10:00-19:00"}}                # turno propio
+  # "100000005": {ausente: true}                                                            # pausado indefinidamente
+
+proyectos:
+  # La clave es el valor interno de la propiedad "Proyecto de Interés".
+  Raíces de Curicó:
+    zona: Zona Centro       # se escribe en "Zona Ubicación del Proyecto" del negocio
+    supervisor: 900000002   # opcional: supervisor propio del proyecto
+    vendedores:
+      - {id: 100000001, nombre: Vendedor 1, peso: 4}   # recibe ~4 de cada 9 leads
+      - {id: 100000002, nombre: Vendedor 2, peso: 3}
+      - {id: 100000003, nombre: Vendedora 3, peso: 2}
+  Raíces de Los Ulmos:
+    zona: Zona Sur
+    alias: [Raíces Los Ulmos]   # otros nombres con que puede llegar el proyecto
+    vendedores:
+      - {id: 100000004, nombre: Vendedor 4}            # peso 1 por defecto
+      - {id: 100000005, nombre: Vendedor 5}
+      - {id: 100000006, nombre: Vendedor 6, peso: 0}   # peso 0 = pausado en este proyecto
+  # Proyecto sin vendedores propios: sus leads van a los vendedores de su zona.
+  Raíces de Frutillar: {zona: Zona Sur}
+
+# Opcional: definir las zonas a mano (si no, son la unión de los vendedores de sus proyectos).
+# zonas:
+#   Zona Sur: [100000004, 100000005]
