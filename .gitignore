@@ -5,6 +5,8 @@ data/*.db-*
 .env
 # Ruteo real de la central de WhatsApp (nombres e IDs del equipo de ventas)
 central_whatsapp/ruteo.yaml
+# Estimación de costos con datos de la cuenta de HubSpot (no se publica)
+costos_central_whatsapp.xlsx
 .streamlit/secrets.toml
 # Python
 __pycache__/
