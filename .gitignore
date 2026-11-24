@@ -7,6 +7,7 @@ data/*.db-*
 central_whatsapp/ruteo.yaml
 # Estimación de costos con datos de la cuenta de HubSpot (no se publica)
 costos_central_whatsapp.xlsx
+hoja_de_ruta_central_whatsapp.xlsx
 .streamlit/secrets.toml
 # Python
 __pycache__/
