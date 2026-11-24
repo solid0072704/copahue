@@ -83,6 +83,15 @@ PROPIEDADES = {
             "textarea",
             "Resumen breve de lo que pidió el cliente. Lo usa la tarea que recibe el vendedor.",
         ),
+        {
+            "name": "central_pendiente_reparto",
+            "label": "Pendiente de reparto (central)",
+            "type": "bool",
+            "fieldType": "booleancheckbox",
+            "groupName": GRUPO,
+            "description": "La marca un workflow cuando Breeze califica al cliente; el distribuidor asigna el lead y la desmarca.",
+            "options": [{"label": "Sí", "value": "true", "displayOrder": 0}, {"label": "No", "value": "false", "displayOrder": 1}],
+        },
         _campo(
             "central_ultimo_ruteo",
             "Último ruteo de la central",

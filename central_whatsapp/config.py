@@ -66,6 +66,9 @@ class ConfigCentral:
     ventana_duplicado_min: int = 30  # webhooks repetidos dentro de esta ventana no crean otro negocio
     simular: bool = False  # True = lee HubSpot pero no escribe nada (para probar en producción)
 
+    # --- Consulta periódica (reemplaza al webhook): cada cuántos segundos buscar pendientes ---
+    consulta_cada_seg: int = 60
+
     # --- SLA: reasignar leads no atendidos ---
     sla_en_servidor: bool = True  # el servicio web revisa el SLA en segundo plano
     sla_cada_min: int = 5
@@ -94,6 +97,7 @@ class ConfigCentral:
             propietario_contacto=politica,
             ventana_duplicado_min=_env_int("CENTRAL_VENTANA_DUPLICADO_MIN", 30),
             simular=_env_bool("CENTRAL_SIMULAR", False),
+            consulta_cada_seg=max(15, _env_int("CENTRAL_CONSULTA_CADA_SEG", 60)),
             sla_en_servidor=_env_bool("CENTRAL_SLA_EN_SERVIDOR", True),
             sla_cada_min=max(1, _env_int("CENTRAL_SLA_CADA_MIN", 5)),
             smtp_host=_env("CENTRAL_SMTP_HOST"),

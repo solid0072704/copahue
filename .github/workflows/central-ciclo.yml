@@ -1,0 +1,50 @@
+# Central de WhatsApp sin servidor: cada 5 minutos reparte los contactos "Pendiente de reparto"
+# y revisa el SLA (reasigna leads no atendidos). GitHub suele atrasar estas ejecuciones varios
+# minutos; para atención rápida, deja corriendo `python run_central.py trabajar` en un servidor.
+# Usa solo una de las dos opciones, no ambas.
+#
+# Para activarlo (Settings → Secrets and variables → Actions):
+#   1. Secrets:   HUBSPOT_TOKEN, CENTRAL_RUTEO_YAML (contenido completo de central_whatsapp/ruteo.yaml)
+#                 HUBSPOT_PORTAL_ID (opcional)
+#   2. Variables: CENTRAL_ACTIVO = true   (sin esta variable el flujo no corre ni consume minutos)
+#
+# La salida solo muestra cifras (sin nombres ni teléfonos), porque los logs de un repositorio público son públicos.
+name: Central WhatsApp (reparto + SLA)
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: central-ciclo
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ciclo:
+    if: vars.CENTRAL_ACTIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+      HUBSPOT_PORTAL_ID: ${{ secrets.HUBSPOT_PORTAL_ID }}
+      CENTRAL_RUTEO_YAML: ${{ secrets.CENTRAL_RUTEO_YAML }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements-central.txt
+
+      - name: Repartir pendientes
+        run: python run_central.py consultar
+
+      - name: Revisar SLA
+        if: always()
+        run: python run_central.py sla

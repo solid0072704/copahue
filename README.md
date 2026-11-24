@@ -5,7 +5,7 @@
 | `tablero_ebook.py` | **Tablero con agentes** que analizan las descargas del ebook, te avisan por correo, hacen seguimiento y generan reuniones con potenciales clientes | `streamlit run tablero_ebook.py` |
 | `app.py` | Generador de reportes Forpay (cuotas por empresa a Excel) | `streamlit run app.py` |
 | `grok.py` | Chat con tus documentos PDF (Groq + Gemini) | `streamlit run grok.py` |
-| `run_central.py` | **Central de WhatsApp**: el agente Breeze de HubSpot atiende a los clientes y el distribuidor reparte cada lead al vendedor de su proyecto, con reasignación si no responde | `python run_central.py servir` |
+| `run_central.py` | **Central de WhatsApp**: el agente Breeze de HubSpot atiende a los clientes y el distribuidor reparte cada lead al vendedor de su proyecto, con reasignación si no responde | `python run_central.py trabajar` |
 
 ---
 
@@ -13,8 +13,8 @@
 
 Un número central de WhatsApp conectado al inbox de HubSpot. El agente **Breeze** conversa con el cliente,
 responde con la base de conocimiento y lo califica (proyecto, plazo, forma de pago, presupuesto, visita).
-Un workflow avisa al **distribuidor** (`central_whatsapp/`), que elige al vendedor del proyecto según su peso y la
-carga del día, crea el negocio y una tarea con plazo, respeta al vendedor si el cliente ya tenía uno y, si nadie
+Un workflow marca al contacto como pendiente y el **distribuidor** (`central_whatsapp/`), que revisa cada minuto,
+elige al vendedor del proyecto según su peso y la carga del día, crea el negocio y una tarea con plazo, respeta al vendedor si el cliente ya tenía uno y, si nadie
 atiende en 15 minutos hábiles, lo reasigna o lo escala al supervisor.
 
 Guía completa, paso a paso: [`central_whatsapp/README.md`](central_whatsapp/README.md) ·
@@ -24,7 +24,7 @@ textos para configurar el agente: [`central_whatsapp/breeze/`](central_whatsapp/
 pip install -r requirements-central.txt
 python run_central.py instalar        # propiedades en HubSpot
 python run_central.py sugerir-ruteo   # qué vendedor atiende cada proyecto, con tus datos reales
-python run_central.py servir          # recibe el webhook del workflow de HubSpot
+python run_central.py trabajar        # reparte los pendientes cada minuto y revisa el SLA
 ```
 
 ---

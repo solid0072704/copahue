@@ -75,7 +75,7 @@ Si el agente permite escribir un resumen en una propiedad, usa **Resumen de la c
 
 | Categoría | Regla | Qué pasa |
 |---|---|---|
-| Calificado | Proyecto definido **y** compra en 6 meses o menos **y** (forma de pago conocida **o** quiere visitar) | El workflow lo envía al distribuidor → vendedor del proyecto |
+| Calificado | Proyecto definido **y** compra en 6 meses o menos **y** (forma de pago conocida **o** quiere visitar) | El workflow lo marca como pendiente y el distribuidor lo asigna al vendedor del proyecto |
 | Parcialmente calificado | Proyecto definido, pero compra en más de 6 meses o aún no sabe cómo pagar | También va al vendedor del proyecto (prioridad normal) |
 | No calificado | Solo está cotizando y no definió proyecto ni zona después de 2 intentos | Queda con Marketing para nutrición; el agente sigue respondiendo |
 

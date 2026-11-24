@@ -10,7 +10,8 @@ flowchart LR
     C[📱 Cliente] -->|escribe al número central| I[Inbox de HubSpot<br/>canal WhatsApp]
     I --> B[🤖 Agente Breeze<br/>responde y califica]
     B -->|Proyecto, plazo, forma de pago,<br/>presupuesto, visita| K[(Contacto)]
-    K -->|workflow: lead calificado<br/>«Send webhook»| D[🧭 Distribuidor<br/>run_central.py servir]
+    K -->|workflow: marca<br/>«Pendiente de reparto»| P{{Pendiente}}
+    P -->|revisa cada minuto| D[🧭 Distribuidor<br/>run_central.py trabajar]
     D -->|negocio + tarea + propietario| V[👤 Vendedor del proyecto]
     D -. 15 min hábiles sin atender .-> R[🔁 Siguiente vendedor]
     R -. 2 reasignaciones .-> S[🧑‍💼 Supervisor]
@@ -21,8 +22,8 @@ flowchart LR
 |---|---|---|
 | Canal WhatsApp | Inbox de HubSpot (Meta) | Recibe y envía los mensajes del número central. |
 | Agente Breeze | HubSpot (Customer Agent) | Conversa 24/7, responde con la base de conocimiento, califica y completa las propiedades del contacto. |
-| Workflow | HubSpot | Cuando el agente califica a un contacto, llama al distribuidor (webhook). |
-| Distribuidor | Este repositorio (`central_whatsapp/`) | Elige vendedor por proyecto y carga del día, crea el negocio y la tarea, respeta al vendedor si el cliente ya tenía uno, y reasigna o escala si nadie atiende. |
+| Workflow | HubSpot | Cuando el agente califica a un contacto, marca la casilla «Pendiente de reparto (central)». Es una acción estándar: no necesita webhook ni Data Hub. |
+| Distribuidor | Este repositorio (`central_whatsapp/`) | Cada minuto busca los contactos marcados, elige vendedor por proyecto y carga del día, crea el negocio y la tarea, respeta al vendedor si el cliente ya tenía uno, desmarca la casilla y reasigna o escala si nadie atiende. |
 
 ---
 
@@ -36,7 +37,8 @@ flowchart LR
 - **Un número dedicado** para la central, registrado en la app WhatsApp Business. No lo conectes también a
   otra integración (por ejemplo WhatHub): un número solo puede estar en una integración a la vez. WhatHub
   puede seguir sincronizando los WhatsApp personales de los vendedores.
-- Un servidor para el distribuidor (Render, Railway, Cloud Run, un VPS…). Consume muy poco.
+- Un lugar donde corra el distribuidor como proceso permanente (Render, Railway, un VPS…, unos USD 7 al mes)
+  o GitHub Actions (gratis, con algunos minutos más de demora).
 
 ## 1. Conectar el número central al inbox
 
@@ -73,6 +75,7 @@ Crea el grupo **Central WhatsApp** con:
 | Objeto | Propiedad | Para qué |
 |---|---|---|
 | Contacto | Plazo de compra · Forma de pago · Presupuesto · Quiere visitar el proyecto | Las completa Breeze al calificar. |
+| Contacto | Pendiente de reparto (central) | La marca el workflow; el distribuidor la desmarca al asignar. |
 | Contacto | Resumen de la conversación · Último ruteo | Resumen para el vendedor y fecha del último reparto. |
 | Negocio | Estado en la central · Asignado por la central · Reasignaciones · Vendedores previos · Tarea de la central · Minutos hábiles hasta la atención | Seguimiento del SLA y reportes. |
 
@@ -114,7 +117,8 @@ turnos propios y alias de proyectos.
 
 ### Cómo se elige al vendedor
 
-1. **Aviso repetido**: si la central ya creó el negocio hace menos de 30 minutos, no hace nada (HubSpot reintenta webhooks).
+1. **Aviso repetido**: si la central ya asignó o avisó por ese negocio hace menos de 30 minutos, no hace nada
+   (por ejemplo, si el workflow vuelve a marcar al contacto).
 2. **Cliente que vuelve**: si el contacto tiene un negocio abierto del mismo proyecto y su vendedor está activo, se
    queda con él: se le crea una tarea "Cliente volvió a escribir" y no se duplica el negocio.
 3. **Lead nuevo**: entre los vendedores del proyecto que están activos en HubSpot, no ausentes y bajo su tope diario,
@@ -140,16 +144,33 @@ o lo cierra. Si pasan `sla.minutos` (15) **hábiles** sin eso, el negocio y su t
 proyecto (con nota en el historial). Después de `max_reasignaciones` (2), se escala al supervisor con una tarea.
 Al atenderse se guarda **Minutos hábiles hasta la atención** para medir tiempos de respuesta por vendedor.
 
-## 5. Desplegar el distribuidor
+## 5. Workflow en HubSpot (sin webhook)
 
-Ejemplo en **Render** (*New → Web Service* desde este repositorio):
+*Automatización → Workflows → Crear → Basado en contactos*:
+
+1. **Disparador**: *Estado del lead del agente de clientes* (Customer agent lead status) es **Calificado** o
+   **Parcialmente calificado**. Activa la **reinscripción** cuando la propiedad cambie, para que un cliente que vuelve
+   a calificar (por ejemplo, por otro proyecto) se reparta de nuevo.
+   Si tu portal no muestra esa propiedad, usa *Plazo de compra es conocido* o *Quiere visitar el proyecto es conocido*.
+2. **Acción**: *Editar registro* → **Pendiente de reparto (central)** = **Sí**.
+3. Activa el workflow.
+
+Eso es todo lo que hace HubSpot. El distribuidor busca cada minuto los contactos con esa casilla marcada, reparte
+cada lead y la desmarca. Si HubSpot falla en ese momento, la casilla queda marcada y se reintenta en la siguiente
+vuelta; si no hay ningún vendedor disponible, también queda marcada hasta que haya alguien.
+
+## 6. Dejar corriendo el distribuidor
+
+Es un proceso permanente: `python run_central.py trabajar` reparte los pendientes cada 60 segundos y revisa el SLA
+cada 5 minutos. No necesita URL pública ni base de datos.
+
+**Opción A · Render** (*New → Background Worker* desde este repositorio, plan Starter, unos USD 7 al mes):
 
 | Campo | Valor |
 |---|---|
 | Build command | `pip install -r requirements-central.txt` |
-| Start command | `python run_central.py servir` |
-| Health check | `/salud` |
-| Instancias | **1** (la revisión del SLA corre dentro del servicio) |
+| Start command | `python run_central.py trabajar` |
+| Instancias | **1** |
 
 Variables de entorno:
 
@@ -157,38 +178,28 @@ Variables de entorno:
 |---|---|
 | `HUBSPOT_TOKEN` | token de la app privada |
 | `HUBSPOT_PORTAL_ID` | ID del portal |
-| `CENTRAL_WEBHOOK_SECRET` | un secreto largo al azar (p. ej. `python -c "import secrets; print(secrets.token_urlsafe(32))"`) |
 | `CENTRAL_RUTEO_YAML` | contenido completo de `ruteo.yaml` |
 | `CENTRAL_SIMULAR` | `true` la primera semana si quieres ver qué haría sin escribir en HubSpot |
+| `CENTRAL_CONSULTA_CADA_SEG` | opcional, por defecto `60` |
 
-Usa un plan que no se "duerma" por inactividad, o desactiva el SLA interno (`CENTRAL_SLA_EN_SERVIDOR=false`) y
-llama a `POST /tareas/sla` cada 5 minutos desde un cron externo con el mismo header de seguridad.
-Alternativa sin servidor para el SLA: el flujo de GitHub Actions `.github/workflows/central-sla.yml`.
+**Opción B · GitHub Actions** (gratis): el flujo `.github/workflows/central-ciclo.yml` corre `consultar` y `sla` cada
+5 minutos. GitHub suele atrasar estas ejecuciones varios minutos, así que el vendedor puede recibir el lead entre 5 y
+15 minutos después de la calificación. Sirve para empezar; para atención rápida usa la opción A.
+Activa una sola de las dos opciones.
 
-## 6. Workflow en HubSpot
+### Alternativa: webhook
 
-*Automatización → Workflows → Crear → Basado en contactos*:
-
-1. **Disparador**: *Estado del lead del agente de clientes* (Customer agent lead status) es **Calificado** o
-   **Parcialmente calificado**. Activa la **reinscripción** cuando la propiedad cambie.
-   Si tu portal no muestra esa propiedad, usa *Plazo de compra es conocido* o *Quiere visitar el proyecto es conocido*.
-2. **Acción**: *Enviar un webhook* → método `POST` → URL `https://TU-SERVICIO/webhooks/hubspot/lead`.
-   - Autenticación: **clave de API** en el header `X-Central-Token` con el valor de `CENTRAL_WEBHOOK_SECRET`
-     (guárdalo como secreto del workflow).
-   - Cuerpo: el predeterminado sirve; si lo personalizas, incluye `hs_object_id` (y opcionalmente `proyecto_de_interes`).
-3. Activa el workflow.
-
-La acción de webhook puede requerir una suscripción específica (Operations Hub Professional o un Hub Enterprise,
-según HubSpot): revisa [cómo usar webhooks en workflows](https://knowledge.hubspot.com/workflows/how-do-i-use-webhooks-with-hubspot-workflows).
-
-Respuestas del servicio: `200` con lo que hizo (`asignado`, `existente`, `duplicado`, `sin_vendedor`); `401` secreto
-inválido; `404` contacto inexistente; `503` HubSpot no disponible o token sin permisos (HubSpot reintenta solo).
+Si algún día tienen **Data Hub Professional** (unos USD 720 al mes), el workflow puede usar *Enviar un webhook* en vez
+de marcar la casilla, y el distribuidor recibe el aviso al instante con `python run_central.py servir` (servicio web,
+`POST /webhooks/hubspot/lead` con el header `X-Central-Token` = `CENTRAL_WEBHOOK_SECRET`). Con un SLA de 15 minutos,
+la consulta cada minuto da el mismo resultado sin ese costo.
 
 ## 7. Prueba de punta a punta
 
 1. `python run_central.py asignar ID_DE_UN_CONTACTO --simular` → muestra a quién iría y qué escribiría, sin tocar nada.
-2. Despliega con `CENTRAL_SIMULAR=true`, escribe al número central desde un celular y completa la conversación.
-3. Revisa los logs del servicio (solo IDs) y, cuando el resultado sea el esperado, cambia a `CENTRAL_SIMULAR=false`.
+2. Deja corriendo `trabajar` con `CENTRAL_SIMULAR=true`, escribe al número central desde un celular y completa la
+   conversación. En menos de un minuto debería aparecer en los logs `1 pendientes · 1 asignados`.
+3. Revisa los logs (solo cifras e IDs) y, cuando el resultado sea el esperado, cambia a `CENTRAL_SIMULAR=false`.
 4. Repite: confirma el negocio, la tarea, el propietario y que el traspaso de la conversación llega al vendedor.
 5. Deja pasar 15 minutos hábiles sin completar la tarea y verifica la reasignación.
 
@@ -210,7 +221,8 @@ eso con un solo archivo.
 
 ## Seguridad y privacidad
 
-- El webhook exige `CENTRAL_WEBHOOK_SECRET`; sin él, el servicio no procesa nada.
+- El distribuidor no expone nada a internet en el modo recomendado (`trabajar`): solo consulta a HubSpot.
+- En el modo webhook, el servicio exige `CENTRAL_WEBHOOK_SECRET`; sin él no procesa nada.
 - Los logs y la salida del SLA solo muestran IDs y cifras, nunca nombres ni teléfonos (importante si usas GitHub
   Actions en un repositorio público).
 - No hay base de datos propia: todo el estado vive en HubSpot (propiedades `central_*`).
@@ -224,8 +236,11 @@ python run_central.py sugerir-ruteo --sobrescribir # regenerar ruteo.yaml con lo
 python run_central.py validar                      # revisar el ruteo
 python run_central.py simular "Fundo Las Ortigas"  # reparto de prueba, sin HubSpot
 python run_central.py asignar 123456 --simular     # rutear un contacto real sin escribir
-python run_central.py servir --puerto 8000         # servicio web (webhook + SLA)
-python run_central.py sla --loop 5                 # SLA por separado (si no corre en el servicio)
+python run_central.py trabajar                     # reparto cada minuto + SLA (recomendado)
+python run_central.py trabajar --una-vez           # una vuelta y salir, para probar
+python run_central.py consultar                    # una vuelta de reparto (cron / GitHub Actions)
+python run_central.py sla --loop 5                 # solo el SLA
+python run_central.py servir --puerto 8000         # modo webhook (requiere Data Hub Professional)
 pytest tests/test_central.py -q                    # pruebas
 ```
 
@@ -237,8 +252,9 @@ central_whatsapp/
   hubspot.py       cliente de la API de HubSpot (reintentos, modo solo lectura)
   ruteo.py         reglas: proyectos, pesos, horarios, ausencias, minutos hábiles
   distribuidor.py  asigna cada lead: negocio, tarea, propietario
+  consulta.py      reparto periódico de los contactos marcados como pendientes
   sla.py           reasigna o escala los leads no atendidos
-  servicio.py      FastAPI: /webhooks/hubspot/lead, /tareas/sla, /salud
+  servicio.py      modo webhook (FastAPI): /webhooks/hubspot/lead, /tareas/sla, /salud
   instalar.py      propiedades de la central en HubSpot
   sugerir.py       genera ruteo.yaml desde los negocios de HubSpot
   notificar.py     aviso opcional por correo

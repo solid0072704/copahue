@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from central_whatsapp.config import ConfigCentral
+from central_whatsapp.consulta import PROPIEDAD_PENDIENTE, consultar_pendientes
 from central_whatsapp.distribuidor import Distribuidor, iso, parse_fecha, telefono_whatsapp
 from central_whatsapp.hubspot import ClienteSoloLectura, ErrorHubSpot
 from central_whatsapp.instalar import PROPIEDADES, instalar
@@ -368,6 +369,75 @@ def test_modo_simulacion_no_escribe(tabla, hs, reloj):
     r = d.procesar(c)
     assert r.accion == "asignado" and not hs.objetos["deals"] and not hs.objetos["tasks"]
     assert [e[1] for e in lectura.escrituras if e[0] == "crear"] == ["deals", "tasks"]
+
+
+def test_cliente_que_vuelve_repetido_no_crea_otra_tarea(dist, hs, reloj):
+    c = contacto(hs, hubspot_owner_id="102")
+    hs.agregar(
+        "deals",
+        {"pipeline": "default", "dealstage": "189519371", "hubspot_owner_id": "102", "hs_is_closed": "false",
+         "proyecto_de_interes": "Raíces de Curicó", "createdate": "2026-10-01T12:00:00Z", "fuente": "google"},
+        asociar=[("contacts", c)],
+    )
+    assert dist.procesar(c).accion == "existente"
+    reloj.avanzar(minutes=5)
+    assert dist.procesar(c).accion == "duplicado"
+    assert len(hs.objetos["tasks"]) == 1
+
+
+# ------------------------------------------------------- consulta periódica
+def test_consulta_reparte_y_desmarca(dist, hs):
+    a = contacto(hs, central_pendiente_reparto="true")
+    b = contacto(hs, proyecto="Raíces de Los Ulmos", central_pendiente_reparto="true")
+    sin_marca = contacto(hs)
+    r = consultar_pendientes(dist)
+    assert (r.pendientes, r.asignados, r.errores) == (2, 2, [])
+    assert hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] == "false"
+    assert hs.objetos["contacts"][b][PROPIEDAD_PENDIENTE] == "false"
+    assert not hs.negocios_de(sin_marca) and len(hs.objetos["deals"]) == 2
+    assert consultar_pendientes(dist).pendientes == 0
+
+
+def test_consulta_error_pasajero_deja_marcado(dist, hs):
+    a = contacto(hs, central_pendiente_reparto="true")
+    hs.fallar_con = ErrorHubSpot(503, "HubSpot caído")
+    r = consultar_pendientes(dist)
+    assert r.errores and hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] == "true"
+    hs.fallar_con = None
+    assert consultar_pendientes(dist).asignados == 1
+    assert hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] == "false"
+
+
+def test_consulta_error_permanente_desmarca(dist, hs):
+    a = contacto(hs, central_pendiente_reparto="true")
+    hs.fallar_con = ErrorHubSpot(400, "datos inválidos")
+    r = consultar_pendientes(dist)
+    assert r.errores and hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] == "false"
+
+
+def test_consulta_remarcado_no_duplica(dist, hs, reloj):
+    a = contacto(hs, central_pendiente_reparto="true")
+    consultar_pendientes(dist)
+    reloj.avanzar(minutes=3)
+    hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] = "true"  # el workflow lo vuelve a marcar
+    r = consultar_pendientes(dist)
+    assert r.duplicados == 1 and len(hs.objetos["deals"]) == 1
+    assert hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] == "false"
+
+
+def test_consulta_sin_vendedor_queda_marcado(dist, hs):
+    hs.owners = {}
+    a = contacto(hs, central_pendiente_reparto="true")
+    assert consultar_pendientes(dist).sin_vendedor == 1
+    assert hs.objetos["contacts"][a][PROPIEDAD_PENDIENTE] == "true"
+
+
+def test_consulta_en_simulacion_no_repite(tabla, hs, reloj):
+    contacto(hs, central_pendiente_reparto="true")
+    d = Distribuidor(ConfigCentral(hubspot_token="x"), tabla, ClienteSoloLectura(hs), reloj=reloj)
+    assert consultar_pendientes(d).asignados == 1
+    assert consultar_pendientes(d).pendientes == 0
+    assert not hs.objetos["deals"]
 
 
 # --------------------------------------------------------------------- SLA

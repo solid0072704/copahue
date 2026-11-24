@@ -35,6 +35,7 @@ PROPS_CONTACTO = (
     "proyecto_de_interes",
     "hubspot_owner_id",
     "comuna",
+    "central_ultimo_ruteo",
     "central_plazo_compra",
     "central_forma_pago",
     "central_presupuesto",
@@ -170,13 +171,17 @@ class Distribuidor:
             reverse=True,
         )
 
-        # 1) Aviso repetido: el negocio ya lo creó la central hace un momento
+        # 1) Aviso repetido: la central ya asignó o avisó por este negocio hace un momento
+        ventana = timedelta(minutes=self.cfg.ventana_duplicado_min)
+        ultimo_ruteo = parse_fecha(p.get("central_ultimo_ruteo"))
+        contacto_reciente = bool(ultimo_ruteo and ahora - ultimo_ruteo < ventana)
         for n in mismos:
             np_ = n["properties"]
-            if np_.get("fuente") != self.cfg.fuente:
-                continue
-            asignado = parse_fecha(np_.get("central_asignado_en")) or parse_fecha(np_.get("createdate"))
-            if asignado and ahora - asignado < timedelta(minutes=self.cfg.ventana_duplicado_min):
+            asignado = None
+            if np_.get("fuente") == self.cfg.fuente:
+                asignado = parse_fecha(np_.get("central_asignado_en")) or parse_fecha(np_.get("createdate"))
+            negocio_reciente = bool(asignado and ahora - asignado < ventana)
+            if negocio_reciente or (contacto_reciente and np_.get("central_tarea_id")):
                 dueño = np_.get("hubspot_owner_id", "")
                 log.info("Contacto %s: aviso repetido, negocio %s ya asignado", contacto_id, n["id"])
                 return Resultado(

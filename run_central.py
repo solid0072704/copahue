@@ -6,8 +6,12 @@ Puesta en marcha (ver central_whatsapp/README.md):
     python run_central.py validar                     # 3. revisa el ruteo contra los vendedores activos
     python run_central.py simular "Raíces de Curicó"  #    cómo se repartirían 20 leads (sin tocar HubSpot)
     python run_central.py asignar 123456 --simular    # 4. prueba con un contacto real sin escribir nada
-    python run_central.py servir --puerto 8000        # 5. recibe el webhook del workflow de HubSpot
-    python run_central.py sla [--loop 5]              #    reasigna leads no atendidos (si no corre en el servicio)
+    python run_central.py trabajar                    # 5. reparte los pendientes cada minuto y revisa el SLA
+
+Otros:
+    python run_central.py consultar                   # una sola vuelta de reparto (para cron / GitHub Actions)
+    python run_central.py sla [--loop 5]              # solo la revisión del SLA
+    python run_central.py servir --puerto 8000        # modo webhook (requiere Data Hub Professional en HubSpot)
 """
 
 import argparse
@@ -114,6 +118,46 @@ def cmd_servir(cfg, args):
     uvicorn.run(crear_app(cfg), host=args.host, port=args.puerto, workers=1, log_level="info")
 
 
+def cmd_consultar(cfg, args):
+    from central_whatsapp.consulta import consultar_pendientes
+    from central_whatsapp.distribuidor import construir
+
+    if not cfg.hubspot_configurado:
+        sys.exit("Falta HUBSPOT_TOKEN.")
+    r = consultar_pendientes(construir(cfg))
+    print(time.strftime("%Y-%m-%d %H:%M"), "· reparto:", r.texto(), flush=True)  # solo cifras
+    return 1 if r.errores else 0
+
+
+def cmd_trabajar(cfg, args):
+    """Proceso permanente: reparte pendientes cada CENTRAL_CONSULTA_CADA_SEG y revisa el SLA cada CENTRAL_SLA_CADA_MIN."""
+    from central_whatsapp.consulta import consultar_pendientes
+    from central_whatsapp.distribuidor import construir
+    from central_whatsapp.sla import revisar_sla
+
+    if not cfg.hubspot_configurado:
+        sys.exit("Falta HUBSPOT_TOKEN.")
+    dist = construir(cfg)
+    modo = " (SIMULACIÓN: no escribe en HubSpot)" if cfg.simular else ""
+    print(f"Central trabajando{modo}: reparto cada {cfg.consulta_cada_seg} s, SLA cada {cfg.sla_cada_min} min", flush=True)
+    ultimo_sla = 0.0
+    while True:
+        try:
+            r = consultar_pendientes(dist)
+            if r.pendientes or r.errores:
+                print(time.strftime("%Y-%m-%d %H:%M:%S"), "· reparto:", r.texto(), flush=True)
+            if time.monotonic() - ultimo_sla >= cfg.sla_cada_min * 60:
+                ultimo_sla = time.monotonic()
+                s = revisar_sla(dist)
+                if s.reasignados or s.escalados or s.errores:
+                    print(time.strftime("%Y-%m-%d %H:%M:%S"), "· SLA:", s.texto(), flush=True)
+        except Exception as e:  # el proceso nunca debe caerse por un error pasajero
+            logging.getLogger("central").warning("Vuelta fallida (%s): %s", type(e).__name__, e)
+        if args.una_vez:
+            return 0
+        time.sleep(cfg.consulta_cada_seg)
+
+
 def cmd_sla(cfg, args):
     from central_whatsapp.distribuidor import construir
     from central_whatsapp.sla import revisar_sla
@@ -154,7 +198,12 @@ def main():
     s.add_argument("--proyecto")
     s.add_argument("--simular", action="store_true")
 
-    s = sub.add_parser("servir", help="levanta el servicio web que recibe el webhook de HubSpot")
+    s = sub.add_parser("trabajar", help="reparte los pendientes cada minuto y revisa el SLA (recomendado)")
+    s.add_argument("--una-vez", action="store_true", help="una sola vuelta y salir (para probar)")
+
+    sub.add_parser("consultar", help="una vuelta de reparto de los contactos pendientes")
+
+    s = sub.add_parser("servir", help="modo webhook: servicio web que recibe el aviso de HubSpot")
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--puerto", type=int, default=int(os.environ.get("PORT", "8000")))
 
@@ -170,6 +219,8 @@ def main():
         "validar": cmd_validar,
         "simular": cmd_simular,
         "asignar": cmd_asignar,
+        "trabajar": cmd_trabajar,
+        "consultar": cmd_consultar,
         "servir": cmd_servir,
         "sla": cmd_sla,
     }
